@@ -9,45 +9,48 @@ The Schedule Bot is a Laravel-based Telegram bot application designed to help st
 ```
 ┌─────────────┐
 │   Telegram  │
-│     API    │
+│     API     │
 └──────┬──────┘
-       │ Webhook Updates
+       │ Updates(Long polling for dev period)
        ▼
 ┌─────────────────────────────────┐
 │   Laravel Application           │
 │                                 │
-│  ┌──────────────────────────┐  │
-│  │  Webhook Controller       │  │
-│  │  (receives updates)       │  │
-│  └───────────┬──────────────┘  │
+│  ┌──────────────────────────┐   │
+│  │  Webhook Controller      |   |
+|  |  or long-polling command |   |
+│  │  (receives updates)      |   │
+│  └───────────┬──────────────┘   │
 │              │                  │
-│  ┌───────────▼──────────────┐  │
-│  │  Bot Command Handlers    │  │
-│  │  - /start                 │  │
-│  │  - /homework              │  │
-│  │  - /events                │  │
-│  │  - /list                  │  │
-│  └───────────┬──────────────┘  │
+│  ┌───────────▼──────────────┐   │
+│  │  TelegramUpdateHandler   |   |
+│  └───────────┬──────────────┘   |
+|              |                  |
+│  ┌───────────▼──────────────┐   │
+│  │  Bot Command Handlers    │   │
+│  │  - /start                │   │
+│  │  - /homework             │   │
+│  │  - etc.                  │   │
+│  └───────────┬──────────────┘   │
 │              │                  │
-│  ┌───────────▼──────────────┐  │
-│  │  Service Layer           │  │
-│  │  - HomeworkService       │  │
-│  │  - EventService          │  │
-│  │  - NotificationService   │  │
-│  └───────────┬──────────────┘  │
+│  ┌───────────▼──────────────┐   │
+│  │  Service Layer           │   │
+│  │  - HomeworkService       │   │
+|  |  - ClassService          |   |
+|  |  - etc.                  |   |
+│  └───────────┬──────────────┘   │
 │              │                  │
-│  ┌───────────▼──────────────┐  │
-│  │  Models (Eloquent)       │  │
-│  │  - User                  │  │
-│  │  - Homework              │  │
-│  │  - Event                 │  │
-│  └───────────┬──────────────┘  │
+│  ┌───────────▼──────────────┐   │
+│  │  Models (Eloquent)       │   │
+│  │  - User                  │   │
+│  │  - Homework              │   │
+│  │  - Event                 │   │
+│  └───────────┬──────────────┘   │
 └──────────────┼──────────────────┘
                │
                ▼
         ┌──────────────┐
         │   Database   │
-        │   (SQLite)   │
         └──────────────┘
 ```
 
@@ -57,52 +60,66 @@ The Schedule Bot is a Laravel-based Telegram bot application designed to help st
 Stores Telegram user information and preferences.
 
 **Fields:**
-- `id` (primary key)
-- `telegram_id` (unique, Telegram user ID)
+- `id` (unique, Telegram user ID)
 - `username` (Telegram username, nullable)
 - `first_name` (user's first name)
-- `last_name` (user's last name, nullable)
-- `language_code` (preferred language)
-- `timezone` (user's timezone for reminders)
 - `created_at`, `updated_at`
 
-**Relationships:**
-- `hasMany` Homework
-- `hasMany` Event
+- **Relationships:**
+  - `belongsTo` Class
 
-### Homework Model
-Represents a homework assignment.
+### Class-based Schedule Models
 
-**Fields:**
-- `id` (primary key)
-- `user_id` (foreign key to users)
-- `title` (assignment title)
-- `description` (detailed description, nullable)
-- `subject` (subject/course name)
-- `due_date` (deadline date and time)
-- `completed` (boolean, default false)
-- `priority` (enum: low, medium, high)
-- `created_at`, `updated_at`
+#### Class Model
+- Represents a school class (e.g., `10Б`).
+- **Fields:**
+  - `id` (primary key)
+  - `code` (unique short identifier, e.g., `10Б`)
+- **Relationships:**
+  - `hasMany` Subject
+  - `hasMany` WeeklyScheduleEntry
+  - `hasMany` Homework
+  - `hasMany` User
 
-**Relationships:**
-- `belongsTo` User
+#### Subject Model
+- Represents a subject taught within a specific class.
+- **Fields:**
+  - `id` (primary key)
+  - `class_id` (foreign key to classrooms)
+  - `name` (subject name, unique per class)
+  - `created_at`, `updated_at`
+- **Relationships:**
+  - `belongsTo` Classroom
+  - `hasMany` WeeklyScheduleEntry
+  - `hasMany` Homework
 
-### Event Model
-Represents a school event or important date.
+#### WeeklyScheduleEntry Model
+- Represents a single weekly timetable slot for a class.
+- **Fields:**
+  - `id` (primary key)
+  - `class_id` (foreign key to classrooms)
+  - `weekday` (1–7, Monday–Sunday)
+  - `lesson_number` (1, 2, 3, ...)
+  - `subject_id` (foreign key to subjects)
+  - `created_at`, `updated_at`
+- **Relationships:**
+  - `belongsTo` Classroom
+  - `belongsTo` Subject
 
-**Fields:**
-- `id` (primary key)
-- `user_id` (foreign key to users)
-- `title` (event title)
-- `description` (event description, nullable)
-- `event_date` (date and time of the event)
-- `event_type` (enum: exam, deadline, meeting, other)
-- `location` (location, nullable)
-- `reminder_sent` (boolean, default false)
-- `created_at`, `updated_at`
-
-**Relationships:**
-- `belongsTo` User
+#### Homework Model (class-based)
+- Represents homework for a particular class, subject, and calendar date.
+- **Fields:**
+  - `id` (primary key)
+  - `class_id` (foreign key to classrooms)
+  - `subject_id` (foreign key to subjects)
+  - `date` (date of the lesson when homework is checked)
+  - `description` (homework text)
+  - `created_at`, `updated_at`
+- **Constraints:**
+  - Unique `(class_id, subject_id, date)` to ensure at most one homework per class/subject/date.
+- **Relationships:**
+  - `belongsTo` Classroom
+  - `belongsTo` Subject
 
 ## Bot Commands
 
@@ -119,115 +136,23 @@ Displays help message with all available commands and their usage.
 
 #### `/homework`
 Homework management commands:
-- `/homework add <title> | <subject> | <due_date>` - Add new homework
-- `/homework list` - List all homework assignments
-- `/homework list pending` - List only pending assignments
-- `/homework complete <id>` - Mark homework as completed
-- `/homework delete <id>` - Delete a homework assignment
-- `/homework view <id>` - View details of a specific homework
+- `/homework add` - Add new homework
+- `/homework current <subject>` - Shows last pending(due date is after/on today) homework for specified subject
+- `/homework all <subject>` - Shows all pending homeworks for specified subject
 
-#### `/events`
-Event management commands:
-- `/events add <title> | <date> | <type>` - Add new event
-- `/events list` - List all events
-- `/events list upcoming` - List upcoming events
-- `/events delete <id>` - Delete an event
-- `/events view <id>` - View details of a specific event
-
-#### `/list` or `/all`
-Shows a combined view of all homework and events, sorted by date.
+#### `/schedule`
+Schedule managment commands:
+- `/schedule new` - begins process of creating new schedule
+- `/schedule edit` - begins process of editing current schedule
+- `/schedule permit_edit <user>` - permits specified user to edit schedule
+- `/schedule revoke_edit <user>` - revokes edit rights to edit schedule from specified user
+- `/schedule print` - prints schedule for this week(with dates, subjects, relevant homeworks)
+- `schedule print next` - prints schedule for the next week (with dates, subjects, relevant homeworks)
 
 #### `/settings`
 User settings management:
 - `/settings timezone <timezone>` - Set user timezone
 - `/settings language <code>` - Set preferred language
-
-## Workflow
-
-### User Registration Flow
-1. User sends `/start` command to bot
-2. Webhook receives update from Telegram
-3. Webhook controller extracts user information
-4. System checks if user exists in database
-5. If new user, creates User record
-6. Sends welcome message with instructions
-
-### Adding Homework Flow
-1. User sends `/homework add` command with details
-2. Command handler parses the input
-3. Validates required fields (title, subject, due_date)
-4. Creates Homework record linked to user
-5. Confirms creation with formatted message
-6. Optionally schedules reminder notification
-
-### Notification Flow
-1. Scheduled job runs periodically (via Laravel scheduler)
-2. Queries database for upcoming homework/events
-3. Checks if reminder should be sent (based on user preferences)
-4. Sends notification via Telegram API
-5. Marks reminder as sent in database
-
-### Data Flow Example: Adding Homework
-
-```
-User Input: /homework add Math Assignment | Mathematics | 2024-12-20 23:59
-
-1. Telegram API → Webhook Endpoint
-   POST /webhook/telegram
-   {
-     "message": {
-       "text": "/homework add Math Assignment | Mathematics | 2024-12-20 23:59",
-       "from": { "id": 123456, "username": "student" }
-     }
-   }
-
-2. WebhookController → BotCommandHandler
-   - Extracts command and parameters
-   - Identifies user from Telegram ID
-   - Routes to HomeworkCommandHandler
-
-3. HomeworkCommandHandler → HomeworkService
-   - Parses input: title, subject, due_date
-   - Validates date format and future date
-   - Creates Homework model instance
-
-4. HomeworkService → Database
-   - Saves homework to database
-   - Links to user via user_id
-
-5. Response → Telegram API
-   - Sends confirmation message
-   - "✅ Homework added: Math Assignment (Due: Dec 20, 2024)"
-```
-
-## Service Layer
-
-### HomeworkService
-Handles all homework-related business logic:
-- Creating homework assignments
-- Updating homework status
-- Querying homework by various criteria
-- Formatting homework data for display
-
-### EventService
-Handles all event-related business logic:
-- Creating events
-- Querying upcoming events
-- Managing event reminders
-
-### NotificationService
-Manages reminder notifications:
-- Scheduling reminders
-- Sending notifications via Telegram
-- Tracking sent reminders
-- Handling notification preferences
-
-### TelegramService
-Wrapper for Telegram Bot API interactions:
-- Sending messages
-- Formatting messages with Markdown/HTML
-- Handling inline keyboards
-- Error handling for API calls
 
 ## Queue System
 
@@ -247,10 +172,10 @@ The application uses Laravel's queue system for:
 
 ## Future Enhancements
 
+- **Events support**
+- **Notifications**
+- **File attachments**: Allow users to attach files to homework
 - **Categories/Tags**: Organize homework and events by categories
 - **Recurring events**: Support for repeating events (weekly classes, etc.)
-- **File attachments**: Allow users to attach files to homework
 - **Collaboration**: Share homework/events with classmates
 - **Calendar integration**: Export to Google Calendar, iCal, etc.
-- **Analytics**: Track completion rates and productivity metrics
-- **Multi-language support**: Full internationalization
