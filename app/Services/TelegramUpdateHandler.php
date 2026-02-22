@@ -80,7 +80,16 @@ class TelegramUpdateHandler
 
         [$command, $arguments] = $this->parseMessage($messageText);
 
-        $handler = $this->commandHandlerFactory->make($command, $arguments);
+        $chatId = $update['message']['chat']['id'] ?? null;
+        $from = $update['message']['from'] ?? [];
+
+        if ($chatId === null || $from === []) {
+            $this->logger->warning('Update missing chat_id or from, skipping command handling.');
+
+            return;
+        }
+
+        $handler = $this->commandHandlerFactory->make($command, $arguments, $chatId, $from);
 
         if ($handler === null) {
             $this->logger->warning('Received unknown command', [

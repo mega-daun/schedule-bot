@@ -19,6 +19,7 @@ class CommandHandlerFactory
         '/homework' => HomeworkCommandHandler::class,
         '/schedule' => ScheduleCommandHandler::class,
         '/settings' => SettingsCommandHandler::class,
+        '/class' => ClassCommandHandler::class,
     ];
 
     public function __construct(
@@ -27,8 +28,10 @@ class CommandHandlerFactory
 
     /**
      * Create a command handler for the given command and arguments.
+     *
+     * @param  array<string, mixed>  $from  Telegram user payload from message.from
      */
-    public function make(string $command, array $arguments): ?CommandHandler
+    public function make(string $command, array $arguments, int|string $chatId, array $from): ?CommandHandler
     {
         $handlerClass = $this->map[$command] ?? null;
 
@@ -39,6 +42,8 @@ class CommandHandlerFactory
         return $this->container->make($handlerClass, [
             'command' => $command,
             'arguments' => $arguments,
+            'chatId' => $chatId,
+            'from' => $from,
         ]);
     }
 }

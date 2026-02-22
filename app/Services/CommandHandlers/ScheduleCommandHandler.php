@@ -6,11 +6,6 @@ namespace App\Services\CommandHandlers;
 
 class ScheduleCommandHandler extends CommandHandler
 {
-    public function __construct(string $command, array $arguments)
-    {
-        parent::__construct($command, $arguments);
-    }
-
     public function handle(): void
     {
         // TODO: Implement /schedule command handling logic.

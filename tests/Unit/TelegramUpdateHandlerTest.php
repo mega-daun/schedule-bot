@@ -20,7 +20,7 @@ class TelegramUpdateHandlerTest extends TestCase
 
         $factory = $this->createMock(CommandHandlerFactory::class);
         $factory->method('make')
-            ->with('/start', [])
+            ->with('/start', [], 123456, ['id' => 123456, 'first_name' => 'Test'])
             ->willReturn($handler);
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -30,7 +30,11 @@ class TelegramUpdateHandlerTest extends TestCase
         $updateHandler = new TelegramUpdateHandler($logger, $factory);
 
         $updateHandler->handle([
-            'message' => ['text' => '/start'],
+            'message' => [
+                'text' => '/start',
+                'chat' => ['id' => 123456],
+                'from' => ['id' => 123456, 'first_name' => 'Test'],
+            ],
         ]);
     }
 
@@ -38,7 +42,7 @@ class TelegramUpdateHandlerTest extends TestCase
     {
         $factory = $this->createMock(CommandHandlerFactory::class);
         $factory->method('make')
-            ->with('/unknown', [])
+            ->with('/unknown', [], 123456, ['id' => 123456, 'first_name' => 'Test'])
             ->willReturn(null);
 
         $logger = $this->createMock(LoggerInterface::class);
@@ -49,7 +53,11 @@ class TelegramUpdateHandlerTest extends TestCase
         $updateHandler = new TelegramUpdateHandler($logger, $factory);
 
         $updateHandler->handle([
-            'message' => ['text' => '/unknown'],
+            'message' => [
+                'text' => '/unknown',
+                'chat' => ['id' => 123456],
+                'from' => ['id' => 123456, 'first_name' => 'Test'],
+            ],
         ]);
     }
 
@@ -79,7 +87,11 @@ class TelegramUpdateHandlerTest extends TestCase
         $updateHandler = new TelegramUpdateHandler($logger, $factory);
 
         $updateHandler->handle([
-            'message' => ['text' => '/start'],
+            'message' => [
+                'text' => '/start',
+                'chat' => ['id' => 123456],
+                'from' => ['id' => 123456, 'first_name' => 'Test'],
+            ],
         ]);
     }
 }

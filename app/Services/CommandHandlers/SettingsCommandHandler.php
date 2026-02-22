@@ -6,11 +6,6 @@ namespace App\Services\CommandHandlers;
 
 class SettingsCommandHandler extends CommandHandler
 {
-    public function __construct(string $command, array $arguments)
-    {
-        parent::__construct($command, $arguments);
-    }
-
     public function handle(): void
     {
         // TODO: Implement /settings command handling logic.
