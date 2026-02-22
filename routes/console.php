@@ -1,8 +1,8 @@
 <?php
 
+use App\Services\TelegramUpdateHandler;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
-use App\Services\TelegramUpdateHandler;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 Artisan::command('inspire', function () {
@@ -33,4 +33,3 @@ Artisan::command('telegram:poll {--timeout=20}', function (TelegramUpdateHandler
         sleep(1);
     }
 })->purpose('Poll Telegram for updates using getUpdates');
-

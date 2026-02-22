@@ -63,4 +63,3 @@ class Classroom extends Model
         return $this->hasMany(User::class, 'class_id');
     }
 }
-

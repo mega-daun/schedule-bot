@@ -44,4 +44,3 @@ class Homework extends Model
         return $this->belongsTo(Subject::class, 'subject_id');
     }
 }
-

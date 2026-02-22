@@ -4,13 +4,61 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Services\CommandHandlers\CommandHandlerFactory;
 use Psr\Log\LoggerInterface;
 
 class TelegramUpdateHandler
 {
     public function __construct(
         private readonly LoggerInterface $logger,
-    ) {
+        private readonly CommandHandlerFactory $commandHandlerFactory,
+    ) {}
+
+    public function validateMessage(string $messageText): bool
+    {
+        if (! is_string($messageText)) {
+            $this->logger->debug('Update does not contain a text message, skipping command handling.');
+
+            return false;
+        }
+
+        $messageText = trim($messageText);
+
+        if ($messageText === '' || $messageText[0] !== '/') {
+            $this->logger->debug('Message is not a command, skipping command handling.', [
+                'text' => $messageText,
+            ]);
+
+            return false;
+        }
+
+        return true;
+    }
+
+    public function parseMessage(string $messageText): array
+    {
+        $parts = preg_split('/\s+/', $messageText);
+
+        if ($parts === false || count($parts) === 0) {
+            $this->logger->warning('Failed to parse command from message text.', [
+                'text' => $messageText,
+            ]);
+
+            return [];
+        }
+
+        $command = $parts[0];
+        $arguments = array_slice($parts, 1);
+
+        $this->logger->info('Parsed Telegram command', [
+            'command' => $command,
+            'arguments' => $arguments,
+        ]);
+
+        return [
+            $command,
+            $arguments,
+        ];
     }
 
     /**
@@ -20,14 +68,36 @@ class TelegramUpdateHandler
      */
     public function handle(array $update): void
     {
-        // For now, just log the incoming update so we can
-        // verify that long polling works during development.
         $this->logger->info('Received Telegram update', [
             'update' => $update,
         ]);
 
-        // TODO: Dispatch to domain-specific handlers and services
-        // (e.g. homework, events, notifications) as they are implemented.
+        $messageText = $update['message']['text'] ?? null;
+
+        if (! $this->validateMessage($messageText)) {
+            return;
+        }
+
+        [$command, $arguments] = $this->parseMessage($messageText);
+
+        $handler = $this->commandHandlerFactory->make($command, $arguments);
+
+        if ($handler === null) {
+            $this->logger->warning('Received unknown command', [
+                'command' => $command,
+            ]);
+
+            return;
+        }
+
+        try {
+            $handler->handle();
+        } catch (\Throwable $exception) {
+            $this->logger->error('Error while handling Telegram command', [
+                'command' => $command,
+                'arguments' => $arguments,
+                'exception' => $exception,
+            ]);
+        }
     }
 }
-
