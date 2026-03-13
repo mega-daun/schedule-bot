@@ -1,7 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
+use App\Models\Classroom;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,11 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('classes', function (Blueprint $table): void {
-            $table->id();
-            $table->string('code', 5);
-            $table->timestamps();
-        });
+        Schema::drop('users_classes');
     }
 
     /**
@@ -25,6 +20,9 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('classes');
+        Schema::create('users_classes', function (Blueprint $table) {
+            $table->unsignedBigInteger('user_id')->index()->unique();
+            $table->foreignIdFor(Classroom::class, 'class_id');
+        });
     }
 };

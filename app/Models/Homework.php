@@ -27,7 +27,7 @@ class Homework extends Model
     /**
      * Get the classroom this homework belongs to.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Classroom, \App\Models\Homework>
+     * @return BelongsTo<Classroom, Homework>
      */
     public function classroom(): BelongsTo
     {
@@ -37,7 +37,7 @@ class Homework extends Model
     /**
      * Get the subject this homework is for.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Subject, \App\Models\Homework>
+     * @return BelongsTo<Subject, Homework>
      */
     public function subject(): BelongsTo
     {

@@ -26,12 +26,13 @@ class Classroom extends Model
      */
     protected $fillable = [
         'code',
+        'join_token',
     ];
 
     /**
      * Get the subjects that belong to this class.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Subject>
+     * @return HasMany<Subject>
      */
     public function subjects(): HasMany
     {
@@ -41,7 +42,7 @@ class Classroom extends Model
     /**
      * Get the weekly schedule entries for this class.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\WeeklyScheduleEntry>
+     * @return HasMany<WeeklyScheduleEntry>
      */
     public function weeklyScheduleEntries(): HasMany
     {
@@ -51,13 +52,21 @@ class Classroom extends Model
     /**
      * Get the homework records for this class.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Homework>
+     * @return HasMany<Homework>
      */
     public function homeworks(): HasMany
     {
         return $this->hasMany(Homework::class, 'class_id');
     }
 
+    public static function generateJoinToken(): string
+    {
+        return bin2hex(random_bytes(8));
+    }
+
+    /**
+     * @return HasMany<User>
+     */
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'class_id');

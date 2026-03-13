@@ -27,7 +27,7 @@ class WeeklyScheduleEntry extends Model
     /**
      * Get the classroom that owns this weekly schedule entry.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Classroom, \App\Models\WeeklyScheduleEntry>
+     * @return BelongsTo<Classroom, WeeklyScheduleEntry>
      */
     public function classroom(): BelongsTo
     {
@@ -37,7 +37,7 @@ class WeeklyScheduleEntry extends Model
     /**
      * Get the subject for this schedule entry.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Subject, \App\Models\WeeklyScheduleEntry>
+     * @return BelongsTo<Subject, WeeklyScheduleEntry>
      */
     public function subject(): BelongsTo
     {

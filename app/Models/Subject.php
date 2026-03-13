@@ -26,7 +26,7 @@ class Subject extends Model
     /**
      * Get the class this subject belongs to.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo<\App\Models\Classroom, \App\Models\Subject>
+     * @return BelongsTo<Classroom, Subject>
      */
     public function classroom(): BelongsTo
     {
@@ -36,7 +36,7 @@ class Subject extends Model
     /**
      * Get the weekly schedule entries for this subject.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\WeeklyScheduleEntry>
+     * @return HasMany<WeeklyScheduleEntry>
      */
     public function weeklyScheduleEntries(): HasMany
     {
@@ -46,7 +46,7 @@ class Subject extends Model
     /**
      * Get the homework records for this subject.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany<\App\Models\Homework>
+     * @return HasMany<Homework>
      */
     public function homeworks(): HasMany
     {

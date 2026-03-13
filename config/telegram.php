@@ -1,5 +1,9 @@
 <?php
 
+use App\BotCommands\Class\DeleteClassCommand;
+use App\BotCommands\Class\JoinClassCommand;
+use App\BotCommands\Class\NewClassCommand;
+use App\BotCommands\StartCommand;
 use Telegram\Bot\Commands\HelpCommand;
 
 return [
@@ -40,7 +44,10 @@ return [
              */
             'allowed_updates' => null,
             'commands' => [
-                // Acme\Project\Commands\MyTelegramBot\BotCommand::class
+                StartCommand::class,
+                NewClassCommand::class,
+                JoinClassCommand::class,
+                DeleteClassCommand::class,
             ],
         ],
 
