@@ -13,11 +13,11 @@ use Telegram\Bot\Objects\Update;
  * Executes a Telegram command and returns the sent message response.
  *
  * @param  array{id: int, first_name: string, is_bot: bool, username: string, language_code: string}  $from  User data from Telegram (id and first_name required)
- * @param  string  $commandClass  Fully qualified class name of the command to execute
+ * @param  array  $commandsUsed  Array of all fully-qualified class names of commands which will be used
  * @param  string  $text  Command text to send (e.g., '/start' or '/start mytoken')
  * @return array{text: string, chat_id: int}|null The message parameters sent by the command, or null if no message was sent
  */
-function runCommand(array $from, string $commandClass, string $text): ?array
+function runCommand(array $from, string $text, array $commandsUsed = []): ?array
 {
     $chat = new Chat([
         'id' => $from['id'],
@@ -56,7 +56,9 @@ function runCommand(array $from, string $commandClass, string $text): ?array
     $apiMock->shouldReceive('getAccessToken')->andReturn('test:test');
 
     $commandBus = new CommandBus($apiMock);
-    $commandBus->addCommand($commandClass);
+    foreach ($commandsUsed as $command) {
+        $commandBus->addCommand($command);
+    }
 
     $apiMock->setCommandBus($commandBus);
     $apiMock->processCommand($fakeUpdate);
@@ -68,11 +70,11 @@ function runCommand(array $from, string $commandClass, string $text): ?array
  * Executes a Telegram command as a specific user.
  *
  * @param  User  $user  The user model to execute the command as
- * @param  string  $commandClass  Fully qualified class name of the command to execute
+ * @param  array  $commandsUsed  Array of all fully-qualified class-names of commands which will be used
  * @param  string  $text  Command text to send (e.g., '/start')
  * @return array{text: string, chat_id: int}|null The message parameters sent by the command, or null if no message was sent
  */
-function runCommandAs(User $user, string $commandClass, string $text): ?array
+function runCommandAs(User $user, string $text, array $commandsUsed = []): ?array
 {
-    return runCommand($user->toArray(), $commandClass, $text);
+    return runCommand($user->toArray(), $text, $commandsUsed);
 }
