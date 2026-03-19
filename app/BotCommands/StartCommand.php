@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\BotCommands;
 
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Traits\HasClass;
 use App\Traits\HasUser;
+use Illuminate\Support\Facades\Log;
 
 class StartCommand extends BaseCommand
 {
@@ -24,17 +27,21 @@ class StartCommand extends BaseCommand
         ];
     }
 
-    protected function __handle(array $args): void
+    protected function __handle(array $args): mixed
     {
         $this->setUser($this->getUpdate()->getMessage()->from);
+        Log::debug('Checking user', [
+            'user' => $this->user,
+            'exists' => $this->user->exists(),
+        ]);
         $token = $args['token'];
 
         if ($token === null) {
             $this->replyWithMessage([
-                'text' => 'Привет, '.$this->user?->firstName.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).',
+                'text' => 'Привет, '.$this->user->first_name.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).',
             ]);
 
-            return;
+            return null;
         }
 
         if ($this->user->class !== null) {
@@ -42,7 +49,7 @@ class StartCommand extends BaseCommand
                 'text' => 'Вы перешли по ссылке для присоединения к классу, однако вы уже состоите в классе.',
             ]);
 
-            return;
+            return null;
         }
 
         $this->class = Classroom::where('join_token', $token)->first();
@@ -52,7 +59,7 @@ class StartCommand extends BaseCommand
                 'text' => 'Класс не найден.',
             ]);
 
-            return;
+            return null;
         }
 
         $this->user->update([
@@ -63,5 +70,7 @@ class StartCommand extends BaseCommand
         $this->replyWithMessage([
             'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
         ]);
+
+        return null;
     }
 }

@@ -12,12 +12,11 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => $this->faker->unique()->numerify('###########'),
-            'first_name' => $this->faker->firstName(),
-            'username' => $this->faker->unique()->userName(),
-            'language_code' => $this->faker->randomElement(['en', 'ru', 'uk']),
+            'id' => 123456789,
+            'first_name' => 'Саша',
+            'username' => 'YoppaniySir',
+            'language_code' => 'ru',
             'role' => UserRole::Student,
-            'is_bot' => false,
             'class_id' => null,
         ];
     }

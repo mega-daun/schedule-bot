@@ -12,6 +12,8 @@ class Homework extends Model
 {
     use HasFactory;
 
+    protected $table = 'homeworks';
+
     /**
      * The attributes that are mass assignable.
      *

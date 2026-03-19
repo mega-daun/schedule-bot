@@ -1,5 +1,8 @@
 <?php
 
+declare(strict_types=1);
+
+use App\BotCommands\CancelCommand;
 use App\BotCommands\Class\DeleteClassCommand;
 use App\BotCommands\Class\JoinClassCommand;
 use App\BotCommands\Class\NewClassCommand;
@@ -48,6 +51,7 @@ return [
                 NewClassCommand::class,
                 JoinClassCommand::class,
                 DeleteClassCommand::class,
+                CancelCommand::class,
             ],
         ],
 

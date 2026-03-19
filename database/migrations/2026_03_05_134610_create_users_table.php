@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('language_code');
             $table->foreignIdFor(Classroom::class, 'class_id')->nullable()->constrained()->cascadeOnUpdate()->onDelete('set null');
             $table->unsignedTinyInteger('role')->default(0);
+            $table->boolean('is_bot')->default(false);
             $table->timestamps();
         });
     }

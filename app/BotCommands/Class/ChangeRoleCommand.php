@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\BotCommands\Class;
 
 use App\BotCommands\BaseCommand;
@@ -26,7 +28,7 @@ class ChangeRoleCommand extends BaseCommand
         ];
     }
 
-    protected function __handle(array $args): void
+    protected function __handle(array $args): mixed
     {
         $this->setUser($this->getUpdate()->getMessage()->from);
         $username = $args['username'];
@@ -37,7 +39,7 @@ class ChangeRoleCommand extends BaseCommand
                 'text' => 'Только админы могут изменять роли других пользователей.',
             ]);
 
-            return;
+            return null;
         }
 
         if ((! $username) || (! $role)) {
@@ -45,9 +47,11 @@ class ChangeRoleCommand extends BaseCommand
                 'text' => 'Пример команды: /changerole @YoppaniySir ученик',
             ]);
 
-            return;
+            return null;
         }
 
         User::where('username', $username)->update(['role' => $role]);
+
+        return null;
     }
 }

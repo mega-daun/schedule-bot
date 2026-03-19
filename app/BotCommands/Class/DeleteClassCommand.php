@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\BotCommands\Class;
 
 use App\BotCommands\BaseCommand;
@@ -20,7 +22,7 @@ class DeleteClassCommand extends BaseCommand
         return [];
     }
 
-    protected function __handle(array $args): void
+    protected function __handle(array $args): mixed
     {
         $this->setUser($this->getUpdate()->getMessage()->from);
         $class = $this->user->class;
@@ -30,7 +32,7 @@ class DeleteClassCommand extends BaseCommand
                 'text' => 'Вы не состоите в классе.',
             ]);
 
-            return;
+            return null;
         }
 
         if ($this->user->role !== UserRole::Admin) {
@@ -38,7 +40,7 @@ class DeleteClassCommand extends BaseCommand
                 'text' => 'Вы не имеете право это сделать.',
             ]);
 
-            return;
+            return null;
         }
 
         if (! $class->delete()) {
@@ -52,5 +54,7 @@ class DeleteClassCommand extends BaseCommand
         $this->replyWithMessage([
             'text' => 'Вы успешно удалили класс '.$class->code.'.',
         ]);
+
+        return null;
     }
 }

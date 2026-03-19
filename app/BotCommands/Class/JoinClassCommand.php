@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\BotCommands\Class;
 
 use App\BotCommands\BaseCommand;
@@ -24,7 +26,7 @@ class JoinClassCommand extends BaseCommand
         ];
     }
 
-    protected function __handle(array $args): void
+    protected function __handle(array $args): mixed
     {
         $this->setUser($this->getUpdate()->getMessage()->from);
         $token = $args['token'];
@@ -34,7 +36,7 @@ class JoinClassCommand extends BaseCommand
                 'text' => 'Для присоединения к классу, укажите токен.',
             ]);
 
-            return;
+            return null;
         }
 
         $this->class = Classroom::where('join_token', $token)->first();
@@ -44,7 +46,7 @@ class JoinClassCommand extends BaseCommand
                 'text' => 'Класс не найден.',
             ]);
 
-            return;
+            return null;
         }
 
         if (! $this->class->users()->save($this->user)) {
@@ -52,11 +54,13 @@ class JoinClassCommand extends BaseCommand
                 'text' => 'Произошла ошибка при присоединении к классу на стороне сервера.',
             ]);
 
-            return;
+            return null;
         }
 
         $this->replyWithMessage([
             'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
         ]);
+
+        return null;
     }
 }

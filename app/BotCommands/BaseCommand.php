@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\BotCommands;
 
 use Illuminate\Support\Facades\Log;
-use InvalidArgumentException;
 use Telegram\Bot\Commands\Command;
 
 /**
@@ -39,10 +38,6 @@ abstract class BaseCommand extends Command
     {
         try {
             $args = $this->__getArgs();
-
-            if (! is_array($args) || empty($args)) {
-                throw new InvalidArgumentException('Missing command arguments');
-            }
 
             $this->__handle($args);
         } catch (\Exception $e) {
