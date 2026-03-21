@@ -12,7 +12,7 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'id' => 123456789,
+            'id' => $this->faker->unique()->numberBetween(100000000, 999999999),
             'first_name' => 'Саша',
             'username' => 'YoppaniySir',
             'language_code' => 'ru',
@@ -53,6 +53,13 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'class_id' => $classroom,
+        ]);
+    }
+
+    public function withConversation(array $conversation_state): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'conversation_state' => $conversation_state,
         ]);
     }
 }
