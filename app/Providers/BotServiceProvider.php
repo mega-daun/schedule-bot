@@ -19,6 +19,7 @@ use Telegram\Bot\Laravel\Facades\Telegram as TelegramFacade;
  * | Action | Class | Description |
  * |--------|-------|-------------|
  * | `'newclass'` | NewClassConversation | Handles multi-step class creation |
+ * | `'joinclass'` | JoinClassConversation | Handles multi-step class joining |
  *
  * ## Adding a new conversation:
  * 1. Create a class extending \App\BotCommands\Conversations\Conversation
@@ -45,5 +46,6 @@ class BotServiceProvider extends ServiceProvider
     private function registerConversationHandlers(ConversationHandler $handler): void
     {
         $handler->registerHandler('newclass', NewClassConversation::class);
+        $handler->registerHandler('joinclass', JoinClassConversation::class);
     }
 }

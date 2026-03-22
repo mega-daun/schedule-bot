@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace App\BotCommands\Class;
 
 use App\BotCommands\BaseCommand;
+use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Traits\HasClass;
+use App\Traits\HasConversation;
 use App\Traits\HasUser;
 
 class JoinClassCommand extends BaseCommand
 {
-    use HasClass, HasUser;
+    use HasClass, HasConversation, HasUser;
 
     protected string $name = 'joinclass';
 
@@ -31,9 +33,27 @@ class JoinClassCommand extends BaseCommand
         $this->setUser($this->getUpdate()->getMessage()->from);
         $token = $args['token'];
 
-        if ($token === null) {
+        if ($this->user->class_id !== null) {
             $this->replyWithMessage([
-                'text' => 'Для присоединения к классу, укажите токен.',
+                'text' => 'Вы уже состоите в классе.',
+            ]);
+
+            return null;
+        }
+
+        if ($token === null) {
+            $this->user->startConversation('joinclass', []);
+
+            $this->replyWithMessage([
+                'text' => 'Введите токен для присоединения к классу.',
+            ]);
+
+            return null;
+        }
+
+        if (! $this->isValidTokenFormat($token)) {
+            $this->replyWithMessage([
+                'text' => 'Класс не найден.',
             ]);
 
             return null;
@@ -49,18 +69,20 @@ class JoinClassCommand extends BaseCommand
             return null;
         }
 
-        if (! $this->class->users()->save($this->user)) {
-            $this->replyWithMessage([
-                'text' => 'Произошла ошибка при присоединении к классу на стороне сервера.',
-            ]);
-
-            return null;
-        }
+        $this->user->update([
+            'class_id' => $this->class->id,
+            'role' => UserRole::Student,
+        ]);
 
         $this->replyWithMessage([
             'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
         ]);
 
         return null;
+    }
+
+    private function isValidTokenFormat(string $token): bool
+    {
+        return preg_match('/^[a-f0-9]{16}$/i', $token) === 1;
     }
 }
