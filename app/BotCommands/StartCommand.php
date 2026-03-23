@@ -4,16 +4,12 @@ declare(strict_types=1);
 
 namespace App\BotCommands;
 
+use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
 use App\Models\Classroom;
-use App\Traits\HasClass;
-use App\Traits\HasUser;
-use Illuminate\Support\Facades\Log;
 
 class StartCommand extends BaseCommand
 {
-    use HasClass, HasUser;
-
     protected string $name = 'start';
 
     protected string $description = 'Начинает общение с ботом. Даёт начальные инструкции.';
@@ -27,50 +23,37 @@ class StartCommand extends BaseCommand
         ];
     }
 
-    protected function __handle(array $args): mixed
+    protected function __handle(array $args): void
     {
-        $this->setUser($this->getUpdate()->getMessage()->from);
-        Log::debug('Checking user', [
-            'user' => $this->user,
-            'exists' => $this->user->exists(),
-        ]);
         $token = $args['token'];
 
         if ($token === null) {
             $this->replyWithMessage([
                 'text' => 'Привет, '.$this->user->first_name.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).',
             ]);
+        } else {
+            if ($this->user->class !== null) {
+                throw new IncorrectMessageException(
+                    'Вы перешли по ссылке для присоединения к классу, однако вы уже состоите в классе.'
+                );
+            }
 
-            return null;
-        }
+            $this->class = Classroom::where('join_token', $token)->first();
 
-        if ($this->user->class !== null) {
-            $this->replyWithMessage([
-                'text' => 'Вы перешли по ссылке для присоединения к классу, однако вы уже состоите в классе.',
+            if ($this->class === null) {
+                throw new IncorrectMessageException(
+                    'Класс не найден.'
+                );
+            }
+
+            $this->user->update([
+                'class_id' => $this->class->id,
+                'role' => UserRole::Student,
             ]);
 
-            return null;
-        }
-
-        $this->class = Classroom::where('join_token', $token)->first();
-
-        if ($this->class === null) {
             $this->replyWithMessage([
-                'text' => 'Класс не найден.',
+                'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
             ]);
-
-            return null;
         }
-
-        $this->user->update([
-            'class_id' => $this->class->id,
-            'role' => UserRole::Student,
-        ]);
-
-        $this->replyWithMessage([
-            'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
-        ]);
-
-        return null;
     }
 }

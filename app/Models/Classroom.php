@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,6 +63,16 @@ class Classroom extends Model
     public static function generateJoinToken(): string
     {
         return bin2hex(random_bytes(8));
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Classroom $classroom) {
+            $classroom->users()->update([
+                'role' => UserRole::Student,
+                'conversation_state' => null,
+            ]);
+        });
     }
 
     /**

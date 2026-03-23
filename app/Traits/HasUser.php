@@ -1,12 +1,14 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Traits;
 
 use App\Models\User;
+use App\Traits\Attributes\Setup;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Log;
-use Telegram\Bot\Objects\User as ObjectsUser;
+use Telegram\Bot\Objects\Update;
 
 /**
  * @property User|null $user
@@ -21,11 +23,12 @@ trait HasUser
     protected ?User $user;
 
     /**
-     * @param  ObjectsUser  $from  Data that we recieve by telegram's API
      * @return void
      */
-    private function setUser(ObjectsUser $from)
+    #[Setup(order: 1)]
+    protected function setUser(Update $update)
     {
+        $from = $update->getMessage()->from;
         try {
             $this->user = User::findOrFail(['id' => $from->id])->first();
         } catch (ModelNotFoundException $e) {

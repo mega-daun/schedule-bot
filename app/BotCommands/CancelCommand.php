@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\BotCommands;
 
-use App\Traits\HasUser;
+use App\BotCommands\Exceptions\IncorrectMessageException;
 
 class CancelCommand extends BaseCommand
 {
-    use HasUser;
-
     protected string $name = 'cancel';
 
     protected string $description = 'Отменяет текущее действие (создание класса, домашнего задания и т.д.)';
@@ -19,25 +17,19 @@ class CancelCommand extends BaseCommand
         return [];
     }
 
-    protected function __handle(array $args): mixed
+    protected function __handle(array $args): void
     {
-        $this->setUser($this->getUpdate()->getMessage()->from);
-
         if (! $this->user->hasActiveConversation()) {
-            $this->replyWithMessage([
-                'text' => 'Нет активных действий для отмены.',
-            ]);
-
-            return null;
+            throw new IncorrectMessageException(
+                'Нет активных действий для отмены.',
+            );
         }
-
         $action = $this->user->getConversationAction();
+
         $this->user->clearConversationState();
 
         $this->replyWithMessage([
             'text' => 'Действие "'.$action.'" отменено.',
         ]);
-
-        return null;
     }
 }

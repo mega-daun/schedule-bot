@@ -153,10 +153,10 @@ describe('DeleteClassCommand', function () {
         $users = User::factory()->count(5)->create(['class_id' => $classroom->id]);
         runCommandAs($admin, '/deleteclass', [DeleteClassCommand::class]);
         $this->assertDatabaseMissing('classes', ['id' => $classroom->id]);
-        $this->assertEquals(6, User::whereIn('id', $users->pluck('id'))->whereNotNull('class_id')->count());
+        $this->assertEquals(0, User::whereIn('id', $users->pluck('id'))->whereNotNull('class_id')->count());
     });
 
-    it('other users conversation_state is not affected', function () {
+    it('other users conversation_state is cleared', function () {
         $classroom = Classroom::factory()->create();
         $otherUser = User::factory()->create([
             'class_id' => $classroom->id,

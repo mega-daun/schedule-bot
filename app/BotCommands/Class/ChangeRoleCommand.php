@@ -7,13 +7,9 @@ namespace App\BotCommands\Class;
 use App\BotCommands\BaseCommand;
 use App\Enums\UserRole;
 use App\Models\User;
-use App\Traits\HasClass;
-use App\Traits\HasUser;
 
 class ChangeRoleCommand extends BaseCommand
 {
-    use HasClass, HasUser;
-
     protected string $name = 'changerole';
 
     protected string $description = 'Изменяет роль пользователя: ученик, дежурный, учитель, админ. Пример команды: /changerole @YoppaniySir ученик';
@@ -28,30 +24,19 @@ class ChangeRoleCommand extends BaseCommand
         ];
     }
 
-    protected function __handle(array $args): mixed
+    protected function __handle(array $args): void
     {
-        $this->setUser($this->getUpdate()->getMessage()->from);
         $username = $args['username'];
         $role = $args['role'];
 
         if ($this->user->role !== UserRole::Admin) {
-            $this->replyWithMessage([
-                'text' => 'Только админы могут изменять роли других пользователей.',
-            ]);
-
-            return null;
+            throw new IncorrectMessageException('Только админы могут изменять роли других пользователей.');
         }
 
         if ((! $username) || (! $role)) {
-            $this->replyWithMessage([
-                'text' => 'Пример команды: /changerole @YoppaniySir ученик',
-            ]);
-
-            return null;
+            throw new IncorrectMessageException('Пример команды: /changerole @YoppaniySir ученик');
         }
 
         User::where('username', $username)->update(['role' => $role]);
-
-        return null;
     }
 }
