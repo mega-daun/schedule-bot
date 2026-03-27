@@ -129,21 +129,6 @@ describe('LeaveClassCommand - Admin leaving with other members', function () {
         $this->assertNull($admin->conversation_state);
     });
 
-    it('admin leaves and other users roles unchanged', function () {
-        $classroom = Classroom::factory()->create();
-        $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-        $teacher = User::factory()->teacher()->create(['class_id' => $classroom->id]);
-        $onDuty = User::factory()->onDuty()->create(['class_id' => $classroom->id]);
-        $student = User::factory()->student()->create(['class_id' => $classroom->id]);
-        $teacherId = $teacher->id;
-        $onDutyId = $onDuty->id;
-        $studentId = $student->id;
-        runCommandAs($admin, '/leaveclass', [LeaveClassCommand::class]);
-        $this->assertEquals(UserRole::Teacher, User::find($teacherId)->role);
-        $this->assertEquals(UserRole::OnDuty, User::find($onDutyId)->role);
-        $this->assertEquals(UserRole::Student, User::find($studentId)->role);
-    });
-
     it('admin leaves with 2+ users and one random user is new admin', function () {
         $classroom = Classroom::factory()->create();
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
@@ -183,7 +168,7 @@ describe('LeaveClassCommand - Admin as only member', function () {
         Homework::factory()->count(5)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         runCommandAs($admin, '/leaveclass', [LeaveClassCommand::class]);
-        $this->assertDatabaseMissing('homework', ['class_id' => $classroom->id]);
+        $this->assertDatabaseMissing('homeworks', ['class_id' => $classroom->id]);
     });
 
     it('admin is only member and schedules are deleted', function () {
