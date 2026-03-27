@@ -7,7 +7,6 @@ namespace App\Traits;
 use App\Models\User;
 use App\Traits\Attributes\Setup;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Facades\Log;
 use Telegram\Bot\Objects\Update;
 
 /**
@@ -38,16 +37,6 @@ trait HasUser
                 'language_code' => $from->languageCode,
                 'username' => $from->username,
             ]);
-        } catch (\Exception $e) {
-            Log::error(
-                $e->getMessage(),
-                [
-                    'trace' => $e->getTraceAsString(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'from' => $from,
-                ]
-            );
         }
     }
 }

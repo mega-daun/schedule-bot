@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Jobs\BroadcastToUsers;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -68,6 +69,9 @@ class Classroom extends Model
     protected static function booted(): void
     {
         static::deleting(function (Classroom $classroom) {
+            $userIds = $classroom->users()->pluck('id');
+            BroadcastToUsers::dispatch($userIds, 'Класс, в котором вы состояли, был удалён.');
+
             $classroom->users()->update([
                 'role' => UserRole::Student,
                 'conversation_state' => null,

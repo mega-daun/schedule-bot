@@ -82,34 +82,34 @@ class ConversationHandler
      */
     public function handle(Update $update): bool
     {
-        $message = $update->getMessage();
-        if ($message === null) {
-            return false;
-        }
+        try {
+            $text = $update->getMessage()->text;
+            $user = $this->getUser($update);
 
+            $action = $user->getConversationAction();
+
+            $handler = $this->handlers[$action];
+
+            if (is_string($handler)) {
+                $conversation = new $handler;
+                $conversation->handle($user, $text, $this->telegram, $update);
+            } else {
+                $handler($user, $text, $this->telegram, $update);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            throw $e;
+        }
+    }
+
+    private function getUser(Update $update): User
+    {
+        $message = $update->getMessage();
         $userId = $message->from->id;
         $user = User::find($userId);
 
-        if ($user === null || ! $user->hasActiveConversation()) {
-            return false;
-        }
-
-        $action = $user->getConversationAction();
-
-        if ($action === null || ! isset($this->handlers[$action])) {
-            return false;
-        }
-
-        $handler = $this->handlers[$action];
-
-        if (is_string($handler) && is_a($handler, Conversation::class, true)) {
-            $conversation = new $handler;
-            $conversation->handle($user, $message->text, $this->telegram, $update);
-        } else {
-            $handler($user, $message->text, $this->telegram, $update);
-        }
-
-        return true;
+        return $user;
     }
 
     public function hasHandler(string $action): bool

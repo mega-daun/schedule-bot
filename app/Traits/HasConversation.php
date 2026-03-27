@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Traits;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -144,7 +145,7 @@ trait HasConversation
     public function updateConversationData(array $data): void
     {
         if ($this->conversation_state === null) {
-            return;
+            throw new Exception('Trying to update empty conversation_state');
         }
 
         $this->update([
