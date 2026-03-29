@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Traits\Attributes\Setup;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Telegram\Bot\Objects\Update;
+use Telegram\Bot\Objects\User as ObjectsUser;
 
 /**
  * @property User|null $user
@@ -16,27 +17,31 @@ use Telegram\Bot\Objects\Update;
  */
 trait HasUser
 {
-    /**
-     * related user
-     */
     protected ?User $user;
 
-    /**
-     * @return void
-     */
     #[Setup(order: 1)]
     protected function setUser(Update $update)
     {
-        $from = $update->getMessage()->from;
+        $user = $update->getMessage()->from;
         try {
-            $this->user = User::findOrFail(['id' => $from->id])->first();
-        } catch (ModelNotFoundException $e) {
-            $this->user = User::create([
-                'id' => $from->id,
-                'first_name' => $from->firstName,
-                'language_code' => $from->languageCode,
-                'username' => $from->username,
-            ]);
+            $this->user = $this->tryToFindUser($user);
+        } catch (ModelNotFoundException) {
+            $this->user = $this->createUser($user);
         }
+    }
+
+    private function tryToFindUser(ObjectsUser $user)
+    {
+        return User::findOrFail(['id' => $user->id])->first();
+    }
+
+    private function createUser(ObjectsUser $user)
+    {
+        return User::create([
+            'id' => $user->id,
+            'first_name' => $user->firstName,
+            'language_code' => $user->languageCode,
+            'username' => $user->username,
+        ]);
     }
 }

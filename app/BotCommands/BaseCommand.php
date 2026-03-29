@@ -37,9 +37,6 @@ abstract class BaseCommand extends Command
      */
     abstract protected function __handle(array $args): void;
 
-    /**
-     * Execute command with error handling and validation.
-     */
     public function handle(): void
     {
         try {
@@ -60,9 +57,6 @@ abstract class BaseCommand extends Command
         }
     }
 
-    /**
-     * Handle error by logging and replying to user.
-     */
     protected function handleError(\Exception $e): void
     {
         Log::error(

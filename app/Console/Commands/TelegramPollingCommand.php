@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Services\ConversationHandler;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Psr\Log\LoggerInterface;
 use Telegram\Bot\Laravel\Facades\Telegram as TelegramFacade;
 
@@ -30,6 +31,7 @@ class TelegramPollingCommand extends Command
                     continue;
                 }
                 foreach ($updates as $update) {
+                    Log::info('Recieved update', $update);
 
                     if ($update === null) {
                         sleep(1);
@@ -71,6 +73,9 @@ class TelegramPollingCommand extends Command
                 }
             } catch (\Exception $e) {
                 $logger->error('Telegram polling error: '.$e->getMessage(), [
+                    'trace' => $e->getTraceAsString(),
+                ]);
+                info('Telegram polling error: '.$e->getMessage(), [
                     'trace' => $e->getTraceAsString(),
                 ]);
                 sleep(5);
