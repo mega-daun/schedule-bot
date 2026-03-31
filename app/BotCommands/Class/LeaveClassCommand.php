@@ -4,54 +4,54 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Class;
 
-use App\BotCommands\BaseCommand;
 use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
 use App\Models\Classroom;
+use App\Models\User;
+use SergiX44\Nutgram\Nutgram;
 
-class LeaveClassCommand extends BaseCommand
+class LeaveClassCommand
 {
-    protected string $name = 'leaveclass';
-
-    protected string $description = 'Покинуть текущий класс.';
-
-    protected function __getArgs(): array
+    public function __invoke(Nutgram $bot): void
     {
-        return [];
-    }
+        $user = $this->getUser($bot);
 
-    protected function __handle(array $args): void
-    {
-        if ($this->user->class_id === null) {
+        if ($user->class_id === null) {
             throw new IncorrectMessageException('Вы не состоите в классе.');
         }
 
-        $classroom = Classroom::find($this->user->class_id);
+        $classroom = Classroom::find($user->class_id);
         $classCode = $classroom->code;
 
-        if ($this->user->role === UserRole::Admin) {
-            $this->handleAdminLeaving($classroom);
+        if ($user->role === UserRole::Admin) {
+            $this->handleAdminLeaving($user, $classroom);
         } else {
-            $this->handleUserLeaving();
+            $this->handleUserLeaving($user);
         }
 
-        $this->replyWithMessage([
-            'text' => 'Вы вышли из класса '.$classCode.'.',
-        ]);
+        $bot->sendMessage(
+            text: 'Вы вышли из класса '.$classCode.'.'
+        );
     }
 
-    private function handleUserLeaving(): void
+    private function getUser(Nutgram $bot): User
     {
-        $this->user->update([
+        $telegramUser = $bot->user();
+
+        return User::findOrFail($telegramUser->id);
+    }
+
+    private function handleUserLeaving(User $user): void
+    {
+        $user->update([
             'class_id' => null,
             'role' => UserRole::Student,
-            'conversation_state' => null,
         ]);
     }
 
-    private function handleAdminLeaving(Classroom $classroom): void
+    private function handleAdminLeaving(User $user, Classroom $classroom): void
     {
-        $otherUsers = $classroom->users()->where('id', '!=', $this->user->id)->get();
+        $otherUsers = $classroom->users()->where('id', '!=', $user->id)->get();
 
         if ($otherUsers->isEmpty()) {
             $classroom->delete();
@@ -59,10 +59,9 @@ class LeaveClassCommand extends BaseCommand
             $otherUsers->random()->update(['role' => UserRole::Admin]);
         }
 
-        $this->user->update([
+        $user->update([
             'class_id' => null,
             'role' => UserRole::Student,
-            'conversation_state' => null,
         ]);
     }
 }

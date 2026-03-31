@@ -4,41 +4,46 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Class;
 
-use App\BotCommands\BaseCommand;
 use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
+use App\Models\User;
+use SergiX44\Nutgram\Nutgram;
 
-class DeleteClassCommand extends BaseCommand
+class DeleteClassCommand
 {
-    protected string $name = 'deleteclass';
-
-    protected string $description = 'Удалить класс. Пример: /deleteclass';
-
-    protected function __getArgs(): array
+    public function __invoke(Nutgram $bot): void
     {
-        return [];
-    }
+        $user = $this->getUser($bot);
 
-    protected function __handle(array $args): void
-    {
-        if (! $this->class) {
+        if (! $user->class) {
             throw new IncorrectMessageException('Вы не состоите в классе.');
         }
 
-        if ($this->user->role !== UserRole::Admin) {
+        if ($user->role !== UserRole::Admin) {
             throw new IncorrectMessageException('Вы не имеете право это сделать.');
         }
 
-        if (! $this->class->delete()) {
-            $this->replyWithMessage([
-                'text' => 'Произошла ошибка на стороне сервера.',
-            ]);
+        $class = $user->class;
+
+        if (! $class->delete()) {
+            $bot->sendMessage(
+                text: 'Произошла ошибка на стороне сервера.'
+            );
+
+            return;
         }
 
-        $this->user->update(['role' => UserRole::Student]);
+        $user->update(['role' => UserRole::Student]);
 
-        $this->replyWithMessage([
-            'text' => 'Вы успешно удалили класс '.$this->class->code.'.',
-        ]);
+        $bot->sendMessage(
+            text: 'Вы успешно удалили класс '.$class->code.'.'
+        );
+    }
+
+    private function getUser(Nutgram $bot): User
+    {
+        $telegramUser = $bot->user();
+
+        return User::findOrFail($telegramUser->id);
     }
 }

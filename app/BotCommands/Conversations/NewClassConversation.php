@@ -8,35 +8,34 @@ use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\User;
 use Illuminate\Support\Str;
-use Telegram\Bot\Api;
-use Telegram\Bot\Objects\Update;
+use SergiX44\Nutgram\Conversations\Conversation;
+use SergiX44\Nutgram\Nutgram;
 
-/**
- * Handles multi-step class creation conversation.
- *
- * Flow:
- * 1. User sends /newclass (without argument)
- * 2. Bot asks for class name
- * 3. User provides class name
- * 4. This conversation handler validates and creates the class and completes
- */
 class NewClassConversation extends Conversation
 {
     private const VALID_PATTERN = '/^[1-9][01]?[А-Яа-я]$/u';
 
-    public function handle(User $user, string $input, Api $telegram, Update $update): void
+    public function start(Nutgram $bot)
     {
-        $chatId = $update->getMessage()->chat->id;
-        $botUsername = env('TELEGRAM_BOT_NAME', 'hatenigas_bot');
+        $bot->sendMessage(
+            text: 'Введите название нового класса (например, 10Б):'
+        );
+        $this->next('handleInput');
+    }
+
+    public function handleInput(Nutgram $bot)
+    {
+        $input = $bot->message()->text;
 
         if (! $this->validateInput($input)) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Неверный формат названия класса. Примеры: 1А, 10Б, 11В. Введите название нового класса:',
-            ]);
+            $bot->sendMessage(
+                text: 'Неверный формат названия класса. Примеры: 1А, 10Б, 11В. Введите название нового класса:'
+            );
 
             return;
         }
+
+        $user = $this->getUser($bot);
 
         $class = Classroom::create([
             'code' => Str::upper($input),
@@ -44,10 +43,9 @@ class NewClassConversation extends Conversation
         ]);
 
         if (! $class) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Произошла ошибка при создании класса.',
-            ]);
+            $bot->sendMessage(
+                text: 'Произошла ошибка при создании класса.'
+            );
 
             return;
         }
@@ -55,13 +53,20 @@ class NewClassConversation extends Conversation
         $user->update([
             'class_id' => $class->id,
             'role' => UserRole::Admin,
-            'conversation_state' => null,
         ]);
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => 'Класс '.$class->code.' успешно создан. Токен для присоединения: '.$class->join_token.'. Ссылка для присоединения: https://t.me/'.$botUsername.'?start='.$class->join_token,
-        ]);
+        $bot->sendMessage(
+            text: 'Класс '.$class->code.' успешно создан. Токен для присоединения: '.$class->join_token.'. Ссылка для присоединения: https://t.me/hatenigas_bot?start='.$class->join_token
+        );
+
+        $this->end();
+    }
+
+    private function getUser(Nutgram $bot): User
+    {
+        $telegramUser = $bot->user();
+
+        return User::findOrFail($telegramUser->id);
     }
 
     private function validateInput(string $input): bool

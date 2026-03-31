@@ -7,52 +7,59 @@ namespace App\BotCommands;
 use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
 use App\Models\Classroom;
+use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use SergiX44\Nutgram\Nutgram;
 
-class StartCommand extends BaseCommand
+class StartCommand
 {
-    protected string $name = 'start';
-
-    protected string $description = 'Начинает общение с ботом. Даёт начальные инструкции.';
-
-    protected string $pattern = '{token}';
-
-    protected function __getArgs(): array
+    public function __invoke(Nutgram $bot): void
     {
-        return [
-            'token' => $this->argument('token'),
-        ];
-    }
-
-    protected function __handle(array $args): void
-    {
-        $token = $args['token'];
+        $user = $this->getUser($bot);
+        $token = $bot->get('token');
 
         if ($token === null) {
-            $this->replyWithMessage([
-                'text' => 'Привет, '.$this->user->first_name.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).',
-            ]);
+            $bot->sendMessage(
+                text: 'Привет, '.$user->first_name.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).'
+            );
         } else {
-            if ($this->user->class !== null) {
+            if ($user->class !== null) {
                 throw new IncorrectMessageException(
                     'Вы перешли по ссылке для присоединения к классу, однако вы уже состоите в классе.'
                 );
             }
 
-            $this->class = Classroom::where('join_token', $token)->first();
+            $class = Classroom::where('join_token', $token)->first();
 
-            if ($this->class === null) {
+            if ($class === null) {
                 throw new IncorrectMessageException(
                     'Класс не найден.'
                 );
             }
 
-            $this->user->update([
-                'class_id' => $this->class->id,
+            $user->update([
+                'class_id' => $class->id,
                 'role' => UserRole::Student,
             ]);
 
-            $this->replyWithMessage([
-                'text' => 'Вы успешно присоеденились к классу '.$this->class->code.'.',
+            $bot->sendMessage(
+                text: 'Вы успешно присоеденились к классу '.$class->code.'.'
+            );
+        }
+    }
+
+    private function getUser(Nutgram $bot): User
+    {
+        $telegramUser = $bot->user();
+
+        try {
+            return User::findOrFail($telegramUser->id);
+        } catch (ModelNotFoundException) {
+            return User::create([
+                'id' => $telegramUser->id,
+                'first_name' => $telegramUser->first_name,
+                'language_code' => $telegramUser->language_code,
+                'username' => $telegramUser->username,
             ]);
         }
     }

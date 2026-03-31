@@ -5,31 +5,31 @@ declare(strict_types=1);
 namespace App\BotCommands;
 
 use App\BotCommands\Exceptions\IncorrectMessageException;
+use SergiX44\Nutgram\Nutgram;
 
-class CancelCommand extends BaseCommand
+class CancelCommand
 {
-    protected string $name = 'cancel';
-
-    protected string $description = 'Отменяет текущее действие (создание класса, домашнего задания и т.д.)';
-
-    protected function __getArgs(): array
+    public function __invoke(Nutgram $bot): void
     {
-        return [];
+        $bot->endConversation();
+
+        $bot->sendMessage(
+            text: 'Действие отменено.'
+        );
+    }
+}
+
+        Conversation::end($bot);
+
+        $bot->sendMessage(
+            text: 'Действие отменено.'
+        );
     }
 
-    protected function __handle(array $args): void
+    private function getUser(Nutgram $bot): User
     {
-        if (! $this->user->hasActiveConversation()) {
-            throw new IncorrectMessageException(
-                'Нет активных действий для отмены.',
-            );
-        }
-        $action = $this->user->getConversationAction();
+        $telegramUser = $bot->user();
 
-        $this->user->clearConversationState();
-
-        $this->replyWithMessage([
-            'text' => 'Действие "'.$action.'" отменено.',
-        ]);
+        return User::findOrFail($telegramUser->id);
     }
 }

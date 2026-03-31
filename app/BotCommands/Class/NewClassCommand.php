@@ -4,70 +4,61 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Class;
 
-use App\BotCommands\BaseCommand;
 use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
 use App\Models\Classroom;
+use App\Models\User;
+use SergiX44\Nutgram\Nutgram;
 
-class NewClassCommand extends BaseCommand
+class NewClassCommand
 {
-    protected string $name = 'newclass';
-
-    protected string $description = 'Создать новый класс. Пример: /newclass 10Б или /newclass (для пошагового создания)';
-
-    protected string $pattern = '{code}';
-
-    protected function __getArgs(): array
+    public function __invoke(Nutgram $bot): void
     {
-        return [
-            'code' => $this->argument('code'),
-        ];
-    }
+        $user = $this->getUser($bot);
+        $code = $bot->get('code');
 
-    protected function __handle(array $args): void
-    {
-        $code = $args['code'];
-
-        if ($this->user->class !== null) {
+        if ($user->class !== null) {
             throw new IncorrectMessageException('Вы уже состоите в классе.');
         }
 
         if ($code === null) {
-            $this->user->startConversation('newclass', []);
+            $bot->sendMessage(
+                text: 'Введите название нового класса (например, 10Б):'
+            );
 
-            $this->replyWithMessage([
-                'text' => 'Введите название нового класса (например, 10Б):',
-            ]);
-        } else {
-            $this->createClass($code);
+            return;
         }
-    }
 
-    private function createClass(string $code): void
-    {
-        $this->class = Classroom::create([
+        $class = Classroom::create([
             'code' => $code,
             'join_token' => Classroom::generateJoinToken(),
         ]);
 
-        if (! $this->class) {
-            $this->replyWithMessage([
-                'text' => 'Произошла ошибка при создании класса.',
-            ]);
+        if (! $class) {
+            $bot->sendMessage(
+                text: 'Произошла ошибка при создании класса.'
+            );
 
             return;
         }
 
-        if (! $this->user->update(['class_id' => $this->class->id, 'role' => UserRole::Admin])) {
-            $this->replyWithMessage([
-                'text' => 'Произошла ошибка при присоединении к классу.',
-            ]);
+        if (! $user->update(['class_id' => $class->id, 'role' => UserRole::Admin])) {
+            $bot->sendMessage(
+                text: 'Произошла ошибка при присоединении к классу.'
+            );
 
             return;
         }
 
-        $this->replyWithMessage([
-            'text' => 'Класс '.$this->class->code.' успешно создан. Токен для присоединения: '.$this->class->join_token.'. Ссылка для присоединения: https://t.me/'.env('TELEGRAM_BOT_NAME', 'hatenigas_bot').'?start='.$this->class->join_token,
-        ]);
+        $bot->sendMessage(
+            text: 'Класс '.$class->code.' успешно создан. Токен для присоединения: '.$class->join_token.'. Ссылка для присоединения: https://t.me/hatenigas_bot?start='.$class->join_token
+        );
+    }
+
+    private function getUser(Nutgram $bot): User
+    {
+        $telegramUser = $bot->user();
+
+        return User::findOrFail($telegramUser->id);
     }
 }

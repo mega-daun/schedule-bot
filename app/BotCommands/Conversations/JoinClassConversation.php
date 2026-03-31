@@ -7,51 +7,54 @@ namespace App\BotCommands\Conversations;
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\User;
-use Telegram\Bot\Api;
-use Telegram\Bot\Objects\Update;
+use SergiX44\Nutgram\Conversations\Conversation;
+use SergiX44\Nutgram\Nutgram;
 
 class JoinClassConversation extends Conversation
 {
-    public function handle(User $user, string $input, Api $telegram, Update $update): void
+    public function start(Nutgram $bot)
     {
-        $chatId = $update->getMessage()->chat->id;
+        $bot->sendMessage(
+            text: 'Введите токен для присоединения к классу:'
+        );
+        $this->next('handleInput');
+    }
+
+    public function handleInput(Nutgram $bot)
+    {
+        $user = $this->getUser($bot);
+        $input = trim($bot->message()->text);
 
         if ($user->class_id !== null) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Вы уже состоите в классе.',
-            ]);
+            $bot->sendMessage(
+                text: 'Вы уже состоите в классе.'
+            );
 
             return;
         }
 
-        $trimmed = trim($input);
-
-        if ($trimmed === '') {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Токен не может быть пустым. Введите токен для присоединения к классу:',
-            ]);
+        if ($input === '') {
+            $bot->sendMessage(
+                text: 'Токен не может быть пустым. Введите токен для присоединения к классу:'
+            );
 
             return;
         }
 
-        if (! $this->isValidTokenFormat($trimmed)) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Класс не найден.',
-            ]);
+        if (! $this->isValidTokenFormat($input)) {
+            $bot->sendMessage(
+                text: 'Класс не найден.'
+            );
 
             return;
         }
 
-        $class = Classroom::where('join_token', $trimmed)->first();
+        $class = Classroom::where('join_token', $input)->first();
 
         if (! $class) {
-            $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text' => 'Класс не найден.',
-            ]);
+            $bot->sendMessage(
+                text: 'Класс не найден.'
+            );
 
             return;
         }
@@ -59,13 +62,20 @@ class JoinClassConversation extends Conversation
         $user->update([
             'class_id' => $class->id,
             'role' => UserRole::Student,
-            'conversation_state' => null,
         ]);
 
-        $telegram->sendMessage([
-            'chat_id' => $chatId,
-            'text' => 'Вы успешно присоеденились к классу '.$class->code.'.',
-        ]);
+        $bot->sendMessage(
+            text: 'Вы успешно присоеденились к классу '.$class->code.'.'
+        );
+
+        $this->end();
+    }
+
+    private function getUser(Nutgram $bot): User
+    {
+        $telegramUser = $bot->user();
+
+        return User::findOrFail($telegramUser->id);
     }
 
     private function isValidTokenFormat(string $token): bool

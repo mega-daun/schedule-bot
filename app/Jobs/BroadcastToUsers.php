@@ -3,13 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\User;
-use App\Services\BroadcastHandler;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use SergiX44\Nutgram\Nutgram;
 
 class BroadcastToUsers implements ShouldQueue
 {
@@ -20,9 +20,14 @@ class BroadcastToUsers implements ShouldQueue
         private readonly string $message,
     ) {}
 
-    public function handle(BroadcastHandler $broadcast): void
+    public function handle(Nutgram $bot): void
     {
         $users = User::whereIn('id', $this->userIds)->get();
-        $broadcast->broadcastTo($users, $this->message);
+        $chatIds = $users->pluck('id')->toArray();
+
+        $bot->getBulkMessenger()
+            ->setChats($chatIds)
+            ->setText($this->message)
+            ->startSync();
     }
 }
