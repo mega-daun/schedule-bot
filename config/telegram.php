@@ -37,6 +37,7 @@ return [
     |                       Acme\Project\Commands\BotFather\ByeCommand::class,
     |             ]
     */
+    'base_bot_url' => 'https://dawn-bird-61bb.9531084346s.workers.dev/bot/',
     'bots' => [
         'ScheduleBot' => [
             'token' => env('TELEGRAM_BOT_TOKEN', 'YOUR-BOT-TOKEN'),
