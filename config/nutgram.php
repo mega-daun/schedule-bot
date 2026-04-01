@@ -8,7 +8,9 @@ return [
     'safe_mode' => env('APP_ENV', 'local') === 'production',
 
     // Extra or specific configurations
-    'config' => [],
+    'config' => [
+        'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
+    ],
 
     // Set if the service provider should automatically load
     // handlers from /routes/telegram.php
@@ -22,6 +24,4 @@ return [
 
     // Set log channel
     'log_channel' => env('TELEGRAM_LOG_CHANNEL', 'null'),
-
-    'apiUrl' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
 ];
