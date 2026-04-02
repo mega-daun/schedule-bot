@@ -43,7 +43,7 @@ class JoinClassConversation extends Conversation
 
         if (! $this->isValidTokenFormat($input)) {
             $bot->sendMessage(
-                text: 'Класс не найден.'
+                text: 'Неверный формат токена. Токен должен содержать 16 символов (латинские буквы и цифры). Попробуйте ещё раз или введите /cancel для отмены.'
             );
 
             return;
@@ -53,7 +53,7 @@ class JoinClassConversation extends Conversation
 
         if (! $class) {
             $bot->sendMessage(
-                text: 'Класс не найден.'
+                text: 'Класс с таким токеном не найден. Проверьте токен и попробуйте ещё раз или введите /cancel для отмены.'
             );
 
             return;

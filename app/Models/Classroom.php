@@ -74,7 +74,6 @@ class Classroom extends Model
 
             $classroom->users()->update([
                 'role' => UserRole::Student,
-                'conversation_state' => null,
             ]);
         });
     }

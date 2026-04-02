@@ -22,18 +22,16 @@ class IncorrectMessageMiddleware
                 }
             }
 
-            $bot->sendMessage([
-                'text' => $e->getMessage(),
-            ]);
+            $bot->sendMessage($e->getMessage());
         } catch (\Exception $e) {
             Log::error('Command failed: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
                 'line' => $e->getLine(),
             ]);
 
-            $bot->sendMessage([
-                'text' => 'При выполнении команды произошла ошибка на стороне сервера. Попробуйте позже.',
-            ]);
+            $bot->sendMessage(
+                'При выполнении команды произошла ошибка на стороне сервера. Попробуйте позже.',
+            );
         }
     }
 }

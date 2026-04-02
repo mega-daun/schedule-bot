@@ -46,6 +46,7 @@ class NewClassConversation extends Conversation
             $bot->sendMessage(
                 text: 'Произошла ошибка при создании класса.'
             );
+            $this->end();
 
             return;
         }

@@ -55,11 +55,4 @@ class UserFactory extends Factory
             'class_id' => $classroom,
         ]);
     }
-
-    public function withConversation(array $conversation_state): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'conversation_state' => $conversation_state,
-        ]);
-    }
 }

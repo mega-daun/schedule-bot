@@ -18,7 +18,7 @@ class JoinClassCommand
         $token = $bot->get('token');
 
         if ($user->class_id !== null) {
-            throw new IncorrectMessageException('Вы уже состоите в классе.');
+            throw new IncorrectMessageException('Вы уже состоите в классе.', true);
         }
 
         if ($token === null) {
@@ -30,7 +30,7 @@ class JoinClassCommand
         }
 
         if (! $this->isValidTokenFormat($token)) {
-            throw new IncorrectMessageException('Класс не найден.');
+            throw new IncorrectMessageException('Класс не найден. Попробуйте ещё раз.');
         }
 
         $class = Classroom::where('join_token', $token)->first();
