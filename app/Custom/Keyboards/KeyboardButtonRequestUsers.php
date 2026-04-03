@@ -3,6 +3,7 @@
 namespace App\Custom\Keyboards;
 
 use App\Custom\ButtonTypes;
+use SergiX44\Nutgram\Telegram\Types\Keyboard\ReplyKeyboardMarkup;
 
 class KeyboardButtonRequestUsers
 {
@@ -16,6 +17,8 @@ class KeyboardButtonRequestUsers
      */
     public static function create(string $text, ButtonTypes $button_type, int $max_quantity = 1, bool $user_is_bot = false, bool $resize_keyboard = true, bool $one_time_keyboard = true)
     {
+        $markup = ReplyKeyboardMarkup::make($resize_keyboard, $one_time_keyboard, $text, true);
+
         return json_encode([
             'keyboard' => [
                 'resize_keyboard' => $resize_keyboard,

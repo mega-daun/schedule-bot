@@ -21,6 +21,16 @@ describe('NewClass command', function () {
         $bot->hearText('/newclass fake')->reply();
         assertReplyContains($bot, 'Вы уже состоите в классе');
     });
+
+    it('returns error when user already in a class and starts conversation', function () {
+        $existingClass = Classroom::factory()->create();
+        $user = User::factory()->create(['class_id' => $existingClass->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newclass')
+            ->reply();
+        assertReplyContains($bot, 'Вы уже состоите в классе');
+    });
 });
 
 describe('NewClass conversation validation', function () {

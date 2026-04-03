@@ -14,18 +14,63 @@ class ChangeRoleCommand
     public function __invoke(Nutgram $bot): void
     {
         $user = $this->getUser($bot);
+
+        if (! $user->class) {
+            throw new IncorrectMessageException('Вы должны состоять в классе.', true);
+        }
+
+        if ($user->role !== UserRole::Admin) {
+            throw new IncorrectMessageException('Только админы могут изменять роли других пользователей.', true);
+        }
+
         $username = $bot->get('username');
         $role = $bot->get('role');
 
-        if ($user->role !== UserRole::Admin) {
-            throw new IncorrectMessageException('Только админы могут изменять роли других пользователей.');
+        if ($username === null) {
+            $bot->sendMessage(
+                text: 'Пример команды: /changerole @username учитель'
+            );
+
+            return;
         }
 
-        if ((! $username) || (! $role)) {
-            throw new IncorrectMessageException('Пример команды: /changerole @YoppaniySir ученик');
+        if ($role === null) {
+            $bot->sendMessage(
+                text: 'Пример команды: /changerole @username учитель'
+            );
+
+            return;
         }
 
-        User::where('username', $username)->update(['role' => $role]);
+        $targetUser = User::where('username', $username)
+            ->where('class_id', $user->class_id)
+            ->first();
+
+        if (! $targetUser) {
+            $targetUser = User::where('username', $username)->first();
+
+            if ($targetUser) {
+                throw new IncorrectMessageException('Пользователь не состоит в вашем классе.', true);
+            }
+
+            throw new IncorrectMessageException('Пользователь не найден.', true);
+        }
+
+        if ($targetUser->id === $user->id) {
+            throw new IncorrectMessageException('Нельзя изменить роль самого себя.', true);
+        }
+
+        $roleEnum = UserRole::tryFrom($role);
+
+        if ($roleEnum === null) {
+            throw new IncorrectMessageException('Неверная роль. Доступные: ученик, учитель, дежурный, админ.', true);
+        }
+
+        $targetUser->update(['role' => $roleEnum]);
+
+        $bot->sendMessage(
+            text: 'Роль изменена'
+        );
     }
 
     private function getUser(Nutgram $bot): User

@@ -29,7 +29,7 @@ describe('LeaveClassCommand', function () {
 
     it('resets user role to Student', function () {
         $classroom = Classroom::factory()->create();
-        $student = User::factory()->student()->create(['class_id' => $classroom->id]);
+        $student = User::factory()->teacher()->create(['class_id' => $classroom->id]);
         $bot = bot($student);
         $bot->hearText('/leaveclass')->reply();
         $student->refresh();

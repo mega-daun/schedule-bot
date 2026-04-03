@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Conversations;
 
+use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\User;
@@ -17,6 +18,12 @@ class NewClassConversation extends Conversation
 
     public function start(Nutgram $bot)
     {
+        $user = $this->getUser($bot);
+
+        if ($user->class !== null) {
+            throw new IncorrectMessageException('Вы уже состоите в классе.');
+        }
+
         $bot->sendMessage(
             text: 'Введите название нового класса (например, 10Б):'
         );
