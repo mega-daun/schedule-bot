@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Exceptions\UnknownRoleException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,5 +57,26 @@ class User extends Model
     public function class(): BelongsTo
     {
         return $this->belongsTo(Classroom::class);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role == UserRole::Admin;
+    }
+
+    public function hasClass(): bool
+    {
+        return $this->class_id !== null;
+    }
+
+    public function changeRole(string|UserRole $newRole): void
+    {
+        if (is_string($newRole)) {
+            $newRole = UserRole::tryFrom($newRole);
+        }
+        if ($newRole === null) {
+            throw new UnknownRoleException;
+        }
+        $this->update(['role' => $newRole]);
     }
 }

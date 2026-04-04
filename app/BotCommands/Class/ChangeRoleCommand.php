@@ -5,45 +5,63 @@ declare(strict_types=1);
 namespace App\BotCommands\Class;
 
 use App\BotCommands\Exceptions\IncorrectMessageException;
-use App\Enums\UserRole;
+use App\Exceptions\UnknownRoleException;
 use App\Models\User;
 use SergiX44\Nutgram\Nutgram;
 
 class ChangeRoleCommand
 {
+    private Nutgram $bot;
+
     public function __invoke(Nutgram $bot): void
     {
-        $user = $this->getUser($bot);
+        $this->bot = $bot;
+        $user = $this->getUser();
 
-        if (! $user->class) {
-            throw new IncorrectMessageException('Вы должны состоять в классе.', true);
+        $targetUser = $this->findClassmember($this->getUsername(), $user->class_id);
+
+        if ($targetUser->id == $user->id) {
+            throw new IncorrectMessageException('Нельзя изменить роль самого себя.', true);
         }
 
-        if ($user->role !== UserRole::Admin) {
-            throw new IncorrectMessageException('Только админы могут изменять роли других пользователей.', true);
-        }
+        $this->changeRole($targetUser, $this->getRole());
 
-        $username = $bot->get('username');
-        $role = $bot->get('role');
+        $bot->sendMessage(
+            text: 'Роль изменена'
+        );
+    }
 
+    private function getUser(): User
+    {
+        $telegramUser = $this->bot->user();
+
+        return User::findOrFail($telegramUser->id);
+    }
+
+    private function getUsername(): string
+    {
+        $username = $this->bot->get('username');
         if ($username === null) {
-            $bot->sendMessage(
-                text: 'Пример команды: /changerole @username учитель'
-            );
-
-            return;
+            throw new IncorrectMessageException('Пример команды: /changerole @username учитель');
         }
 
+        return $username;
+    }
+
+    private function getRole(): string
+    {
+        $role = $this->bot->get('role');
         if ($role === null) {
-            $bot->sendMessage(
-                text: 'Пример команды: /changerole @username учитель'
-            );
-
-            return;
+            throw new IncorrectMessageException('Пример команды: /changerole @username учитель');
         }
 
+        return $role;
+    }
+
+    private function findClassmember(string $username, int $class_id): User
+    {
         $targetUser = User::where('username', $username)
-            ->where('class_id', $user->class_id)
+            ->where('class_id', $class_id)
             ->first();
 
         if (! $targetUser) {
@@ -56,27 +74,15 @@ class ChangeRoleCommand
             throw new IncorrectMessageException('Пользователь не найден.', true);
         }
 
-        if ($targetUser->id === $user->id) {
-            throw new IncorrectMessageException('Нельзя изменить роль самого себя.', true);
-        }
-
-        $roleEnum = UserRole::tryFrom($role);
-
-        if ($roleEnum === null) {
-            throw new IncorrectMessageException('Неверная роль. Доступные: ученик, учитель, дежурный, админ.', true);
-        }
-
-        $targetUser->update(['role' => $roleEnum]);
-
-        $bot->sendMessage(
-            text: 'Роль изменена'
-        );
+        return $targetUser;
     }
 
-    private function getUser(Nutgram $bot): User
+    private function changeRole(User $user, string $role): void
     {
-        $telegramUser = $bot->user();
-
-        return User::findOrFail($telegramUser->id);
+        try {
+            $user->changeRole($role);
+        } catch (UnknownRoleException) {
+            throw new IncorrectMessageException('Неверная роль. Доступные: ученик, учитель, дежурный, админ.', true);
+        }
     }
 }

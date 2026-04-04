@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Conversations;
 
-use App\Enums\UserRole;
+use App\BotCommands\Exceptions\IncorrectMessageException;
+use App\Exceptions\UnknownRoleException;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
@@ -15,32 +17,10 @@ class ChangeRoleConversation extends Conversation
 {
     public function start(Nutgram $bot)
     {
-        $user = $this->getUser($bot);
+        $this->bot = $bot;
+        $user = $this->getUser();
 
-        if (! $user->class) {
-            $bot->sendMessage('Вы должны состоять в классе.');
-            $this->end();
-
-            return;
-        }
-
-        if ($user->role !== UserRole::Admin) {
-            $bot->sendMessage('Только админы могут изменять роли других пользователей.');
-            $this->end();
-
-            return;
-        }
-
-        $classMembers = User::where('class_id', $user->class_id)
-            ->where('id', '!=', $user->id)
-            ->get();
-
-        if ($classMembers->isEmpty()) {
-            $bot->sendMessage('Нет других участников');
-            $this->end();
-
-            return;
-        }
+        $classMembers = $this->findClassmembers($user->class_id, $user->id);
 
         $keyboard = $this->buildUserKeyboard($classMembers);
 
@@ -52,106 +32,18 @@ class ChangeRoleConversation extends Conversation
         $this->next('handleUserSelection');
     }
 
-    public function handleUserSelection(Nutgram $bot)
+    private function getUser(): User
     {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
-            $this->next('handleUserSelection');
+        $telegramUser = $this->bot->user();
 
-            return;
-        }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, 'changerole.select.')) {
-            return;
-        }
-
-        $selectedUserId = (int) str_replace('changerole.select.', '', $callbackData);
-
-        $targetUser = User::find($selectedUserId);
-
-        if (! $targetUser) {
-            $bot->answerCallbackQuery('Пользователь не найден');
-            $bot->sendMessage('Пользователь не найден');
-            $this->end();
-
-            return;
-        }
-
-        $keyboard = $this->buildRoleKeyboard($selectedUserId);
-
-        $bot->sendMessage('Выберите роль',
-            reply_markup: $keyboard,
-        );
-
-        $this->next('handleRoleSelection');
+        return User::findOrFail($telegramUser->id);
     }
 
-    public function handleRoleSelection(Nutgram $bot)
+    private function findClassmembers(int $class_id, int $caller_id): Collection
     {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
-            $this->next('handleRoleSelection');
-
-            return;
-        }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, 'changerole.role.')) {
-            return;
-        }
-
-        $roleKey = str_replace('changerole.role.', '', $callbackData);
-
-        if (str_contains($roleKey, '_')) {
-            $parts = explode('_', $roleKey);
-            $roleKey = $parts[0];
-            $selectedUserId = (int) $parts[1];
-        } else {
-            $selectedUserId = null;
-        }
-
-        $role = UserRole::tryFrom($roleKey);
-
-        if ($role === null) {
-            $bot->answerCallbackQuery('Неверная роль');
-
-            return;
-        }
-
-        if ($selectedUserId === null) {
-            $bot->sendMessage('Ошибка: пользователь не выбран');
-            $this->end();
-
-            return;
-        }
-
-        $admin = $this->getUser($bot);
-
-        if ($selectedUserId === $admin->id) {
-            $bot->answerCallbackQuery('Нельзя изменить роль самого себя');
-            $bot->sendMessage('Нельзя изменить роль самого себя');
-            $this->end();
-
-            return;
-        }
-
-        $targetUser = User::find($selectedUserId);
-
-        if (! $targetUser) {
-            $bot->sendMessage('Пользователь не найден');
-            $this->end();
-
-            return;
-        }
-
-        $targetUser->update(['role' => $role]);
-
-        $bot->sendMessage('Роль изменена на '.$role->value);
-
-        $this->end();
+        return User::where('class_id', $class_id)
+            ->where('id', '!=', $caller_id)
+            ->get();
     }
 
     private function buildUserKeyboard($classMembers): InlineKeyboardMarkup
@@ -172,6 +64,114 @@ class ChangeRoleConversation extends Conversation
         }
 
         return $markup;
+    }
+
+    public function handleUserSelection(Nutgram $bot)
+    {
+        $this->bot = $bot;
+        try {
+            $callbackData = $this->getSelectedOption();
+        } catch (IncorrectMessageException) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('handleUserSelection');
+
+            return;
+        }
+
+        $selectedUserId = $this->parseUserId($callbackData);
+
+        $keyboard = $this->buildRoleKeyboard($selectedUserId);
+
+        $bot->sendMessage('Выберите роль',
+            reply_markup: $keyboard,
+        );
+
+        $this->next('handleRoleSelection');
+    }
+
+    private function getSelectedOption(): string
+    {
+        if (! $this->bot->isCallbackQuery()) {
+            throw new IncorrectMessageException;
+        }
+
+        return $this->bot->callbackQuery()->data;
+    }
+
+    private function parseUserId(string $callbackData): int
+    {
+        if (! str_starts_with($callbackData, 'changerole.select.')) {
+            // don't catch it because it happens when our callback query is wrong
+            throw new IncorrectMessageException;
+        }
+
+        return (int) str_replace('changerole.select.', '', $callbackData);
+
+    }
+
+    public function handleRoleSelection(Nutgram $bot)
+    {
+        try {
+            $callbackData = $this->getSelectedOption();
+        } catch (IncorrectMessageException) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('handleRoleSelection');
+
+            return;
+        }
+
+        [$role, $selectedUserId] = $this->parseRoleAndUserId($callbackData);
+
+        $admin = $this->getUser();
+
+        if ($selectedUserId === $admin->id) {
+            $bot->answerCallbackQuery('Нельзя изменить роль самого себя');
+            $bot->sendMessage('Нельзя изменить роль самого себя');
+            $this->end();
+
+            return;
+        }
+
+        $targetUser = $this->findUser($selectedUserId);
+        try {
+            $targetUser->changeRole($role);
+        } catch (UnknownRoleException) {
+            $bot->answerCallbackQuery('Неверная роль');
+        }
+
+        $bot->sendMessage('Роль изменена на '.$role);
+
+        $this->end();
+    }
+
+    private function parseRoleAndUserId(string $callbackData): array
+    {
+        if (! str_starts_with($callbackData, 'changerole.role.')) {
+            throw new IncorrectMessageException;
+        }
+
+        $role = str_replace('changerole.role.', '', $callbackData);
+
+        if (str_contains($role, '_')) {
+            $parts = explode('_', $role);
+            $role = $parts[0];
+            $userId = (int) $parts[1];
+        } else {
+            throw new IncorrectMessageException;
+        }
+
+        return [$role, $userId];
+    }
+
+    private function findUser(int $id): User
+    {
+        $targetUser = User::find($id);
+
+        if (! $targetUser) {
+            throw new IncorrectMessageException('Пользователь не найден', true);
+        }
+
+        return $targetUser;
     }
 
     private function buildRoleKeyboard(int $selectedUserId): InlineKeyboardMarkup
@@ -201,12 +201,5 @@ class ChangeRoleConversation extends Conversation
         }
 
         return $markup;
-    }
-
-    private function getUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
-
-        return User::findOrFail($telegramUser->id);
     }
 }

@@ -107,7 +107,7 @@ describe('ChangeRoleCommand', function () {
 
     describe('User is not admin - rejects', function () {
         it('non-admin receives error message', function () {
-            $classroom = Classroom::factory()->create();
+            $classroom = Classroom::factory()->has(User::factory(3))->create();
             $user = User::factory()->student()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
@@ -115,7 +115,7 @@ describe('ChangeRoleCommand', function () {
         });
 
         it('teacher cannot access changerole command', function () {
-            $classroom = Classroom::factory()->create();
+            $classroom = Classroom::factory()->has(User::factory(3))->create();
             $user = User::factory()->teacher()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
@@ -123,7 +123,7 @@ describe('ChangeRoleCommand', function () {
         });
 
         it('onDuty cannot access changerole command', function () {
-            $classroom = Classroom::factory()->create();
+            $classroom = Classroom::factory()->has(User::factory(3))->create();
             $user = User::factory()->onDuty()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
@@ -261,7 +261,6 @@ describe('ChangeRoleCommand', function () {
                 ->hearText('/changerole')
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
-            $bot->dump();
             assertReplyContains($bot, 'ученик');
             assertReplyContains($bot, 'учитель');
             assertReplyContains($bot, 'дежурный');
@@ -411,7 +410,6 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$admin->id)->reply();
             $bot->hearCallbackQueryData('changerole.role.ученик_'.$admin->id)->reply();
-            $bot->dump();
             assertReplyContains($bot, 'Нельзя изменить роль самого себя');
         });
 
@@ -565,7 +563,6 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->hearText('/cancel')->reply();
-            $bot->dump();
             assertReplyContains($bot, 'Нет активных действий');
         });
     });

@@ -19,7 +19,10 @@ use App\BotCommands\Schedule\NewScheduleCommand;
 use App\BotCommands\StartCommand;
 use App\BotCommands\Subject\DeleteSubjectCommand;
 use App\BotCommands\Subject\NewSubjectCommand;
+use App\Http\Middleware\HasClassMembersMiddleware;
+use App\Http\Middleware\HasClassMiddleware;
 use App\Http\Middleware\IncorrectMessageMiddleware;
+use App\Http\Middleware\IsAdminMiddleware;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
@@ -35,8 +38,15 @@ $bot->onCommand('joinclass', JoinClassConversation::class)->description('При�
 
 $bot->onCommand('deleteclass', DeleteClassCommand::class)->description('Удалить свой класс');
 
-$bot->onCommand('changerole {username} {role}', ChangeRoleCommand::class)->description('Изменить роль участнику класса');
-$bot->onCommand('changerole', ChangeRoleConversation::class)->description('Изменить роль участнику класса(пошагово)');
+$bot->onCommand('changerole {username} {role}', ChangeRoleCommand::class)
+    ->middleware(IsAdminMiddleware::class)
+    ->middleware(HasClassMiddleware::class)
+    ->description('Изменить роль участнику класса');
+
+$bot->onCommand('changerole', ChangeRoleConversation::class)
+    ->middleware(IsAdminMiddleware::class)
+    ->middleware(HasClassMembersMiddleware::class)
+    ->description('Изменить роль участнику класса(пошагово)');
 
 $bot->onCommand('leaveclass', LeaveClassCommand::class)->description('Выйти из класса');
 

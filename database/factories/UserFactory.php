@@ -13,9 +13,9 @@ class UserFactory extends Factory
     {
         return [
             'id' => $this->faker->unique()->numberBetween(100000000, 999999999),
-            'first_name' => 'Саша',
-            'username' => 'YoppaniySir',
-            'language_code' => 'ru',
+            'first_name' => fake()->name(),
+            'username' => fake()->userName(),
+            'language_code' => fake()->randomElement(['ru', 'en', 'us']),
             'role' => UserRole::Student,
             'class_id' => null,
         ];
