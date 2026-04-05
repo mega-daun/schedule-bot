@@ -15,7 +15,7 @@ class HasClassMembersMiddleware
         $user = User::find($telegramUser->id);
 
         if (! $user || ! $user->class_id) {
-            $bot->sendMessage('Вы должны состоять в классе.');
+            $bot->sendMessage('Вы не состоите в классе.');
             $bot->endConversation();
 
             return;

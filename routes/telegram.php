@@ -23,6 +23,7 @@ use App\Http\Middleware\HasClassMembersMiddleware;
 use App\Http\Middleware\HasClassMiddleware;
 use App\Http\Middleware\IncorrectMessageMiddleware;
 use App\Http\Middleware\IsAdminMiddleware;
+use App\Http\Middleware\NoClassMiddleware;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
@@ -30,13 +31,16 @@ $bot->onCommand('start {token}', StartCommand::class)->description('Начина
 $bot->onCommand('start', StartCommand::class)->description('Начинает общение с ботом');
 $bot->onCommand('cancel', CancelCommand::class)->description('Отменяет текущее действие');
 
-$bot->onCommand('newclass {code}', NewClassCommand::class)->description('Создать новый класс');
-$bot->onCommand('newclass', NewClassConversation::class)->description('Создать новый класс (пошагово)');
+$bot->onCommand('newclass {code}', NewClassCommand::class)->middleware(NoClassMiddleware::class)->description('Создать новый класс');
+$bot->onCommand('newclass', NewClassConversation::class)->middleware(NoClassMiddleware::class)->description('Создать новый класс (пошагово)');
 
-$bot->onCommand('joinclass {token}', JoinClassCommand::class)->description('Присоедениться к классу');
-$bot->onCommand('joinclass', JoinClassConversation::class)->description('Присоедениться к классу (пошагово)');
+$bot->onCommand('joinclass {token}', JoinClassCommand::class)->middleware(NoClassMiddleware::class)->description('Присоедениться к классу');
+$bot->onCommand('joinclass', JoinClassConversation::class)->middleware(NoClassMiddleware::class)->description('Присоедениться к классу (пошагово)');
 
-$bot->onCommand('deleteclass', DeleteClassCommand::class)->description('Удалить свой класс');
+$bot->onCommand('deleteclass', DeleteClassCommand::class)
+    ->middleware(IsAdminMiddleware::class)
+    ->middleware(HasClassMiddleware::class)
+    ->description('Удалить свой класс');
 
 $bot->onCommand('changerole {username} {role}', ChangeRoleCommand::class)
     ->middleware(IsAdminMiddleware::class)
@@ -48,7 +52,7 @@ $bot->onCommand('changerole', ChangeRoleConversation::class)
     ->middleware(HasClassMembersMiddleware::class)
     ->description('Изменить роль участнику класса(пошагово)');
 
-$bot->onCommand('leaveclass', LeaveClassCommand::class)->description('Выйти из класса');
+$bot->onCommand('leaveclass', LeaveClassCommand::class)->middleware(HasClassMiddleware::class)->description('Выйти из класса');
 
 $bot->onCommand('newsubject', NewSubjectCommand::class)->description('Добавить предмет');
 $bot->onCommand('deletesubject', DeleteSubjectCommand::class)->description('Удалить предмет');

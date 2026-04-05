@@ -16,7 +16,7 @@ class IsAdminMiddleware
         $user = User::find($telegramUser->id);
 
         if (! $user || ! $user->isAdmin()) {
-            throw new IncorrectMessageException('Только админы могут изменять роли других пользователей.', true);
+            throw new IncorrectMessageException('Эта команда доступна только админам.', true);
         }
 
         $next($bot);

@@ -8,17 +8,18 @@ use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Models\User;
 use SergiX44\Nutgram\Nutgram;
 
-class HasClassMiddleware
+class NoClassMiddleware
 {
     public function __invoke(Nutgram $bot, $next): void
     {
         $telegramUser = $bot->user();
         $user = User::find($telegramUser->id);
 
-        if (! $user || ! $user->hasClass()) {
-            throw new IncorrectMessageException('Вы не состоите в классе.', true);
+        if ($user && $user->hasClass()) {
+            throw new IncorrectMessageException('Вы уже состоите в классе.', true);
+        } else {
+            $next($bot);
         }
 
-        $next($bot);
     }
 }

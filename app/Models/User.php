@@ -69,6 +69,30 @@ class User extends Model
         return $this->class_id !== null;
     }
 
+    public function joinClass(int $classId)
+    {
+        $this->update([
+            'class_id' => $classId,
+            'role' => UserRole::Student,
+        ]);
+    }
+
+    public function joinClassAsAdmin(int $classId)
+    {
+        $this->update([
+            'class_id' => $classId,
+            'role' => UserRole::Admin,
+        ]);
+    }
+
+    public function leaveClass()
+    {
+        $this->update([
+            'class_id' => null,
+            'role' => UserRole::Student,
+        ]);
+    }
+
     public function changeRole(string|UserRole $newRole): void
     {
         if (is_string($newRole)) {
