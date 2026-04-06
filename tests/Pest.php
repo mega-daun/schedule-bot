@@ -68,6 +68,13 @@ function assertReplyContains(FakeNutgram $bot, string $substring, int $index = 0
     }, index: $index);
 }
 
+function assertCallbackAnswerContains(FakeNutgram $bot, string $substring, int $index = 0)
+{
+    $bot->assertCallbackQueryAnswer(function ($answer) use ($substring) {
+        return str_contains($answer['text'] ?? '', $substring);
+    }, index: $index);
+}
+
 uses(TestCase::class)
     ->beforeEach(function () {
         Bus::fake();

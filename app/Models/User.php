@@ -64,6 +64,11 @@ class User extends Model
         return $this->role == UserRole::Admin;
     }
 
+    public function isOnDutyOrHigher(): bool
+    {
+        return in_array($this->role, [UserRole::OnDuty, UserRole::Teacher, UserRole::Admin], true);
+    }
+
     public function hasClass(): bool
     {
         return $this->class_id !== null;
