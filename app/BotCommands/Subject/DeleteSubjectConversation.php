@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\BotCommands\Subject;
 
+use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Models\Subject;
 use App\Models\User;
 use SergiX44\Nutgram\Conversations\Conversation;
@@ -21,13 +22,6 @@ class DeleteSubjectConversation extends Conversation
 
         $subjects = $user->class->subjects;
 
-        if ($subjects->isEmpty()) {
-            $bot->sendMessage(text: 'В классе нет предметов для удаления.');
-            $this->end();
-
-            return;
-        }
-
         $keyboard = $this->buildSubjectKeyboard($subjects);
 
         $bot->sendMessage(
@@ -41,13 +35,11 @@ class DeleteSubjectConversation extends Conversation
     {
         $callbackData = $bot->callbackQuery()->data;
 
-        if (! str_starts_with($callbackData, 'deletesubject.select.')) {
-            $bot->answerCallbackQuery(text: 'Неверный формат. Выберите предмет из списка.');
-
-            return;
+        try {
+            $this->selectedSubjectId = $this->parseSubjectId($callbackData);
+        } catch (IncorrectMessageException) {
+            $bot->answerCallbackQuery(text: 'Неверный формат. Выберите предмет из списка или напишите /cancel для отмены.');
         }
-
-        $this->selectedSubjectId = (int) substr($callbackData, strlen('deletesubject.select.'));
 
         $subject = Subject::find($this->selectedSubjectId);
 
@@ -92,5 +84,14 @@ class DeleteSubjectConversation extends Conversation
         }
 
         return $markup;
+    }
+
+    private function parseSubjectId(string $callbackData)
+    {
+        if (! str_starts_with($callbackData, 'deletesubject.select.')) {
+            throw new IncorrectMessageException;
+        }
+
+        return (int) substr($callbackData, strlen('deletesubject.select.'));
     }
 }
