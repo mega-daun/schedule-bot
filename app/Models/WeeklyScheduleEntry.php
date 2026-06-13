@@ -21,7 +21,6 @@ class WeeklyScheduleEntry extends Model
         'class_id',
         'weekday',
         'lesson_number',
-        'subject_id',
     ];
 
     /**
@@ -32,15 +31,5 @@ class WeeklyScheduleEntry extends Model
     public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class, 'class_id');
-    }
-
-    /**
-     * Get the subject for this schedule entry.
-     *
-     * @return BelongsTo<Subject, WeeklyScheduleEntry>
-     */
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class, 'subject_id');
     }
 }

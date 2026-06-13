@@ -15,18 +15,4 @@ class WeeklyScheduleEntryFactory extends Factory
             'lesson_number' => $this->faker->numberBetween(1, 8),
         ];
     }
-
-    public function monday(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'weekday' => 1,
-        ]);
-    }
-
-    public function firstLesson(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'lesson_number' => 1,
-        ]);
-    }
 }

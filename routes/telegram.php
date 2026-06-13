@@ -13,12 +13,8 @@ use App\BotCommands\Class\NewClassCommand;
 use App\BotCommands\Conversations\ChangeRoleConversation;
 use App\BotCommands\Conversations\JoinClassConversation;
 use App\BotCommands\Conversations\NewClassConversation;
-use App\BotCommands\Homework\DeleteHomeworkCommand;
-use App\BotCommands\Homework\NewHomeworkCommand;
-use App\BotCommands\Schedule\NewScheduleCommand;
+use App\BotCommands\Conversations\NewHomeworkConversation;
 use App\BotCommands\StartCommand;
-use App\BotCommands\Subject\DeleteSubjectCommand;
-use App\BotCommands\Subject\NewSubjectCommand;
 use App\Http\Middleware\IncorrectMessageMiddleware;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
@@ -40,8 +36,4 @@ $bot->onCommand('changerole', ChangeRoleConversation::class)->description('Из�
 
 $bot->onCommand('leaveclass', LeaveClassCommand::class)->description('Выйти из класса');
 
-$bot->onCommand('newsubject', NewSubjectCommand::class)->description('Добавить предмет');
-$bot->onCommand('deletesubject', DeleteSubjectCommand::class)->description('Удалить предмет');
-$bot->onCommand('newschedule', NewScheduleCommand::class)->description('Добавить расписание');
-$bot->onCommand('newhomework', NewHomeworkCommand::class)->description('Добавить домашнее задание');
-$bot->onCommand('deletehomework', DeleteHomeworkCommand::class)->description('Удалить домашнее задание');
+$bot->onCommand('newhomework', NewHomeworkConversation::class)->description('Добавить домашнее задание');

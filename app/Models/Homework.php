@@ -21,7 +21,6 @@ class Homework extends Model
      */
     protected $fillable = [
         'class_id',
-        'subject_id',
         'date',
         'description',
     ];
@@ -34,15 +33,5 @@ class Homework extends Model
     public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class, 'class_id');
-    }
-
-    /**
-     * Get the subject this homework is for.
-     *
-     * @return BelongsTo<Subject, Homework>
-     */
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class, 'subject_id');
     }
 }

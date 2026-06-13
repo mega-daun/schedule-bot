@@ -19,6 +19,7 @@ class Subject extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'id',
         'class_id',
         'name',
     ];

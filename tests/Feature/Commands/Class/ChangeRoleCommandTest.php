@@ -261,7 +261,6 @@ describe('ChangeRoleCommand', function () {
                 ->hearText('/changerole')
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
-            $bot->dump();
             assertReplyContains($bot, 'ученик');
             assertReplyContains($bot, 'учитель');
             assertReplyContains($bot, 'дежурный');
@@ -411,7 +410,6 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$admin->id)->reply();
             $bot->hearCallbackQueryData('changerole.role.ученик_'.$admin->id)->reply();
-            $bot->dump();
             assertReplyContains($bot, 'Нельзя изменить роль самого себя');
         });
 
@@ -565,7 +563,6 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->hearText('/cancel')->reply();
-            $bot->dump();
             assertReplyContains($bot, 'Нет активных действий');
         });
     });

@@ -3,7 +3,6 @@
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\Homework;
-use App\Models\Subject;
 use App\Models\User;
 use App\Models\WeeklyScheduleEntry;
 
@@ -163,19 +162,9 @@ describe('LeaveClassCommand - Admin as only member', function () {
         $this->assertDatabaseMissing('classes', ['id' => $classroom->id]);
     });
 
-    it('admin is only member and subjects are deleted', function () {
-        $classroom = Classroom::factory()->create();
-        Subject::factory()->count(3)->create(['class_id' => $classroom->id]);
-        $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-        $bot = bot($admin);
-        $bot->hearText('/leaveclass')->reply();
-        $this->assertDatabaseMissing('subjects', ['class_id' => $classroom->id]);
-    });
-
     it('admin is only member and homework is deleted', function () {
         $classroom = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        Homework::factory()->count(5)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        Homework::factory()->count(5)->create(['class_id' => $classroom->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/leaveclass')->reply();
@@ -184,8 +173,7 @@ describe('LeaveClassCommand - Admin as only member', function () {
 
     it('admin is only member and schedules are deleted', function () {
         $classroom = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/leaveclass')->reply();

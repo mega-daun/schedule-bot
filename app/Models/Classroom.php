@@ -32,16 +32,6 @@ class Classroom extends Model
     ];
 
     /**
-     * Get the subjects that belong to this class.
-     *
-     * @return HasMany<Subject>
-     */
-    public function subjects(): HasMany
-    {
-        return $this->hasMany(Subject::class, 'class_id');
-    }
-
-    /**
      * Get the weekly schedule entries for this class.
      *
      * @return HasMany<WeeklyScheduleEntry>

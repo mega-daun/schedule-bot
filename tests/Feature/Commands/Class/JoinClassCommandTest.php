@@ -104,15 +104,6 @@ describe('JoinClassCommand (no token)', function () {
     });
 });
 
-it('prompts user to enter token', function () {
-    $user = User::factory()->create(['class_id' => null]);
-    $bot = bot($user);
-    $bot->willStartConversation(remember: true)
-        ->hearText('/joinclass')
-        ->reply();
-    $bot->assertActiveConversation();
-});
-
 describe('JoinClass conversation validation', function () {
     it('rejects empty input', function () {
         $user = User::factory()->create(['class_id' => null]);

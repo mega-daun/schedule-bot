@@ -3,7 +3,6 @@
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\Homework;
-use App\Models\Subject;
 use App\Models\User;
 use App\Models\WeeklyScheduleEntry;
 
@@ -59,19 +58,9 @@ describe('DeleteClassCommand', function () {
         assertReplyContains($bot, 'Вы не состоите в классе');
     });
 
-    it('deletes associated subjects', function () {
-        $classroom = Classroom::factory()->create();
-        Subject::factory()->count(3)->create(['class_id' => $classroom->id]);
-        $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-        $bot = bot($admin);
-        $bot->hearText('/deleteclass')->reply();
-        $this->assertDatabaseMissing('subjects', ['class_id' => $classroom->id]);
-    });
-
     it('deletes associated homework records', function () {
         $classroom = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        Homework::factory()->count(5)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        Homework::factory()->count(5)->create(['class_id' => $classroom->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/deleteclass')->reply();
@@ -80,8 +69,7 @@ describe('DeleteClassCommand', function () {
 
     it('deletes associated weekly schedule entries', function () {
         $classroom = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/deleteclass')->reply();

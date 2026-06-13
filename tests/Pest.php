@@ -52,13 +52,6 @@ function botWithData(array $data, ?int $id = null, ?string $firstName = null): F
     return $bot;
 }
 
-function botDump(FakeNutgram $bot): FakeNutgram
-{
-    $bot->dd();
-
-    return $bot;
-}
-
 function assertReplyContains(FakeNutgram $bot, string $substring, int $index = 0)
 {
     $bot->assertRaw(function (Request $request) use ($substring) {
@@ -72,4 +65,4 @@ uses(TestCase::class)
     ->beforeEach(function () {
         Bus::fake();
     })
-    ->in('Feature', 'Unit');
+    ->in('Feature');

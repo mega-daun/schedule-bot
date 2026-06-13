@@ -15,25 +15,4 @@ class HomeworkFactory extends Factory
             'description' => $this->faker->paragraph(),
         ];
     }
-
-    public function forToday(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'date' => now()->toDateString(),
-        ]);
-    }
-
-    public function forTomorrow(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'date' => now()->addDay()->toDateString(),
-        ]);
-    }
-
-    public function overdue(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'date' => $this->faker->dateTimeBetween('-1 week', 'yesterday')->toDateString(),
-        ]);
-    }
 }
