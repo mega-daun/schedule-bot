@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\BotCommands\Exceptions\IncorrectMessageException;
+use App\Exceptions\IncorrectMessageException;
 use Illuminate\Support\Facades\Log;
 use SergiX44\Nutgram\Nutgram;
 

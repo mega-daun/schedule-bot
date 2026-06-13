@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands\Class;
+namespace App\Telegram\Commands\Class;
 
-use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
+use App\Exceptions\IncorrectMessageException;
 use App\Models\User;
 use SergiX44\Nutgram\Nutgram;
 

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands\Conversations;
+namespace App\Telegram\Conversations\Class;
 
-use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
+use App\Exceptions\IncorrectMessageException;
 use App\Models\Classroom;
 use App\Models\User;
 use Illuminate\Support\Str;

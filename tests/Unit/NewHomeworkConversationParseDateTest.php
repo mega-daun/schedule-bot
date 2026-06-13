@@ -1,6 +1,6 @@
 <?php
 
-use App\BotCommands\Conversations\NewHomeworkConversation;
+use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 
 class TestableNewHomeworkConversation extends NewHomeworkConversation
 {

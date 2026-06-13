@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands\Conversations;
+namespace App\Telegram\Conversations\Class;
 
 use App\Enums\UserRole;
 use App\Models\User;

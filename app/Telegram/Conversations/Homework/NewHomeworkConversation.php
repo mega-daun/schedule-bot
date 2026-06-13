@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands\Conversations;
+namespace App\Telegram\Conversations\Homework;
 
 use App\Models\Homework;
 use App\Models\User;

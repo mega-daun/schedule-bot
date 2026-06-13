@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands;
+namespace App\Telegram\Commands;
 
 use SergiX44\Nutgram\Nutgram;
 

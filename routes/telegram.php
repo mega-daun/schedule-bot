@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 /** @var Nutgram $bot */
 
-use App\BotCommands\CancelCommand;
-use App\BotCommands\Class\ChangeRoleCommand;
-use App\BotCommands\Class\DeleteClassCommand;
-use App\BotCommands\Class\JoinClassCommand;
-use App\BotCommands\Class\LeaveClassCommand;
-use App\BotCommands\Class\NewClassCommand;
-use App\BotCommands\Conversations\ChangeRoleConversation;
-use App\BotCommands\Conversations\JoinClassConversation;
-use App\BotCommands\Conversations\NewClassConversation;
-use App\BotCommands\Conversations\NewHomeworkConversation;
-use App\BotCommands\StartCommand;
 use App\Http\Middleware\IncorrectMessageMiddleware;
+use App\Telegram\Commands\CancelCommand;
+use App\Telegram\Commands\Class\ChangeRoleCommand;
+use App\Telegram\Commands\Class\DeleteClassCommand;
+use App\Telegram\Commands\Class\JoinClassCommand;
+use App\Telegram\Commands\Class\LeaveClassCommand;
+use App\Telegram\Commands\Class\NewClassCommand;
+use App\Telegram\Commands\StartCommand;
+use App\Telegram\Conversations\Class\ChangeRoleConversation;
+use App\Telegram\Conversations\Class\JoinClassConversation;
+use App\Telegram\Conversations\Class\NewClassConversation;
+use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 

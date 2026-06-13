@@ -1,6 +1,6 @@
 <?php
 
-namespace App\BotCommands\Exceptions;
+namespace App\Exceptions;
 
 class IncorrectMessageException extends \Exception
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\BotCommands;
+namespace App\Telegram\Commands;
 
-use App\BotCommands\Exceptions\IncorrectMessageException;
 use App\Enums\UserRole;
+use App\Exceptions\IncorrectMessageException;
 use App\Models\Classroom;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
