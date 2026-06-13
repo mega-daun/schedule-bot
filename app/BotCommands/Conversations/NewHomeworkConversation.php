@@ -55,6 +55,9 @@ class NewHomeworkConversation extends Conversation
         $callbackData = $bot->callbackQuery()->data;
 
         if (! str_starts_with($callbackData, 'newhomework.date.')) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('dateSelection');
+
             return;
         }
 
@@ -186,7 +189,7 @@ class NewHomeworkConversation extends Conversation
         return $markup;
     }
 
-    private function parseDate(string $data): string
+    protected function parseDate(string $data): string
     {
         return explode('.', $data)[2];
     }
