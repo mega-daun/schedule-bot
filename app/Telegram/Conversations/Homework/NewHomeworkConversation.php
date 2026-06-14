@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
+use App\Helpers\DateHelper;
 use App\Models\Homework;
 use App\Models\User;
-use DateTime;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
@@ -16,6 +16,8 @@ use function Symfony\Component\Clock\now;
 
 class NewHomeworkConversation extends Conversation
 {
+    use DateHelper;
+
     private const MIN_DESCRIPTION_LENGTH = 12;
 
     public ?int $userId = null;
@@ -192,36 +194,5 @@ class NewHomeworkConversation extends Conversation
     protected function parseDate(string $data): string
     {
         return explode('.', $data)[2];
-    }
-
-    private function parseTextDate(string $input): ?DateTime
-    {
-        $input = trim($input);
-
-        // Try YYYY-MM-DD
-        $parsed = DateTime::createFromFormat('Y-m-d', $input);
-        if ($parsed && $parsed->format('Y-m-d') === $input) {
-            return $parsed;
-        }
-
-        // Try DD.MM.YYYY
-        $parsed = DateTime::createFromFormat('d.m.Y', $input);
-        if ($parsed && $parsed->format('d.m.Y') === $input) {
-            return $parsed;
-        }
-
-        // Try DD.MM
-        $parsed = DateTime::createFromFormat('d.m', $input);
-        if ($parsed && $parsed->format('d.m') === $input) {
-            return $parsed;
-        }
-
-        // Try DD
-        $parsed = DateTime::createFromFormat('d', $input);
-        if ($parsed && $parsed->format('d') === $input) {
-            return $parsed;
-        }
-
-        return null;
     }
 }

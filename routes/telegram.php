@@ -15,6 +15,7 @@ use App\Telegram\Commands\StartCommand;
 use App\Telegram\Conversations\Class\ChangeRoleConversation;
 use App\Telegram\Conversations\Class\JoinClassConversation;
 use App\Telegram\Conversations\Class\NewClassConversation;
+use App\Telegram\Conversations\Homework\DeleteHomeworkConversation;
 use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
@@ -37,3 +38,5 @@ $bot->onCommand('changerole', ChangeRoleConversation::class)->description('Из�
 $bot->onCommand('leaveclass', LeaveClassCommand::class)->description('Выйти из класса');
 
 $bot->onCommand('newhomework', NewHomeworkConversation::class)->description('Добавить домашнее задание');
+
+$bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->description('Удалить домашнее задание');

@@ -61,6 +61,36 @@ function assertReplyContains(FakeNutgram $bot, string $substring, int $index = 0
     }, index: $index);
 }
 
+function assertReplyMarkupContains(FakeNutgram $bot, array $expectedStrings, int $index = 0)
+{
+    $bot->assertRaw(function (Request $request) use ($expectedStrings) {
+        $body = (string) $request->getBody();
+
+        foreach ($expectedStrings as $string) {
+            if (! str_contains($body, $string)) {
+                return false;
+            }
+        }
+
+        return true;
+    }, index: $index);
+}
+
+function assertReplyMarkupNotContains(FakeNutgram $bot, array $forbiddenStrings, int $index = 0)
+{
+    $bot->assertRaw(function (Request $request) use ($forbiddenStrings) {
+        $body = (string) $request->getBody();
+
+        foreach ($forbiddenStrings as $string) {
+            if (str_contains($body, $string)) {
+                return false;
+            }
+        }
+
+        return true;
+    }, index: $index);
+}
+
 uses(TestCase::class)
     ->beforeEach(function () {
         Bus::fake();
