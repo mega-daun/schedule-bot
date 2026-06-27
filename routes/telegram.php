@@ -17,6 +17,7 @@ use App\Telegram\Conversations\Class\JoinClassConversation;
 use App\Telegram\Conversations\Class\NewClassConversation;
 use App\Telegram\Conversations\Homework\DeleteHomeworkConversation;
 use App\Telegram\Conversations\Homework\NewHomeworkConversation;
+use App\Telegram\Conversations\Homework\ShowHomeworkConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
@@ -40,3 +41,5 @@ $bot->onCommand('leaveclass', LeaveClassCommand::class)->description('Выйти
 $bot->onCommand('newhomework', NewHomeworkConversation::class)->description('Добавить домашнее задание');
 
 $bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->description('Удалить домашнее задание');
+
+$bot->onCommand('showhomework', ShowHomeworkConversation::class)->description('Показать домашнее задание');

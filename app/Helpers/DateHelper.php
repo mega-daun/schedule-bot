@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use DateTime;
+use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
+use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 trait DateHelper
 {
@@ -46,5 +48,40 @@ trait DateHelper
         }
 
         return mb_substr($description, 0, $maxLength).'...';
+    }
+
+    private function buildDateRangeKeyboard(string $prefix, array $additional_options = []): InlineKeyboardMarkup
+    {
+        $mkup = InlineKeyboardMarkup::make();
+
+        foreach ($additional_options as $option_data => $option_name) {
+            $mkup->addRow([
+                InlineKeyboardButton::make(
+                    text: $option_name,
+                    callback_data: $prefix.'.'.$option_data,
+                ),
+            ]);
+        }
+
+        $mkup->addRow([
+            InlineKeyboardButton::make(
+                text: 'Эта неделя',
+                callback_data: $prefix.'.thisweek'
+            ),
+        ])
+            ->addRow([
+                InlineKeyboardButton::make(
+                    text: 'Следующая неделя',
+                    callback_data: $prefix.'.nextweek'
+                ),
+            ])
+            ->addRow([
+                InlineKeyboardButton::make(
+                    text: 'Свой вариант',
+                    callback_data: $prefix.'.custom'
+                ),
+            ]);
+
+        return $mkup;
     }
 }
