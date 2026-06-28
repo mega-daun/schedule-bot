@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int $class_id
+ * @property string $name
+ * @property-read \Carbon\Carbon $created_at
+ * @property-read \Carbon\Carbon $updated_at
+ */
 class Subject extends Model
 {
     use HasFactory;
@@ -19,6 +26,7 @@ class Subject extends Model
      * @var list<string>
      */
     protected $fillable = [
+        'id',
         'class_id',
         'name',
     ];

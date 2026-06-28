@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $class_id
+ * @property \Carbon\Carbon $date
+ * @property string $description
+ * @property-read \Carbon\Carbon $created_at
+ * @property-read \Carbon\Carbon $updated_at
+ */
 class Homework extends Model
 {
     use HasFactory;
@@ -21,10 +29,16 @@ class Homework extends Model
      */
     protected $fillable = [
         'class_id',
-        'subject_id',
         'date',
         'description',
     ];
+
+    protected function casts(): array 
+    {
+        return [
+            'date' => 'date:m.d',
+        ];
+    }
 
     /**
      * Get the classroom this homework belongs to.
@@ -34,15 +48,5 @@ class Homework extends Model
     public function classroom(): BelongsTo
     {
         return $this->belongsTo(Classroom::class, 'class_id');
-    }
-
-    /**
-     * Get the subject this homework is for.
-     *
-     * @return BelongsTo<Subject, Homework>
-     */
-    public function subject(): BelongsTo
-    {
-        return $this->belongsTo(Subject::class, 'subject_id');
     }
 }

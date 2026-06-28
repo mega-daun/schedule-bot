@@ -48,11 +48,4 @@ class UserFactory extends Factory
             'role' => UserRole::Admin,
         ]);
     }
-
-    public function withClass(ClassroomFactory $classroom): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'class_id' => $classroom,
-        ]);
-    }
 }
