@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Telegram\Conversations\Homework;
 
 use App\Helpers\DateHelper;
+use App\Helpers\MessageTextGenerator;
 use App\Models\Homework;
 use App\Models\User;
 use DateTime;
@@ -136,51 +137,9 @@ class ShowHomeworkConversation extends Conversation
             return;
         }
 
-        $message = $this->formatHomeworkMessage($homeworks, $startDate, $endDate);
-        $bot->sendMessage($message, parse_mode: ParseMode::MARKDOWN);
+        $message = (new MessageTextGenerator)->homeworkView($homeworks, new DateTime($startDate), new DateTime($endDate));
+        $bot->sendMessage($message);
         $this->end();
-    }
-
-    private function formatHomeworkMessage($homeworks, string $startDate, string $endDate): string
-    {
-        $start = new DateTime($startDate);
-        $end = new DateTime($endDate);
-
-        if ($startDate === $endDate) {
-            $header = '# ДЗ на '.$start->format('d.m');
-        } else {
-            $header = '# ДЗ на '.$start->format('d.m').'-'.$end->format('d.m');
-        }
-
-        $days = $homeworks->groupBy('date');
-        $sections = [];
-
-        foreach ($days as $date => $items) {
-            $dateObj = new DateTime($date);
-            $dayName = $this->getDayName($dateObj->format('N'));
-            $dateHeader = '#### '.$dateObj->format('d.m').' - '.$dayName;
-
-            $itemsList = $items->map(fn ($item) => '- '.$item->description)->implode("\n");
-
-            $sections[] = $dateHeader."\n".$itemsList;
-        }
-
-        return $header."\n---\n".implode("\n---\n", $sections);
-    }
-
-    private function getDayName(string $dayNumber): string
-    {
-        $days = [
-            '1' => 'Понедельник',
-            '2' => 'Вторник',
-            '3' => 'Среда',
-            '4' => 'Четверг',
-            '5' => 'Пятница',
-            '6' => 'Суббота',
-            '7' => 'Воскресенье',
-        ];
-
-        return $days[$dayNumber] ?? '';
     }
 
     private function getUser(Nutgram $bot): User

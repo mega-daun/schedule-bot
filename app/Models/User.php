@@ -10,16 +10,17 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property int $id Referencing user's telegram id
+ * @property int $id Telegram user ID
  * @property string $first_name
  * @property string $username
- * @property string $language_code
- * @property int $class_id
- * @property bool is_bot
+ * @property string|null $timezone
+ * @property string|null $language_code
+ * @property int|null $class_id
+ * @property bool $is_bot
  * @property UserRole $role
- * @property-read Classroom $class
- * @property datetime $created_at
- * @property datetime $updated_at
+ * @property-read Classroom|null $class
+ * @property-read \Carbon\Carbon $created_at
+ * @property-read \Carbon\Carbon $updated_at
  */
 class User extends Model
 {

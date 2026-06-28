@@ -415,7 +415,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, '# ДЗ на ' . now()->startOfWeek()->format('d.m') . '-' . now()->endOfWeek()->subDay()->format('d.m'));
+        assertReplyContains($bot, '❗️ДЗ на ' . now()->startOfWeek()->format('d.m') . '-' . now()->endOfWeek()->subDay()->format('d.m'));
     });
 
     it('formats header with single date for tomorrow', function () {
@@ -432,7 +432,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.tomorrow')->reply();
-        assertReplyContains($bot, '# ДЗ на ' . now()->addDay()->format('d.m'));
+        assertReplyContains($bot, '❗️ДЗ на ' . now()->addDay()->format('d.m'));
     });
 
     it('separates days with horizontal rule', function () {
@@ -457,7 +457,8 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, '---');
+        assertReplyContains($bot, 'Понедельник');
+        assertReplyContains($bot, 'Вторник');
     });
 });
 
@@ -479,10 +480,9 @@ describe('ShowHomework markdown format', function () {
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
         $bot->hearText('15.06.2026')->reply();
 
-        assertReplyContains($bot, '# ДЗ на');
+        assertReplyContains($bot, '❗️ДЗ на');
         assertReplyContains($bot, '15.06');
-        assertReplyContains($bot, '- '.$homework->description);
-        assertReplyContains($bot, '---');
+        assertReplyContains($bot, $homework->description);
     });
 
     it('formats multiple days correctly', function () {
@@ -508,8 +508,8 @@ describe('ShowHomework markdown format', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
 
-        assertReplyContains($bot, '- '.$homeworkMonday->description);
-        assertReplyContains($bot, '- '.$homeworkTuesday->description);
+        assertReplyContains($bot, $homeworkMonday->description);
+        assertReplyContains($bot, $homeworkTuesday->description);
     });
 
     it('formats multiple homework items per day', function () {
@@ -534,8 +534,8 @@ describe('ShowHomework markdown format', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
 
-        assertReplyContains($bot, '- '.$homework1->description);
-        assertReplyContains($bot, '- '.$homework2->description);
+        assertReplyContains($bot, $homework1->description);
+        assertReplyContains($bot, $homework2->description);
     });
 
     it('displays full description text without truncation', function () {

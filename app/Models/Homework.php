@@ -8,6 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $class_id
+ * @property \Carbon\Carbon $date
+ * @property string $description
+ * @property-read \Carbon\Carbon $created_at
+ * @property-read \Carbon\Carbon $updated_at
+ */
 class Homework extends Model
 {
     use HasFactory;
@@ -24,6 +32,13 @@ class Homework extends Model
         'date',
         'description',
     ];
+
+    protected function casts(): array 
+    {
+        return [
+            'date' => 'date:m.d',
+        ];
+    }
 
     /**
      * Get the classroom this homework belongs to.
