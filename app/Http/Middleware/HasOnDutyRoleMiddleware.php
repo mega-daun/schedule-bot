@@ -16,15 +16,15 @@ class HasOnDutyRoleMiddleware
         $user = User::find($telegramUser->id);
 
         if (! $user) {
-            throw new IncorrectMessageException('Вы не состоите в классе.');
+            throw new IncorrectMessageException(__('error.class.not_member'));
         }
 
         if (! $user->hasClass()) {
-            throw new IncorrectMessageException('Вы не состоите в классе.');
+            throw new IncorrectMessageException(__('error.class.not_member'));
         }
 
         if (! $user->isOnDutyOrHigher()) {
-            throw new IncorrectMessageException('Вы не имеете право это сделать.');
+            throw new IncorrectMessageException(__('error.class.no_permission'));
         }
 
         $next($bot);

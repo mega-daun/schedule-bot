@@ -28,12 +28,12 @@ class ChangeRoleConversation extends Conversation
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
             'changerole.select',
             $classMembers,
-            fn (User $member) => '@'.($member->username ?? 'Без имени'),
+            fn (User $member) => '@'.($member->username ?? __('button_labels.general.no_name')),
             fn (User $member) => $member->id
         );
 
         $bot->sendMessage(
-            text: 'Выберите пользователя',
+            text: __('prompt.role.select_user'),
             reply_markup: $keyboard,
         );
 
@@ -57,7 +57,7 @@ class ChangeRoleConversation extends Conversation
     public function handleUserSelection(Nutgram $bot)
     {
         if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('handleUserSelection');
 
             return;
@@ -66,7 +66,7 @@ class ChangeRoleConversation extends Conversation
         $callbackData = $bot->callbackQuery()->data;
 
         if (! str_starts_with($callbackData, 'changerole.select.')) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('handleUserSelection');
 
             return;
@@ -75,10 +75,10 @@ class ChangeRoleConversation extends Conversation
         $selectedUserId = (int) $this->parser->parseCallbackData($callbackData);
 
         $roles = collect([
-            ['text' => 'ученик', 'data' => 'ученик_'.$selectedUserId],
-            ['text' => 'учитель', 'data' => 'учитель_'.$selectedUserId],
-            ['text' => 'дежурный', 'data' => 'дежурный_'.$selectedUserId],
-            ['text' => 'админ', 'data' => 'админ_'.$selectedUserId],
+            ['text' => __('button_labels.role.student'), 'data' => 'ученик_'.$selectedUserId],
+            ['text' => __('button_labels.role.teacher'), 'data' => 'учитель_'.$selectedUserId],
+            ['text' => __('button_labels.role.onduty'), 'data' => 'дежурный_'.$selectedUserId],
+            ['text' => __('button_labels.role.admin'), 'data' => 'админ_'.$selectedUserId],
         ]);
 
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
@@ -88,7 +88,7 @@ class ChangeRoleConversation extends Conversation
             fn ($role) => $role['data']
         );
 
-        $bot->sendMessage('Выберите роль',
+        $bot->sendMessage(__('prompt.role.select_role'),
             reply_markup: $keyboard,
         );
 
@@ -98,7 +98,7 @@ class ChangeRoleConversation extends Conversation
     public function handleRoleSelection(Nutgram $bot)
     {
         if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('handleRoleSelection');
 
             return;
@@ -107,7 +107,7 @@ class ChangeRoleConversation extends Conversation
         $callbackData = $bot->callbackQuery()->data;
 
         if (! str_starts_with($callbackData, 'changerole.role.')) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('handleRoleSelection');
 
             return;
@@ -116,7 +116,7 @@ class ChangeRoleConversation extends Conversation
         $value = $this->parser->parseCallbackData($callbackData);
 
         if (! str_contains($value, '_')) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('handleRoleSelection');
 
             return;
@@ -128,8 +128,8 @@ class ChangeRoleConversation extends Conversation
         $admin = $this->getUser($bot);
 
         if ($selectedUserId === $admin->id) {
-            $bot->answerCallbackQuery('Нельзя изменить роль самого себя');
-            $bot->sendMessage('Нельзя изменить роль самого себя');
+            $bot->answerCallbackQuery(__('error.role.self_change'));
+            $bot->sendMessage(__('error.role.self_change'));
             $this->end();
 
             return;
@@ -139,10 +139,10 @@ class ChangeRoleConversation extends Conversation
         try {
             $targetUser->changeRole($role);
         } catch (UnknownRoleException) {
-            $bot->answerCallbackQuery('Неверная роль');
+            $bot->answerCallbackQuery(__('error.role.invalid_short'));
         }
 
-        $bot->sendMessage('Роль изменена на '.$role);
+        $bot->sendMessage(__('info.role.changed_to', ['role' => $role]));
 
         $this->end();
     }
@@ -152,7 +152,7 @@ class ChangeRoleConversation extends Conversation
         $targetUser = User::find($id);
 
         if (! $targetUser) {
-            throw new IncorrectMessageException('Пользователь не найден', true);
+            throw new IncorrectMessageException(__('error.role.user_not_found'), true);
         }
 
         return $targetUser;

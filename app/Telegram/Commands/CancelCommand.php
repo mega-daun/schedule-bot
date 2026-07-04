@@ -12,7 +12,7 @@ class CancelCommand
     {
         if ($bot->currentConversation($bot->userId(), $bot->chatId(), $bot->messageThreadId()) == null) {
             $bot->sendMessage(
-                text: 'Нет активных действий для отмены.',
+                text: __('error.cancel.no_active'),
             );
 
             return;
@@ -20,7 +20,7 @@ class CancelCommand
         $bot->endConversation();
 
         $bot->sendMessage(
-            text: 'Действие отменено.'
+            text: __('info.cancel.done')
         );
     }
 }

@@ -18,12 +18,12 @@ class NewClassCommand
         $code = $bot->get('code');
 
         if ($user->class !== null) {
-            throw new IncorrectMessageException('Вы уже состоите в классе.');
+            throw new IncorrectMessageException(__('error.class.already_member'));
         }
 
         if ($code === null) {
             $bot->sendMessage(
-                text: 'Введите название нового класса (например, 10Б):'
+                text: __('prompt.class.enter_name')
             );
 
             return;
@@ -36,7 +36,7 @@ class NewClassCommand
 
         if (! $class) {
             $bot->sendMessage(
-                text: 'Произошла ошибка при создании класса.'
+                text: __('error.class.create_error')
             );
 
             return;
@@ -44,14 +44,14 @@ class NewClassCommand
 
         if (! $user->update(['class_id' => $class->id, 'role' => UserRole::Admin])) {
             $bot->sendMessage(
-                text: 'Произошла ошибка при присоединении к классу.'
+                text: __('error.class.join_error')
             );
 
             return;
         }
 
         $bot->sendMessage(
-            text: 'Класс '.$class->code.' успешно создан. Токен для присоединения: '.$class->join_token.'. Ссылка для присоединения: https://t.me/hatenigas_bot?start='.$class->join_token
+            text: __('info.class.created', ['code' => $class->code, 'token' => $class->join_token])
         );
     }
 

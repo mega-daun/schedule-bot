@@ -3,6 +3,7 @@
 use App\Models\Classroom;
 use App\Models\Homework;
 use App\Models\User;
+use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 
 describe('NewHomework command', function () {
     it('prompts for date selection when user in a class', function () {
@@ -16,7 +17,7 @@ describe('NewHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите дату',
+            'text' => __('prompt.homework.select_date'),
         ]);
     });
 
@@ -26,7 +27,7 @@ describe('NewHomework command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newhomework')
             ->reply();
-        assertReplyContains($bot, 'Вы не состоите в классе');
+        assertReplyContains($bot, __('error.homework.not_in_class'));
     });
 
     it('returns error when user already in a conversation', function () {
@@ -59,7 +60,7 @@ describe('NewHomework date selection', function () {
             ->reply();
 
         $bot->hearText('some text')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -73,7 +74,7 @@ describe('NewHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('invalid.data.here')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -87,7 +88,7 @@ describe('NewHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
-        assertReplyContains($bot, 'Введите описание домашнего задания');
+        assertReplyContains($bot, __('prompt.homework.enter_description'));
         $bot->assertActiveConversation();
     });
 });
@@ -103,7 +104,7 @@ describe('NewHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
-        assertReplyContains($bot, 'Введите дату в формате');
+        assertReplyContains($bot, __('prompt.homework.enter_date_format'));
         $bot->assertActiveConversation();
     });
 
@@ -118,7 +119,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearCallbackQueryData('some.callback')->reply();
-        assertReplyContains($bot, 'Введите дату текстом');
+        assertReplyContains($bot, __('prompt.general.enter_date_text'));
         $bot->assertActiveConversation();
     });
 
@@ -133,7 +134,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'Дата не может быть пустой');
+        assertReplyContains($bot, __('error.homework.date_empty'));
         $bot->assertActiveConversation();
     });
 
@@ -148,7 +149,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText('not a date')->reply();
-        assertReplyContains($bot, 'Неверный формат даты');
+        assertReplyContains($bot, __('error.homework.date_invalid'));
         $bot->assertActiveConversation();
     });
 
@@ -163,7 +164,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText(now()->format('Y-m-d'))->reply();
-        assertReplyContains($bot, 'Введите описание домашнего задания');
+        assertReplyContains($bot, __('prompt.homework.enter_description'));
         $bot->assertActiveConversation();
     });
 
@@ -178,7 +179,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m.Y'))->reply();
-        assertReplyContains($bot, 'Введите описание домашнего задания');
+        assertReplyContains($bot, __('prompt.homework.enter_description'));
         $bot->assertActiveConversation();
     });
 
@@ -193,7 +194,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m'))->reply();
-        assertReplyContains($bot, 'Введите описание домашнего задания');
+        assertReplyContains($bot, __('prompt.homework.enter_description'));
         $bot->assertActiveConversation();
     });
 
@@ -208,7 +209,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText('15')->reply();
-        assertReplyContains($bot, 'Введите описание домашнего задания');
+        assertReplyContains($bot, __('prompt.homework.enter_description'));
         $bot->assertActiveConversation();
     });
 });
@@ -225,7 +226,7 @@ describe('NewHomework conversation description input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'описание');
+        assertReplyContains($bot, __('error.homework.description_empty'));
     });
 
     it('rejects too short description', function () {
@@ -239,7 +240,7 @@ describe('NewHomework conversation description input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
         $bot->hearText('ab')->reply();
-        assertReplyContains($bot, 'описание');
+        assertReplyContains($bot, __('error.homework.description_too_short', ['min' => 12]));
     });
 
     it('creates homework with valid description', function () {
@@ -258,7 +259,7 @@ describe('NewHomework conversation description input', function () {
             'class_id' => $class->id,
             'description' => 'Read chapter 5 carefully and write a summary',
         ]);
-        assertReplyContains($bot, 'успешно создано');
+        assertReplyContains($bot, __('info.homework.created'));
         $bot->assertNoConversation();
     });
 });
@@ -280,7 +281,7 @@ describe('NewHomework full conversation flow', function () {
 
         $user->refresh();
         $this->assertNotNull($user->class_id);
-        assertReplyContains($bot, 'успешно создано');
+        assertReplyContains($bot, __('info.homework.created'));
         $bot->assertNoConversation();
     });
 
@@ -300,7 +301,7 @@ describe('NewHomework full conversation flow', function () {
             'date' => now()->format('Y-m-d'),
             'description' => 'Complete the project',
         ]);
-        assertReplyContains($bot, 'успешно создано');
+        assertReplyContains($bot, __('info.homework.created'));
     });
 
     it('cancel works at any step', function () {

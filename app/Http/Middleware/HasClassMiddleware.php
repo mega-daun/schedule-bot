@@ -16,7 +16,7 @@ class HasClassMiddleware
         $user = User::find($telegramUser->id);
 
         if (! $user || ! $user->hasClass()) {
-            throw new IncorrectMessageException('Вы не состоите в классе.', true);
+            throw new IncorrectMessageException(__('error.class.not_member'), true);
         }
 
         $next($bot);

@@ -29,36 +29,35 @@ use App\Telegram\Conversations\Homework\ShowHomeworkConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
-$bot->onCommand('start {token}', StartCommand::class)->description('Начинает общение с ботом');
-$bot->onCommand('start', StartCommand::class)->description('Начинает общение с ботом');
-$bot->onCommand('cancel', CancelCommand::class)->description('Отменяет текущее действие');
+$bot->onCommand('start {token}', StartCommand::class)->description(__('command_descriptions.cmd.start'));
+$bot->onCommand('start', StartCommand::class)->description(__('command_descriptions.cmd.start'));
+$bot->onCommand('cancel', CancelCommand::class)->description(__('command_descriptions.cmd.cancel'));
 
-$bot->onCommand('newclass {code}', NewClassCommand::class)->middleware(NoClassMiddleware::class)->description('Создать новый класс');
-$bot->onCommand('newclass', NewClassConversation::class)->middleware(NoClassMiddleware::class)->description('Создать новый класс (пошагово)');
+$bot->onCommand('newclass {code}', NewClassCommand::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.newclass'));
+$bot->onCommand('newclass', NewClassConversation::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.newclass_step'));
 
-$bot->onCommand('joinclass {token}', JoinClassCommand::class)->middleware(NoClassMiddleware::class)->description('Присоедениться к классу');
-$bot->onCommand('joinclass', JoinClassConversation::class)->middleware(NoClassMiddleware::class)->description('Присоедениться к классу (пошагово)');
+$bot->onCommand('joinclass {token}', JoinClassCommand::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.joinclass'));
+$bot->onCommand('joinclass', JoinClassConversation::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.joinclass_step'));
 
 $bot->onCommand('deleteclass', DeleteClassCommand::class)
     ->middleware(IsAdminMiddleware::class)
     ->middleware(HasClassMiddleware::class)
-    ->description('Удалить свой класс');
+    ->description(__('command_descriptions.cmd.deleteclass'));
 
 $bot->onCommand('changerole {username} {role}', ChangeRoleCommand::class)
     ->middleware(IsAdminMiddleware::class)
     ->middleware(HasClassMiddleware::class)
-    ->description('Изменить роль участнику класса');
+    ->description(__('command_descriptions.cmd.changerole'));
 
 $bot->onCommand('changerole', ChangeRoleConversation::class)
     ->middleware(IsAdminMiddleware::class)
     ->middleware(HasClassMembersMiddleware::class)
-    ->description('Изменить роль участнику класса(пошагово)');
+    ->description(__('command_descriptions.cmd.changerole_step'));
 
-$bot->onCommand('leaveclass', LeaveClassCommand::class)->middleware(HasClassMiddleware::class)->description('Выйти из класса');
+$bot->onCommand('leaveclass', LeaveClassCommand::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.leaveclass'));
 
-$bot->onCommand('newhomework', NewHomeworkConversation::class)->description('Добавить домашнее задание');
+$bot->onCommand('newhomework', NewHomeworkConversation::class)->description(__('command_descriptions.cmd.newhomework'));
 
-$bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->description('Удалить домашнее задание');
+$bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->description(__('command_descriptions.cmd.deletehomework'));
 
-$bot->onCommand('showhomework', ShowHomeworkConversation::class)->description('Показать домашнее задание');
-
+$bot->onCommand('showhomework', ShowHomeworkConversation::class)->description(__('command_descriptions.cmd.showhomework'));

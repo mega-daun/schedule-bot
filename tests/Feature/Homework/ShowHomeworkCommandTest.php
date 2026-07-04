@@ -16,16 +16,16 @@ describe('ShowHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите период',
+            'text' => __('prompt.homework.select_period'),
         ]);
         assertReplyMarkupContains($bot, [
-            'На завтра',
+            __('button_labels.keyboard.tomorrow'),
             'showhomework.date.tomorrow',
-            'На эту неделю',
+            __('button_labels.keyboard.this_week'),
             'showhomework.date.thisweek',
-            'На следующую неделю',
+            __('button_labels.keyboard.next_week'),
             'showhomework.date.nextweek',
-            'Свой вариант',
+            __('button_labels.keyboard.custom'),
             'showhomework.date.custom',
         ]);
     });
@@ -38,7 +38,7 @@ describe('ShowHomework command', function () {
             ->hearText('/showhomework')
             ->reply();
 
-        assertReplyContains($bot, 'Вы не состоите в классе');
+        assertReplyContains($bot, __('error.homework.not_in_class'));
     });
 
     it('returns error when user already in a conversation', function () {
@@ -71,7 +71,7 @@ describe('ShowHomework date selection', function () {
             ->reply();
 
         $bot->hearText('some text')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -85,7 +85,7 @@ describe('ShowHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('invalid.data.here')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -153,7 +153,7 @@ describe('ShowHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        assertReplyContains($bot, 'Введите дату в формате');
+        assertReplyContains($bot, __('prompt.homework.enter_date_format'));
         $bot->assertActiveConversation();
     });
 });
@@ -169,7 +169,7 @@ describe('ShowHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        assertReplyContains($bot, 'Введите дату в формате');
+        assertReplyContains($bot, __('prompt.homework.enter_date_format'));
         $bot->assertActiveConversation();
     });
 
@@ -184,7 +184,7 @@ describe('ShowHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
         $bot->hearCallbackQueryData('some.callback')->reply();
-        assertReplyContains($bot, 'Введите дату текстом');
+        assertReplyContains($bot, __('prompt.general.enter_date_text'));
         $bot->assertActiveConversation();
     });
 
@@ -199,7 +199,7 @@ describe('ShowHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'Дата не может быть пустой');
+        assertReplyContains($bot, __('error.homework.date_empty'));
         $bot->assertActiveConversation();
     });
 
@@ -214,7 +214,7 @@ describe('ShowHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
         $bot->hearText('not a date')->reply();
-        assertReplyContains($bot, 'Неверный формат даты');
+        assertReplyContains($bot, __('error.homework.date_invalid'));
         $bot->assertActiveConversation();
     });
 
@@ -343,7 +343,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, 'Ничего не задали :)');
+        assertReplyContains($bot, __('info.homework.no_homework'));
         $bot->assertNoConversation();
     });
 
@@ -397,7 +397,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, '❗️ДЗ на ' . now()->startOfWeek()->format('d.m') . '-' . now()->endOfWeek()->subDay()->format('d.m'));
+        assertReplyContains($bot, __('info.homework.view_header_range', ['start' => now()->startOfWeek()->format('d.m'), 'end' => now()->endOfWeek()->subDay()->format('d.m')]));
     });
 
     it('formats header with single date for tomorrow', function () {
@@ -414,7 +414,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.tomorrow')->reply();
-        assertReplyContains($bot, '❗️ДЗ на ' . now()->addDay()->format('d.m'));
+        assertReplyContains($bot, __('info.homework.view_header', ['start' => now()->addDay()->format('d.m')]));
     });
 
     it('separates days with horizontal rule', function () {
@@ -439,8 +439,8 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, 'Понедельник');
-        assertReplyContains($bot, 'Вторник');
+        assertReplyContains($bot, __('general.weekday.1'));
+        assertReplyContains($bot, __('general.weekday.2'));
     });
 });
 
@@ -462,7 +462,7 @@ describe('ShowHomework markdown format', function () {
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m.Y'))->reply();
 
-        assertReplyContains($bot, '❗️ДЗ на');
+        assertReplyContains($bot, __('info.homework.view_header', ['start' => now()->format('d.m')]));
         assertReplyContains($bot, now()->format('d.m'));
         assertReplyContains($bot, $homework->description);
     });
@@ -689,7 +689,7 @@ describe('ShowHomework full conversation flow', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
 
-        assertReplyContains($bot, 'Ничего не задали :)');
+        assertReplyContains($bot, __('info.homework.no_homework'));
         $bot->assertNoConversation();
     });
 });

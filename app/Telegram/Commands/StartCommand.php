@@ -20,12 +20,12 @@ class StartCommand
 
         if ($token === null) {
             $bot->sendMessage(
-                text: 'Привет, '.$user->first_name.'! Используй команду /joinclass {токен} для присоединения к существующему классу или создай новый при помощи команды /newclass {название класса}(узнать подробнее - /help).'
+                text: __('prompt.general.welcome', ['name' => $user->first_name])
             );
         } else {
             if ($user->class !== null) {
                 throw new IncorrectMessageException(
-                    'Вы перешли по ссылке для присоединения к классу, однако вы уже состоите в классе.'
+                    __('error.class.already_has_class_link')
                 );
             }
 
@@ -33,7 +33,7 @@ class StartCommand
 
             if ($class === null) {
                 throw new IncorrectMessageException(
-                    'Класс не найден.'
+                    __('error.class.not_found')
                 );
             }
 
@@ -43,7 +43,7 @@ class StartCommand
             ]);
 
             $bot->sendMessage(
-                text: 'Вы успешно присоеденились к классу '.$class->code.'.'
+                text: __('info.class.joined', ['code' => $class->code])
             );
         }
     }

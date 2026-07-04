@@ -22,7 +22,7 @@ it('generates header for single day', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $start);
 
-    expect($result)->toStartWith("❗️ДЗ на 01.07\n");
+    expect($result)->toStartWith(__('info.homework.view_header', ['start' => '01.07'])."\n");
 });
 
 it('generates header for date range', function () {
@@ -33,7 +33,7 @@ it('generates header for date range', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    expect($result)->toStartWith("❗️ДЗ на 29.06-04.07\n");
+    expect($result)->toStartWith(__('info.homework.view_header_range', ['start' => '29.06', 'end' => '04.07'])."\n");
 });
 
 it('renders day entry with correct format', function () {
@@ -43,7 +43,7 @@ it('renders day entry with correct format', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $start);
 
-    expect($result)->toContain("⬜️ Вторник(30.06)\n");
+    expect($result)->toContain(__('info.homework.view_day', ['weekday' => __('general.weekday.2'), 'date' => '30.06'])."\n");
 });
 
 it('renders homework item with bullet', function () {
@@ -55,7 +55,7 @@ it('renders homework item with bullet', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $start);
 
-    expect($result)->toContain("▫️ Русский язык: задание 1\n");
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Русский язык: задание 1'])."\n");
 });
 
 it('renders multiple homeworks on same day', function () {
@@ -68,8 +68,8 @@ it('renders multiple homeworks on same day', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $start);
 
-    expect($result)->toContain("▫️ Русский язык: задание 1\n");
-    expect($result)->toContain("▫️ Математика: задание 2\n");
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Русский язык: задание 1'])."\n");
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Математика: задание 2'])."\n");
 });
 
 it('renders no-homework message when day has no homeworks', function () {
@@ -79,7 +79,7 @@ it('renders no-homework message when day has no homeworks', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $start);
 
-    expect($result)->toContain("▫️ Ничего не задали :)\n");
+    expect($result)->toContain(__('info.homework.no_homework')."\n");
 });
 
 it('groups homeworks under correct day in multi-day range', function () {
@@ -93,8 +93,8 @@ it('groups homeworks under correct day in multi-day range', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    $mondayPos = strpos($result, 'Понедельник');
-    $wednesdayPos = strpos($result, 'Среда');
+    $mondayPos = strpos($result, __('general.weekday.1'));
+    $wednesdayPos = strpos($result, __('general.weekday.3'));
     $mondayHomeworkPos = strpos($result, 'Понедельник задание');
     $wednesdayHomeworkPos = strpos($result, 'Среда задание');
 
@@ -112,13 +112,13 @@ it('renders all seven days for full week range', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    expect($result)->toContain('Понедельник');
-    expect($result)->toContain('Вторник');
-    expect($result)->toContain('Среда');
-    expect($result)->toContain('Четверг');
-    expect($result)->toContain('Пятница');
-    expect($result)->toContain('Суббота');
-    expect($result)->toContain('Воскресенье');
+    expect($result)->toContain(__('general.weekday.1'));
+    expect($result)->toContain(__('general.weekday.2'));
+    expect($result)->toContain(__('general.weekday.3'));
+    expect($result)->toContain(__('general.weekday.4'));
+    expect($result)->toContain(__('general.weekday.5'));
+    expect($result)->toContain(__('general.weekday.6'));
+    expect($result)->toContain(__('general.weekday.7'));
 });
 
 it('renders full week with homeworks every day matching expected output', function () {
@@ -155,37 +155,38 @@ it('renders full week with homeworks every day matching expected output', functi
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    $expected = "❗️ДЗ на 29.06-04.07\n"
-        . "⬜️ Понедельник(29.06)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "⬜️ Вторник(30.06)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "⬜️ Среда(01.07)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "⬜️ Четверг(02.07)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "⬜️ Пятница(03.07)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "⬜️ Суббота(04.07)\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n"
-        . "▫️ Русский язык: задание 1\n";
+    $hwDesc = __('info.homework.view_item', ['description' => 'Русский язык: задание 1']);
+    $expected = __('info.homework.view_header_range', ['start' => '29.06', 'end' => '04.07'])."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.1'), 'date' => '29.06'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.2'), 'date' => '30.06'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.3'), 'date' => '01.07'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.4'), 'date' => '02.07'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.5'), 'date' => '03.07'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . __('info.homework.view_day', ['weekday' => __('general.weekday.6'), 'date' => '04.07'])."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n"
+        . $hwDesc."\n";
 
     expect($result)->toBe($expected);
 });
@@ -198,8 +199,8 @@ it('renders full week with no homeworks', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    expect($result)->toContain("▫️ Ничего не задали :)\n");
-    expect(substr_count($result, "Ничего не задали"))->toBe(6);
+    expect($result)->toContain(__('info.homework.no_homework')."\n");
+    expect(substr_count($result, __('info.homework.no_homework')))->toBe(6);
 });
 
 it('renders mixed week with some days having homeworks', function () {
@@ -215,8 +216,8 @@ it('renders mixed week with some days having homeworks', function () {
 
     $result = $generator->homeworkView($homeworks, $start, $end);
 
-    expect($result)->toContain("▫️ Понедельник ДЗ\n");
-    expect($result)->toContain("▫️ Среда ДЗ\n");
-    expect($result)->toContain("▫️ Суббота ДЗ\n");
-    expect(substr_count($result, "Ничего не задали"))->toBe(3);
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Понедельник ДЗ'])."\n");
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Среда ДЗ'])."\n");
+    expect($result)->toContain(__('info.homework.view_item', ['description' => 'Суббота ДЗ'])."\n");
+    expect(substr_count($result, __('info.homework.no_homework')))->toBe(3);
 });

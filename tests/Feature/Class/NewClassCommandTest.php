@@ -10,7 +10,7 @@ describe('NewClass command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newclass')
             ->reply();
-        assertReplyContains($bot, 'название');
+        assertReplyContains($bot, __('prompt.class.enter_name'));
         $bot->assertActiveConversation();
     });
 
@@ -19,7 +19,7 @@ describe('NewClass command', function () {
         $user = User::factory()->create(['class_id' => $existingClass->id]);
         $bot = botWithData(['code' => 'fake'], $user->id, $user->first_name);
         $bot->hearText('/newclass fake')->reply();
-        assertReplyContains($bot, 'Вы уже состоите в классе');
+        assertReplyContains($bot, __('error.class.already_member'));
     });
 
     it('returns error when user already in a class and starts conversation', function () {
@@ -29,7 +29,7 @@ describe('NewClass command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newclass')
             ->reply();
-        assertReplyContains($bot, 'Вы уже состоите в классе');
+        assertReplyContains($bot, __('error.class.already_member'));
     });
 });
 
@@ -42,7 +42,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'название');
+        assertReplyContains($bot, __('prompt.class.name_invalid'));
         $bot->assertActiveConversation();
     });
 
@@ -161,6 +161,6 @@ describe('NewClass full conversation flow', function () {
         $bot->assertNoConversation();
 
         $bot->hearText('/cancel')->reply();
-        assertReplyContains($bot, 'Нет активных действий');
+        assertReplyContains($bot, __('error.cancel.no_active'));
     });
 });

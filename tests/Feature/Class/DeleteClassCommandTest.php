@@ -29,7 +29,7 @@ describe('DeleteClassCommand', function () {
         $student = User::factory()->student()->create(['class_id' => $classroom->id]);
         $bot = bot($student);
         $bot->hearText('/deleteclass')->reply();
-        assertReplyContains($bot, 'Вы не имеете право это сделать');
+        assertReplyContains($bot, __('error.class.no_permission'));
         $this->assertDatabaseHas('classes', ['id' => $classroom->id]);
     });
 
@@ -38,7 +38,7 @@ describe('DeleteClassCommand', function () {
         $teacher = User::factory()->teacher()->create(['class_id' => $classroom->id]);
         $bot = bot($teacher);
         $bot->hearText('/deleteclass')->reply();
-        assertReplyContains($bot, 'Вы не имеете право это сделать');
+        assertReplyContains($bot, __('error.class.no_permission'));
         $this->assertDatabaseHas('classes', ['id' => $classroom->id]);
     });
 
@@ -47,7 +47,7 @@ describe('DeleteClassCommand', function () {
         $onDuty = User::factory()->onDuty()->create(['class_id' => $classroom->id]);
         $bot = bot($onDuty);
         $bot->hearText('/deleteclass')->reply();
-        assertReplyContains($bot, 'Вы не имеете право это сделать');
+        assertReplyContains($bot, __('error.class.no_permission'));
         $this->assertDatabaseHas('classes', ['id' => $classroom->id]);
     });
 
@@ -55,7 +55,7 @@ describe('DeleteClassCommand', function () {
         $user = User::factory()->admin()->create(['class_id' => null]);
         $bot = bot($user);
         $bot->hearText('/deleteclass')->reply();
-        assertReplyContains($bot, 'Вы не состоите в классе');
+        assertReplyContains($bot, __('error.class.not_member'));
     });
 
     it('deletes associated homework records', function () {

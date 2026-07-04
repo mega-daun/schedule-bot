@@ -67,7 +67,7 @@ class Classroom extends Model
     {
         static::deleting(function (Classroom $classroom) {
             $userIds = $classroom->users()->pluck('id');
-            BroadcastToUsers::dispatch($userIds, 'Класс, в котором вы состояли, был удалён.');
+            BroadcastToUsers::dispatch($userIds, __('info.class.deleted_broadcast'));
 
             $classroom->users()->update([
                 'role' => UserRole::Student,

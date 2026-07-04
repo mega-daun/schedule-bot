@@ -58,7 +58,7 @@ describe('LeaveClassCommand', function () {
         $user = User::factory()->create(['class_id' => null]);
         $bot = bot($user);
         $bot->hearText('/leaveclass')->reply();
-        assertReplyContains($bot, 'Вы не состоите в классе');
+        assertReplyContains($bot, __('error.class.not_member'));
     });
 
     it('other users in class are not affected', function () {

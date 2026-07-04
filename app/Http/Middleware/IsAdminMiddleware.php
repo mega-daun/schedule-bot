@@ -16,7 +16,7 @@ class IsAdminMiddleware
         $user = User::find($telegramUser->id);
 
         if (! $user || ! $user->isAdmin()) {
-            throw new IncorrectMessageException('Эта команда доступна только админам.', true);
+            throw new IncorrectMessageException(__('error.class.no_permission'), true);
         }
 
         $next($bot);

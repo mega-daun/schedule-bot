@@ -43,7 +43,7 @@ describe('JoinClassCommand (with token)', function () {
         $user = User::factory()->create(['class_id' => null]);
         $bot = botWithData(['token' => 'nonexistent_token_1234'], $user->id, $user->first_name);
         $bot->hearText('/joinclass nonexistent_token_1234')->reply();
-        assertReplyContains($bot, 'Класс не найден');
+        assertReplyContains($bot, __('error.class.not_found'));
         $user->refresh();
         $this->assertNull($user->class_id);
     });
@@ -54,7 +54,7 @@ describe('JoinClassCommand (with token)', function () {
         $newClass = Classroom::factory()->create();
         $bot = botWithData(['token' => $newClass->join_token], $user->id, $user->first_name);
         $bot->hearText('/joinclass '.$newClass->join_token)->reply();
-        assertReplyContains($bot, 'Вы уже состоите в классе');
+        assertReplyContains($bot, __('error.class.already_member'));
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);
         $bot->assertNoConversation($user->id, $user->id);
@@ -81,7 +81,7 @@ describe('JoinClassCommand (no token)', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/joinclass')
             ->reply();
-        assertReplyContains($bot, 'токен');
+        assertReplyContains($bot, __('prompt.class.enter_token'));
         $bot->assertActiveConversation();
     });
 
@@ -99,7 +99,7 @@ describe('JoinClassCommand (no token)', function () {
         $user = User::factory()->create(['class_id' => $classroom->id]);
         $bot = botWithData(['token' => 'fake_token'], $user->id, $user->first_name);
         $bot->hearText('/joinclass fake_token')->reply();
-        assertReplyContains($bot, 'Вы уже состоите в классе');
+        assertReplyContains($bot, __('error.class.already_member'));
         $bot->assertNoConversation($user->id, $user->id);
     });
 });
@@ -113,7 +113,7 @@ describe('JoinClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'токен');
+        assertReplyContains($bot, __('prompt.class.token_empty'));
         $bot->assertActiveConversation();
     });
 
@@ -126,7 +126,7 @@ describe('JoinClass conversation validation', function () {
 
         // Use 16-char valid format token that doesn't exist
         $bot->hearText('abcdef1234567890')->reply();
-        assertReplyContains($bot, 'Класс с таким токеном не найден');
+        assertReplyContains($bot, __('error.class.not_found_with_token'));
         $bot->assertActiveConversation();
     });
 
@@ -169,7 +169,7 @@ describe('JoinClass conversation validation', function () {
             ->hearText('/joinclass')
             ->reply();
 
-        assertReplyContains($bot, 'Вы уже состоите в классе');
+        assertReplyContains($bot, __('error.class.already_member'));
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);
     });

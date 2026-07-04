@@ -31,41 +31,37 @@ class MessageTextGenerator
 
     private function makeHeader(DateTime $start, DateTime $end)
     {
-        $header = '';
-        $header .= "❗️ДЗ на " . $start->format('d.m');
         if ($start->format('Y-m-d') != $end->format('Y-m-d')) {
-            $header .= "-" . $end->format('d.m');
+            return __('info.homework.view_header_range', [
+                'start' => $start->format('d.m'),
+                'end' => $end->format('d.m'),
+            ])."\n";
         }
-        $header .= "\n";
-        return $header;
+
+        return __('info.homework.view_header', [
+            'start' => $start->format('d.m'),
+        ])."\n";
     }
 
     private function makeHomeworksList(Collection $homeworks)
     {
         $list = '';
         foreach ($homeworks as $homework) {
-            $list .= '▫️ ' . $homework->description . "\n";
+            $list .= __('info.homework.view_item', ['description' => $homework->description])."\n";
         }
         return $list;
     }
 
     private function makeNoHomeworksMessage()
     {
-        return '▫️ Ничего не задали :)' . "\n";
+        return __('info.homework.no_homework')."\n";
     }
 
     private function makeDaySubheader(DateTime $day)
     {
-        return '⬜️ ' . self::WEEKDAY_NUMBER_TO_NAME[$day->format('N')] . '(' . $day->format('d.m') . ')' . "\n";
+        return __('info.homework.view_day', [
+            'weekday' => __('general.weekday.'.$day->format('N')),
+            'date' => $day->format('d.m'),
+        ])."\n";
     }
-
-    private const WEEKDAY_NUMBER_TO_NAME = [
-        1 => 'Понедельник',
-        2 => 'Вторник',
-        3 => 'Среда',
-        4 => 'Четверг',
-        5 => 'Пятница',
-        6 => 'Суббота',
-        7 => 'Воскресенье',
-    ];
 }

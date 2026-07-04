@@ -16,14 +16,14 @@ describe('DeleteHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите период',
+            'text' => __('prompt.homework.select_period'),
         ]);
         assertReplyMarkupContains($bot, [
-            'На эту неделю',
+            __('button_labels.keyboard.this_week'),
             'deletehomework.date.thisweek',
-            'На следующую неделю',
+            __('button_labels.keyboard.next_week'),
             'deletehomework.date.nextweek',
-            'Свой вариант',
+            __('button_labels.keyboard.custom'),
             'deletehomework.date.custom',
         ]);
     });
@@ -34,7 +34,7 @@ describe('DeleteHomework command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/deletehomework')
             ->reply();
-        assertReplyContains($bot, 'Вы не состоите в классе');
+        assertReplyContains($bot, __('error.homework.not_in_class'));
     });
 
     it('returns error when user is student', function () {
@@ -46,7 +46,7 @@ describe('DeleteHomework command', function () {
             ->hearText('/deletehomework')
             ->reply();
 
-        assertReplyContains($bot, 'У вас нет прав для удаления домашних заданий');
+        assertReplyContains($bot, __('error.homework.no_permission'));
     });
 
     it('allows on-duty role', function () {
@@ -60,7 +60,7 @@ describe('DeleteHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите период',
+            'text' => __('prompt.homework.select_period'),
         ]);
     });
 
@@ -75,7 +75,7 @@ describe('DeleteHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите период',
+            'text' => __('prompt.homework.select_period'),
         ]);
     });
 
@@ -90,7 +90,7 @@ describe('DeleteHomework command', function () {
 
         $bot->assertActiveConversation();
         $bot->assertReply('sendMessage', [
-            'text' => 'Выберите период',
+            'text' => __('prompt.homework.select_period'),
         ]);
     });
 
@@ -124,7 +124,7 @@ describe('DeleteHomework date selection', function () {
             ->reply();
 
         $bot->hearText('some text')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -138,7 +138,7 @@ describe('DeleteHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('invalid.data.here')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -157,7 +157,7 @@ describe('DeleteHomework date selection', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.thisweek')->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             (new DateTime($homework->date))->format('d.m'),
@@ -179,7 +179,7 @@ describe('DeleteHomework date selection', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.nextweek')->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             (new DateTime($homework->date))->format('d.m'),
@@ -196,7 +196,7 @@ describe('DeleteHomework date selection', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        assertReplyContains($bot, 'Введите дату в формате');
+        assertReplyContains($bot, __('prompt.homework.enter_date_format'));
         $bot->assertActiveConversation();
     });
 });
@@ -212,7 +212,7 @@ describe('DeleteHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        assertReplyContains($bot, 'Введите дату в формате');
+        assertReplyContains($bot, __('prompt.homework.enter_date_format'));
         $bot->assertActiveConversation();
     });
 
@@ -227,7 +227,7 @@ describe('DeleteHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearCallbackQueryData('some.callback')->reply();
-        assertReplyContains($bot, 'Введите дату текстом');
+        assertReplyContains($bot, __('prompt.general.enter_date_text'));
         $bot->assertActiveConversation();
     });
 
@@ -242,7 +242,7 @@ describe('DeleteHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText('')->reply();
-        assertReplyContains($bot, 'Дата не может быть пустой');
+        assertReplyContains($bot, __('error.homework.date_empty'));
         $bot->assertActiveConversation();
     });
 
@@ -257,7 +257,7 @@ describe('DeleteHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText('not a date')->reply();
-        assertReplyContains($bot, 'Неверный формат даты');
+        assertReplyContains($bot, __('error.homework.date_invalid'));
         $bot->assertActiveConversation();
     });
 
@@ -277,7 +277,7 @@ describe('DeleteHomework custom date input', function () {
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText(now()->format('Y-m-d'))->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             now()->format('d.m'),
@@ -300,7 +300,7 @@ describe('DeleteHomework custom date input', function () {
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m.Y'))->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             now()->format('d.m'),
@@ -323,7 +323,7 @@ describe('DeleteHomework custom date input', function () {
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m'))->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             now()->format('d.m'),
@@ -346,7 +346,7 @@ describe('DeleteHomework custom date input', function () {
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText(now()->format('d'))->reply();
         $bot->assertActiveConversation();
-        assertReplyContains($bot, 'Выберите домашнее задание для удаления');
+        assertReplyContains($bot, __('prompt.homework.select_for_delete'));
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
             now()->format('d.m'),
@@ -420,7 +420,7 @@ describe('DeleteHomework homework list display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.thisweek')->reply();
-        assertReplyContains($bot, 'Нет домашних заданий за выбранный период');
+        assertReplyContains($bot, __('error.homework.none_in_period'));
         $bot->assertNoConversation();
     });
 
@@ -481,7 +481,7 @@ describe('DeleteHomework homework selection', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.thisweek')->reply();
         $bot->hearText('some text')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -500,7 +500,7 @@ describe('DeleteHomework homework selection', function () {
 
         $bot->hearCallbackQueryData('deletehomework.date.thisweek')->reply();
         $bot->hearCallbackQueryData('invalid.data.here')->reply();
-        assertReplyContains($bot, 'Нажмите на кнопку');
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 
@@ -521,7 +521,7 @@ describe('DeleteHomework homework selection', function () {
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
         $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
-        assertReplyContains($bot, 'Домашнее задание успешно удалено');
+        assertReplyContains($bot, __('info.homework.deleted'));
         $bot->assertNoConversation();
     });
 });
@@ -562,7 +562,7 @@ describe('DeleteHomework deletion', function () {
         $bot->hearCallbackQueryData('deletehomework.date.thisweek')->reply();
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
-        assertReplyContains($bot, 'Домашнее задание успешно удалено');
+        assertReplyContains($bot, __('info.homework.deleted'));
     });
 
     it('conversation ends after deletion', function () {
@@ -603,7 +603,7 @@ describe('DeleteHomework deletion', function () {
 
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
-        assertReplyContains($bot, 'Домашнее задание не найдено');
+        assertReplyContains($bot, __('error.homework.not_found'));
         $bot->assertNoConversation();
     });
 });
@@ -675,7 +675,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
         $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
-        assertReplyContains($bot, 'Домашнее задание успешно удалено');
+        assertReplyContains($bot, __('info.homework.deleted'));
         $bot->assertNoConversation();
     });
 
@@ -698,7 +698,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
         $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
-        assertReplyContains($bot, 'Домашнее задание успешно удалено');
+        assertReplyContains($bot, __('info.homework.deleted'));
         $bot->assertNoConversation();
     });
 
@@ -722,7 +722,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
         $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
-        assertReplyContains($bot, 'Домашнее задание успешно удалено');
+        assertReplyContains($bot, __('info.homework.deleted'));
         $bot->assertNoConversation();
     });
 
@@ -740,7 +740,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
         $bot->hearText(now()->format('d.m.Y'))->reply();
 
-        assertReplyContains($bot, 'Нет домашних заданий за выбранный период');
+        assertReplyContains($bot, __('error.homework.none_in_period'));
         $bot->assertNoConversation();
     });
 
@@ -766,7 +766,7 @@ describe('DeleteHomework full conversation flow', function () {
 
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
-        assertReplyContains($bot, 'Домашнее задание не найдено');
+        assertReplyContains($bot, __('error.homework.not_found'));
         $bot->assertNoConversation();
     });
 });

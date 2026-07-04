@@ -52,7 +52,7 @@ describe('ChangeRoleCommand', function () {
             $targetUser = User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'targetuser']);
             $bot = botWithData(['username' => 'targetuser', 'role' => 'учитель'], $admin->id, $admin->first_name);
             $bot->hearText('/changerole targetuser учитель')->reply();
-            assertReplyContains($bot, 'Роль изменена');
+            assertReplyContains($bot, __('info.role.changed'));
         });
 
         it('persists role change to database via arguments', function () {
@@ -74,7 +74,7 @@ describe('ChangeRoleCommand', function () {
             $bot->hearText('/changerole adminuser ученик')->reply();
             $admin->refresh();
             $this->assertEquals(UserRole::Admin, $admin->role);
-            assertReplyContains($bot, 'Нельзя изменить роль самого себя');
+            assertReplyContains($bot, __('error.role.self_change'));
         });
 
         it('shows error for invalid role via arguments', function () {
@@ -83,7 +83,7 @@ describe('ChangeRoleCommand', function () {
             $targetUser = User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'targetuser']);
             $bot = botWithData(['username' => 'targetuser', 'role' => 'неверная роль'], $admin->id, $admin->first_name);
             $bot->hearText('/changerole targetuser неверная роль')->reply();
-            assertReplyContains($bot, 'Неверная роль');
+            assertReplyContains($bot, __('error.role.invalid'));
         });
 
         it('shows error for non-existent user via arguments', function () {
@@ -91,7 +91,7 @@ describe('ChangeRoleCommand', function () {
             $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
             $bot = botWithData(['username' => 'nonexistentuser', 'role' => 'учитель'], $admin->id, $admin->first_name);
             $bot->hearText('/changerole nonexistentuser учитель')->reply();
-            assertReplyContains($bot, 'Пользователь не найден');
+            assertReplyContains($bot, __('error.role.user_not_found'));
         });
 
         it('shows error when target user is not in same class', function () {
@@ -101,7 +101,7 @@ describe('ChangeRoleCommand', function () {
             User::factory()->student()->create(['class_id' => $otherClassroom->id, 'username' => 'otheruser']);
             $bot = botWithData(['username' => 'otheruser', 'role' => 'учитель'], $admin->id, $admin->first_name);
             $bot->hearText('/changerole otheruser учитель')->reply();
-            assertReplyContains($bot, 'не состоит в вашем классе');
+            assertReplyContains($bot, __('error.role.not_in_class'));
         });
     });
 
@@ -111,7 +111,7 @@ describe('ChangeRoleCommand', function () {
             $user = User::factory()->student()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
-            assertReplyContains($bot, 'Только админы могут изменять роли других пользователей');
+            assertReplyContains($bot, __('error.class.no_permission'));
         });
 
         it('teacher cannot access changerole command', function () {
@@ -119,7 +119,7 @@ describe('ChangeRoleCommand', function () {
             $user = User::factory()->teacher()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
-            assertReplyContains($bot, 'Только админы могут изменять роли других пользователей');
+            assertReplyContains($bot, __('error.class.no_permission'));
         });
 
         it('onDuty cannot access changerole command', function () {
@@ -127,7 +127,7 @@ describe('ChangeRoleCommand', function () {
             $user = User::factory()->onDuty()->create(['class_id' => $classroom->id]);
             $bot = bot($user);
             $bot->hearText('/changerole')->reply();
-            assertReplyContains($bot, 'Только админы могут изменять роли других пользователей');
+            assertReplyContains($bot, __('error.class.no_permission'));
         });
     });
 
@@ -136,14 +136,14 @@ describe('ChangeRoleCommand', function () {
             $student = User::factory()->student()->create(['class_id' => null]);
             $bot = bot($student);
             $bot->hearText('/changerole')->reply();
-            assertReplyContains($bot, 'Вы должны состоять в классе');
+            assertReplyContains($bot, __('error.class.not_member'));
         });
 
         it('Admin without class receives error message', function () {
             $admin = User::factory()->admin()->create(['class_id' => null]);
             $bot = bot($admin);
             $bot->hearText('/changerole')->reply();
-            assertReplyContains($bot, 'Вы должны состоять в классе');
+            assertReplyContains($bot, __('error.class.not_member'));
         });
     });
 
@@ -167,7 +167,7 @@ describe('ChangeRoleCommand', function () {
                 ->hearText('/changerole')
                 ->reply();
             $bot->assertReplyMessage([
-                'text' => 'Выберите пользователя',
+                'text' => __('prompt.role.select_user'),
             ]);
             assertReplyContains($bot, '@member1');
         });
@@ -194,7 +194,7 @@ describe('ChangeRoleCommand', function () {
             $bot->willStartConversation(remember: true)
                 ->hearText('/changerole')
                 ->reply();
-            assertReplyContains($bot, 'Выберите пользователя');
+            assertReplyContains($bot, __('prompt.role.select_user'));
         });
 
         it('shows only class members in keyboard', function () {
@@ -222,7 +222,7 @@ describe('ChangeRoleCommand', function () {
             $bot->willStartConversation(remember: true)
                 ->hearText('/changerole')
                 ->reply();
-            assertReplyContains($bot, 'Нет других участников');
+            assertReplyContains($bot, __('error.class.no_members'));
             $bot->assertNoConversation($admin->id, $admin->id);
         });
     });
@@ -249,7 +249,7 @@ describe('ChangeRoleCommand', function () {
                 ->hearText('/changerole')
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
-            assertReplyContains($bot, 'Выберите роль');
+            assertReplyContains($bot, __('prompt.role.select_role'));
         });
 
         it('shows role options in message', function () {
@@ -261,10 +261,10 @@ describe('ChangeRoleCommand', function () {
                 ->hearText('/changerole')
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
-            assertReplyContains($bot, 'ученик');
-            assertReplyContains($bot, 'учитель');
-            assertReplyContains($bot, 'дежурный');
-            assertReplyContains($bot, 'админ');
+            assertReplyContains($bot, __('button_labels.role.student'));
+            assertReplyContains($bot, __('button_labels.role.teacher'));
+            assertReplyContains($bot, __('button_labels.role.onduty'));
+            assertReplyContains($bot, __('button_labels.role.admin'));
         });
     });
 
@@ -335,7 +335,7 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->hearCallbackQueryData('changerole.role.учитель_'.$targetUser->id)->reply();
-            assertReplyContains($bot, 'Роль изменена');
+            assertReplyContains($bot, __('info.role.changed'));
         });
 
         it('persists role change to database', function () {
@@ -395,7 +395,7 @@ describe('ChangeRoleCommand', function () {
             $bot->hearCallbackQueryData('changerole.select.'.$targetUserId)->reply();
             $targetUser->delete();
             $bot->hearCallbackQueryData('changerole.role.учитель_'.$targetUser->id)->reply();
-            assertReplyContains($bot, 'Пользователь не найден');
+            assertReplyContains($bot, __('error.role.user_not_found'));
         });
     });
 
@@ -410,7 +410,7 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$admin->id)->reply();
             $bot->hearCallbackQueryData('changerole.role.ученик_'.$admin->id)->reply();
-            assertReplyContains($bot, 'Нельзя изменить роль самого себя');
+            assertReplyContains($bot, __('error.role.self_change'));
         });
 
         it('admin role remains unchanged after trying to change own role', function () {
@@ -452,7 +452,7 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->assertReplyMessage([
-                'text' => 'Выберите роль',
+                'text' => __('prompt.role.select_role'),
             ]);
         });
 
@@ -523,7 +523,7 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->hearText('любой текст')->reply();
-            assertReplyContains($bot, 'Нажмите на кнопку');
+            assertReplyContains($bot, __('prompt.general.click_button'));
             assertReplyContains($bot, '/cancel');
         });
 
@@ -563,7 +563,7 @@ describe('ChangeRoleCommand', function () {
                 ->reply();
             $bot->hearCallbackQueryData('changerole.select.'.$targetUser->id)->reply();
             $bot->hearText('/cancel')->reply();
-            assertReplyContains($bot, 'Нет активных действий');
+            assertReplyContains($bot, __('error.cancel.no_active'));
         });
     });
 });

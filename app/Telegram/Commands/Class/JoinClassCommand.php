@@ -18,25 +18,25 @@ class JoinClassCommand
         $token = $bot->get('token');
 
         if ($user->class_id !== null) {
-            throw new IncorrectMessageException('Вы уже состоите в классе.', true);
+            throw new IncorrectMessageException(__('error.class.already_member'), true);
         }
 
         if ($token === null) {
             $bot->sendMessage(
-                text: 'Введите токен для присоединения к классу.'
+                text: __('prompt.class.enter_token')
             );
 
             return;
         }
 
         if (! $this->isValidTokenFormat($token)) {
-            throw new IncorrectMessageException('Класс не найден. Попробуйте ещё раз.');
+            throw new IncorrectMessageException(__('error.class.not_found_try_again'));
         }
 
         $class = Classroom::where('join_token', $token)->first();
 
         if (! $class) {
-            throw new IncorrectMessageException('Класс не найден.');
+            throw new IncorrectMessageException(__('error.class.not_found'));
         }
 
         $user->update([
@@ -45,7 +45,7 @@ class JoinClassCommand
         ]);
 
         $bot->sendMessage(
-            text: 'Вы успешно присоеденились к классу '.$class->code.'.'
+            text: __('info.class.joined', ['code' => $class->code])
         );
     }
 

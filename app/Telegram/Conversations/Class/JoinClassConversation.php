@@ -15,7 +15,7 @@ class JoinClassConversation extends Conversation
     public function start(Nutgram $bot)
     {
         $bot->sendMessage(
-            text: 'Введите токен для присоединения к классу:'
+            text: __('prompt.class.enter_token')
         );
         $this->next('handleInput');
     }
@@ -27,7 +27,7 @@ class JoinClassConversation extends Conversation
 
         if ($user->class_id !== null) {
             $bot->sendMessage(
-                text: 'Вы уже состоите в классе.'
+                text: __('error.class.already_member')
             );
 
             return;
@@ -35,7 +35,7 @@ class JoinClassConversation extends Conversation
 
         if ($input === '') {
             $bot->sendMessage(
-                text: 'Токен не может быть пустым. Введите токен для присоединения к классу:'
+                text: __('prompt.class.token_empty')
             );
 
             return;
@@ -43,7 +43,7 @@ class JoinClassConversation extends Conversation
 
         if (! $this->isValidTokenFormat($input)) {
             $bot->sendMessage(
-                text: 'Неверный формат токена. Токен должен содержать 16 символов (латинские буквы и цифры). Попробуйте ещё раз или введите /cancel для отмены.'
+                text: __('prompt.class.token_invalid')
             );
 
             return;
@@ -53,7 +53,7 @@ class JoinClassConversation extends Conversation
 
         if (! $class) {
             $bot->sendMessage(
-                text: 'Класс с таким токеном не найден. Проверьте токен и попробуйте ещё раз или введите /cancel для отмены.'
+                text: __('error.class.not_found_with_token')
             );
 
             return;
@@ -65,7 +65,7 @@ class JoinClassConversation extends Conversation
         ]);
 
         $bot->sendMessage(
-            text: 'Вы успешно присоеденились к классу '.$class->code.'.'
+            text: __('info.class.joined', ['code' => $class->code])
         );
 
         $this->end();

@@ -17,7 +17,7 @@ class LeaveClassCommand
         $user = $this->getUser($bot);
 
         if ($user->class_id === null) {
-            throw new IncorrectMessageException('Вы не состоите в классе.');
+            throw new IncorrectMessageException(__('error.class.not_member'));
         }
 
         $classroom = Classroom::find($user->class_id);
@@ -30,7 +30,7 @@ class LeaveClassCommand
         }
 
         $bot->sendMessage(
-            text: 'Вы вышли из класса '.$classCode.'.'
+            text: __('info.class.left', ['code' => $classCode])
         );
     }
 

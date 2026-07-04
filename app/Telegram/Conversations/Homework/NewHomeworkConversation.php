@@ -37,7 +37,7 @@ class NewHomeworkConversation extends Conversation
         $user = $this->getUser($bot);
 
         if ($user->class === null) {
-            $bot->sendMessage('Вы не состоите в классе');
+            $bot->sendMessage(__('error.homework.not_in_class'));
             $this->end();
 
             return;
@@ -49,18 +49,18 @@ class NewHomeworkConversation extends Conversation
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
             'newhomework.date',
             collect([
-                ['text' => 'На следующий понедельник', 'data' => (clone now())->modify('+'.(7 - $dayNum + 1).' days')->format('Y-m-d')],
-                ['text' => 'На следующий вторник', 'data' => (clone now())->modify('+'.(7 - $dayNum + 2).' days')->format('Y-m-d')],
-                ['text' =>'На следующую среду', 'data' => (clone now())->modify('+'.(7 - $dayNum + 3).' days')->format('Y-m-d')],
-                ['text' => 'На следующий четверг', 'data' => (clone now())->modify('+'.(7 - $dayNum + 4).' days')->format('Y-m-d')],
-                ['text' => 'На следующую пятницу', 'data' => (clone now())->modify('+'.(7 - $dayNum + 5).' days')->format('Y-m-d')],
-                ['text' => 'На следующую субботу', 'data' => (clone now())->modify('+'.(7 - $dayNum + 6).' days')->format('Y-m-d')],
-                ['text' => 'Свой вариант', 'data' => 'custom'],
+                ['text' => __('button_labels.keyboard.next_monday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 1).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.next_tuesday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 2).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.next_wednesday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 3).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.next_thursday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 4).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.next_friday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 5).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.next_saturday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 6).' days')->format('Y-m-d')],
+                ['text' => __('button_labels.keyboard.custom'), 'data' => 'custom'],
             ]),
             fn ($item) => $item['text'],
             fn ($item) => $item['data']
         );
-        $bot->sendMessage(text: 'Выберите дату', reply_markup: $keyboard);
+        $bot->sendMessage(text: __('prompt.homework.select_date'), reply_markup: $keyboard);
 
         $this->next('dateSelection');
     }
@@ -68,7 +68,7 @@ class NewHomeworkConversation extends Conversation
     public function dateSelection(Nutgram $bot): void
     {
         if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('dateSelection');
 
             return;
@@ -77,7 +77,7 @@ class NewHomeworkConversation extends Conversation
         $callbackData = $bot->callbackQuery()->data;
 
         if (! str_starts_with($callbackData, 'newhomework.date.')) {
-            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.click_button'));
             $this->next('dateSelection');
 
             return;
@@ -86,7 +86,7 @@ class NewHomeworkConversation extends Conversation
         $selectedDate = $this->parser->parseCallbackData($callbackData);
 
         if ($selectedDate === 'custom') {
-            $bot->sendMessage('Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
+            $bot->sendMessage(__('prompt.homework.enter_date_format'));
             $this->next('promptDate');
 
             return;
@@ -94,14 +94,14 @@ class NewHomeworkConversation extends Conversation
 
         $this->date = $selectedDate;
 
-        $bot->sendMessage('Введите описание домашнего задания');
+        $bot->sendMessage(__('prompt.homework.enter_description'));
         $this->next('promptDescription');
     }
 
     public function promptDate(Nutgram $bot): void
     {
         if ($bot->isCallbackQuery()) {
-            $bot->sendMessage('Введите дату текстом или введите /cancel для отмены.');
+            $bot->sendMessage(__('prompt.general.enter_date_text'));
             $this->next('promptDate');
 
             return;
@@ -110,7 +110,7 @@ class NewHomeworkConversation extends Conversation
         $input = $bot->message()->text;
 
         if ($input === null || trim($input) === '') {
-            $bot->sendMessage('Дата не может быть пустой. Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
+            $bot->sendMessage(__('error.homework.date_empty'));
             $this->next('promptDate');
 
             return;
@@ -118,7 +118,7 @@ class NewHomeworkConversation extends Conversation
 
         $parsed = $this->parser->parseDate(trim($input));
         if ($parsed == null) {
-            $bot->sendMessage('Неверный формат даты. Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
+            $bot->sendMessage(__('error.homework.date_invalid'));
             $this->next('promptDate');
 
             return;
@@ -126,7 +126,7 @@ class NewHomeworkConversation extends Conversation
 
         $this->date = $parsed->format('Y-m-d');
 
-        $bot->sendMessage('Введите описание домашнего задания');
+        $bot->sendMessage(__('prompt.homework.enter_description'));
         $this->next('promptDescription');
     }
 
@@ -135,7 +135,7 @@ class NewHomeworkConversation extends Conversation
         $input = $bot->message()->text;
 
         if ($input === null || trim($input) === '') {
-            $bot->sendMessage('Описание не может быть пустым. Введите описание домашнего задания');
+            $bot->sendMessage(__('error.homework.description_empty'));
             $this->next('promptDescription');
 
             return;
@@ -144,7 +144,7 @@ class NewHomeworkConversation extends Conversation
         $text = trim($input);
 
         if (mb_strlen($text) < self::MIN_DESCRIPTION_LENGTH) {
-            $bot->sendMessage('Описание слишком короткое. Минимум '.self::MIN_DESCRIPTION_LENGTH.' символов. Введите описание домашнего задания');
+            $bot->sendMessage(__('error.homework.description_too_short', ['min' => self::MIN_DESCRIPTION_LENGTH]));
             $this->next('promptDescription');
 
             return;
@@ -160,7 +160,7 @@ class NewHomeworkConversation extends Conversation
             'description' => $this->description,
         ]);
 
-        $bot->sendMessage('Домашнее задание успешно создано');
+        $bot->sendMessage(__('info.homework.created'));
         $this->end();
     }
 

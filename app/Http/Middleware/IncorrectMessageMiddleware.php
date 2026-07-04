@@ -30,7 +30,7 @@ class IncorrectMessageMiddleware
             ]);
 
             $bot->sendMessage(
-                'При выполнении команды произошла ошибка на стороне сервера. Попробуйте позже.',
+                __('error.server.error'),
             );
         }
     }

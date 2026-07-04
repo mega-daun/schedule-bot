@@ -15,19 +15,11 @@ class DeleteClassCommand
     {
         $user = $this->getUser($bot);
 
-        if (! $user->class) {
-            throw new IncorrectMessageException('Вы не состоите в классе.');
-        }
-
-        if ($user->role !== UserRole::Admin) {
-            throw new IncorrectMessageException('Вы не имеете право это сделать.');
-        }
-
         $class = $user->class;
 
         if (! $class->delete()) {
             $bot->sendMessage(
-                text: 'Произошла ошибка на стороне сервера.'
+                text: __('error.class.server_error')
             );
 
             return;
@@ -36,7 +28,7 @@ class DeleteClassCommand
         $user->update(['role' => UserRole::Student]);
 
         $bot->sendMessage(
-            text: 'Вы успешно удалили класс '.$class->code.'.'
+            text: __('info.class.deleted', ['code' => $class->code])
         );
     }
 

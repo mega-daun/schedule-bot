@@ -22,7 +22,7 @@ class HasSubjectsMiddleware
 
         if ($user->class->subjects->isEmpty()) {
             $bot->sendMessage(
-                text: 'В классе нет предметов.'
+                text: __('error.class.no_subjects')
             );
 
             return;
