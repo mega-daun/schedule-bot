@@ -36,13 +36,6 @@ class NewHomeworkConversation extends Conversation
     {
         $user = $this->getUser($bot);
 
-        if ($user->class === null) {
-            $bot->sendMessage(__('error.homework.not_in_class'));
-            $this->end();
-
-            return;
-        }
-
         $this->userId = $user->id;
 
         $dayNum = (int)now()->format('N');

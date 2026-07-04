@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Models\Classroom;
 use App\Models\Homework;
+use App\Models\Subject;
 use App\Models\User;
 use App\Models\WeeklyScheduleEntry;
 
@@ -60,7 +61,8 @@ describe('DeleteClassCommand', function () {
 
     it('deletes associated homework records', function () {
         $classroom = Classroom::factory()->create();
-        Homework::factory()->count(5)->create(['class_id' => $classroom->id]);
+        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+        Homework::factory()->count(5)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/deleteclass')->reply();
@@ -69,11 +71,13 @@ describe('DeleteClassCommand', function () {
 
     it('deletes associated weekly schedule entries', function () {
         $classroom = Classroom::factory()->create();
-        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id]);
+        $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/deleteclass')->reply();
         $this->assertDatabaseMissing('weekly_schedule_entries', ['class_id' => $classroom->id]);
+        $this->assertDatabaseMissing('subjects', ['class_id' => $classroom->id]);
     });
 
     it('users remain in database after class deletion', function () {

@@ -2,6 +2,7 @@
 
 use App\Models\Classroom;
 use App\Models\Homework;
+use App\Models\Subject;
 use App\Models\User;
 
 describe('ShowHomework command', function () {
@@ -92,9 +93,11 @@ describe('ShowHomework date selection', function () {
     it('processes "tomorrow" callback', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addDay()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -110,9 +113,11 @@ describe('ShowHomework date selection', function () {
     it('processes "this week" callback', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -128,9 +133,11 @@ describe('ShowHomework date selection', function () {
     it('processes "next week" callback', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -221,9 +228,11 @@ describe('ShowHomework custom date input', function () {
     it('accepts YYYY-MM-DD format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -240,9 +249,11 @@ describe('ShowHomework custom date input', function () {
     it('accepts DD.MM.YYYY format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -259,9 +270,11 @@ describe('ShowHomework custom date input', function () {
     it('accepts DD.MM format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -281,10 +294,12 @@ describe('ShowHomework homework display', function () {
     it('shows homeworks for this week', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
             'description' => 'Тестовое ДЗ на эту неделю',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -299,10 +314,12 @@ describe('ShowHomework homework display', function () {
     it('shows homeworks for next week', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
             'description' => 'Тестовое ДЗ на следующую неделю',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -317,10 +334,12 @@ describe('ShowHomework homework display', function () {
     it('shows homeworks for custom date', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
             'description' => 'Тестовое ДЗ на ' . now()->format('d') . ' июня',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -351,10 +370,12 @@ describe('ShowHomework homework display', function () {
         $class1 = Classroom::factory()->create();
         $class2 = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class1->id]);
+        $subjectOtherClass = Subject::factory()->create(['class_id' => $class2->id]);
         $homeworkOtherClass = Homework::factory()->create([
             'class_id' => $class2->id,
             'date' => now()->startOfWeek()->toDateString(),
             'description' => 'ДЗ из другого класса',
+            'subject_id' => $subjectOtherClass->id,
         ]);
 
         $bot = bot($user);
@@ -369,9 +390,11 @@ describe('ShowHomework homework display', function () {
     it('groups homeworks by date with day names', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -386,9 +409,11 @@ describe('ShowHomework homework display', function () {
     it('formats header with date range for week selections', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -403,9 +428,11 @@ describe('ShowHomework homework display', function () {
     it('formats header with single date for tomorrow', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addDay()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -422,15 +449,18 @@ describe('ShowHomework homework display', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $monday = now()->startOfWeek()->toDateString();
         $tuesday = now()->startOfWeek()->addDay()->toDateString();
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $monday,
             'description' => 'ДЗ на понедельник',
+            'subject_id' => $subject->id,
         ]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $tuesday,
             'description' => 'ДЗ на вторник',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -448,10 +478,12 @@ describe('ShowHomework markdown format', function () {
     it('formats single day with description correctly', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
             'description' => 'Решить задачи по алгебре',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -472,15 +504,18 @@ describe('ShowHomework markdown format', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $monday = now()->startOfWeek()->toDateString();
         $tuesday = now()->startOfWeek()->addDay()->toDateString();
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homeworkMonday = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $monday,
             'description' => 'ДЗ на понедельник',
+            'subject_id' => $subject->id,
         ]);
         $homeworkTuesday = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $tuesday,
             'description' => 'ДЗ на вторник',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -498,15 +533,19 @@ describe('ShowHomework markdown format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $date = now()->startOfWeek()->toDateString();
+        $subject1 = Subject::factory()->create(['class_id' => $class->id]);
+        $subject2 = Subject::factory()->create(['class_id' => $class->id]);
         $homework1 = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $date,
             'description' => 'Первое домашнее задание на сегодня',
+            'subject_id' => $subject2->id,
         ]);
         $homework2 = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => $date,
             'description' => 'Второе домашнее задание на сегодня',
+            'subject_id' => $subject1->id,
         ]);
 
         $bot = bot($user);
@@ -524,10 +563,12 @@ describe('ShowHomework markdown format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $longDescription = str_repeat('Длинное описание задания ', 5);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
             'description' => $longDescription,
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -571,9 +612,11 @@ describe('ShowHomework cancel and edge cases', function () {
     it('conversation ends after display', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -590,10 +633,12 @@ describe('ShowHomework full conversation flow', function () {
     it('complete flow with tomorrow selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addDay()->toDateString(),
             'description' => 'Завтрашнее ДЗ',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -612,10 +657,12 @@ describe('ShowHomework full conversation flow', function () {
     it('complete flow with this week selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
             'description' => 'ДЗ на эту неделю',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -634,10 +681,12 @@ describe('ShowHomework full conversation flow', function () {
     it('complete flow with next week selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
             'description' => 'ДЗ на следующую неделю',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -656,10 +705,21 @@ describe('ShowHomework full conversation flow', function () {
     it('complete flow with custom date', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
+        //Before:
+        //$homework = Homework::factory()->create([
+        //    'class_id' => $class->id,
+        //    'date' => now()->format('Y-m-d'),
+        //    'description' => 'ДЗ на ' . now()->format('d') . ' июня',
+        //]);
+        //After:
+        $subject = Subject::factory()->create([
+            'class_id' => $class->id
+        ]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
             'description' => 'ДЗ на ' . now()->format('d') . ' июня',
+            'subject_id' => $subject->id
         ]);
 
         $bot = bot($user);

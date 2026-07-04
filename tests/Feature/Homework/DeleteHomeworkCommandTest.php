@@ -2,6 +2,7 @@
 
 use App\Models\Classroom;
 use App\Models\Homework;
+use App\Models\Subject;
 use App\Models\User;
 
 describe('DeleteHomework command', function () {
@@ -145,9 +146,11 @@ describe('DeleteHomework date selection', function () {
     it('processes "this week" callback', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -167,9 +170,11 @@ describe('DeleteHomework date selection', function () {
     it('processes "next week" callback', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -264,9 +269,11 @@ describe('DeleteHomework custom date input', function () {
     it('accepts YYYY-MM-DD format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -287,9 +294,11 @@ describe('DeleteHomework custom date input', function () {
     it('accepts DD.MM.YYYY format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -310,9 +319,11 @@ describe('DeleteHomework custom date input', function () {
     it('accepts DD.MM format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -333,9 +344,11 @@ describe('DeleteHomework custom date input', function () {
     it('accepts DD format', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -358,9 +371,11 @@ describe('DeleteHomework homework list display', function () {
     it('shows homeworks for this week', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -376,9 +391,11 @@ describe('DeleteHomework homework list display', function () {
     it('shows homeworks for next week', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -394,9 +411,11 @@ describe('DeleteHomework homework list display', function () {
     it('shows homeworks for custom date', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -428,9 +447,11 @@ describe('DeleteHomework homework list display', function () {
         $class1 = Classroom::factory()->create();
         $class2 = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class1->id]);
+        $subjectOtherClass = Subject::factory()->create(['class_id' => $class2->id]);
         $homeworkOtherClass = Homework::factory()->create([
             'class_id' => $class2->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subjectOtherClass->id,
         ]);
 
         $bot = bot($user);
@@ -445,13 +466,17 @@ describe('DeleteHomework homework list display', function () {
     it('shows homeworks only from current week in date range', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subjectThisWeek = Subject::factory()->create(['class_id' => $class->id]);
         $homeworkThisWeek = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subjectThisWeek->id,
         ]);
+        $subjectNextWeek = Subject::factory()->create(['class_id' => $class->id]);
         $homeworkNextWeek = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'subject_id' => $subjectNextWeek->id,
         ]);
 
         $bot = bot($user);
@@ -469,9 +494,11 @@ describe('DeleteHomework homework selection', function () {
     it('rejects non-callback query at homework selection step', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -488,9 +515,11 @@ describe('DeleteHomework homework selection', function () {
     it('rejects invalid callback data at homework selection step', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -507,9 +536,11 @@ describe('DeleteHomework homework selection', function () {
     it('processes valid homework selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -530,9 +561,11 @@ describe('DeleteHomework deletion', function () {
     it('deletes selected homework from database', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -549,9 +582,11 @@ describe('DeleteHomework deletion', function () {
     it('shows success message after deletion', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -568,9 +603,11 @@ describe('DeleteHomework deletion', function () {
     it('conversation ends after deletion', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -587,9 +624,11 @@ describe('DeleteHomework deletion', function () {
     it('handles already deleted homework gracefully', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -639,9 +678,11 @@ describe('DeleteHomework cancel and edge cases', function () {
     it('cancel works at homework selection step', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -659,9 +700,11 @@ describe('DeleteHomework full conversation flow', function () {
     it('complete flow with this week selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -682,9 +725,11 @@ describe('DeleteHomework full conversation flow', function () {
     it('complete flow with next week selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -705,9 +750,11 @@ describe('DeleteHomework full conversation flow', function () {
     it('complete flow with custom date', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
@@ -747,9 +794,11 @@ describe('DeleteHomework full conversation flow', function () {
     it('complete flow when homework deleted concurrently', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
