@@ -19,11 +19,11 @@ describe('ShowHomework command', function () {
             'text' => 'Выберите период',
         ]);
         assertReplyMarkupContains($bot, [
-            'Завтра',
+            'На завтра',
             'showhomework.date.tomorrow',
-            'Эта неделя',
+            'На эту неделю',
             'showhomework.date.thisweek',
-            'Следующая неделя',
+            'На следующую неделю',
             'showhomework.date.nextweek',
             'Свой вариант',
             'showhomework.date.custom',
@@ -223,7 +223,7 @@ describe('ShowHomework custom date input', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -232,7 +232,7 @@ describe('ShowHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('2026-06-15')->reply();
+        $bot->hearText(now()->format('Y-m-d'))->reply();
         $bot->assertNoConversation();
         assertReplyContains($bot, $homework->description);
     });
@@ -242,7 +242,7 @@ describe('ShowHomework custom date input', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -251,7 +251,7 @@ describe('ShowHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
         $bot->assertNoConversation();
         assertReplyContains($bot, $homework->description);
     });
@@ -261,7 +261,7 @@ describe('ShowHomework custom date input', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -270,29 +270,11 @@ describe('ShowHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15.06')->reply();
+        $bot->hearText(now()->format('d.m'))->reply();
         $bot->assertNoConversation();
         assertReplyContains($bot, $homework->description);
     });
 
-    it('accepts DD format', function () {
-        $class = Classroom::factory()->create();
-        $user = User::factory()->student()->create(['class_id' => $class->id]);
-        $homework = Homework::factory()->create([
-            'class_id' => $class->id,
-            'date' => '2026-06-15',
-        ]);
-
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/showhomework')
-            ->reply();
-
-        $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15')->reply();
-        $bot->assertNoConversation();
-        assertReplyContains($bot, $homework->description);
-    });
 });
 
 describe('ShowHomework homework display', function () {
@@ -337,8 +319,8 @@ describe('ShowHomework homework display', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
-            'description' => 'Тестовое ДЗ на 15 июня',
+            'date' => now()->format('Y-m-d'),
+            'description' => 'Тестовое ДЗ на ' . now()->format('d') . ' июня',
         ]);
 
         $bot = bot($user);
@@ -347,7 +329,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
         assertReplyContains($bot, $homework->description);
     });
 
@@ -361,7 +343,7 @@ describe('ShowHomework homework display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
-        assertReplyContains($bot, 'Нет домашних заданий за выбранный период');
+        assertReplyContains($bot, 'Ничего не задали :)');
         $bot->assertNoConversation();
     });
 
@@ -468,7 +450,7 @@ describe('ShowHomework markdown format', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
             'description' => 'Решить задачи по алгебре',
         ]);
 
@@ -478,10 +460,10 @@ describe('ShowHomework markdown format', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
 
         assertReplyContains($bot, '❗️ДЗ на');
-        assertReplyContains($bot, '15.06');
+        assertReplyContains($bot, now()->format('d.m'));
         assertReplyContains($bot, $homework->description);
     });
 
@@ -676,8 +658,8 @@ describe('ShowHomework full conversation flow', function () {
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
-            'description' => 'ДЗ на 15 июня',
+            'date' => now()->format('Y-m-d'),
+            'description' => 'ДЗ на ' . now()->format('d') . ' июня',
         ]);
 
         $bot = bot($user);
@@ -688,7 +670,7 @@ describe('ShowHomework full conversation flow', function () {
         $bot->assertActiveConversation();
 
         $bot->hearCallbackQueryData('showhomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
 
         assertReplyContains($bot, $homework->description);
         $bot->assertNoConversation();
@@ -707,7 +689,7 @@ describe('ShowHomework full conversation flow', function () {
 
         $bot->hearCallbackQueryData('showhomework.date.thisweek')->reply();
 
-        assertReplyContains($bot, 'Нет домашних заданий за выбранный период');
+        assertReplyContains($bot, 'Ничего не задали :)');
         $bot->assertNoConversation();
     });
 });

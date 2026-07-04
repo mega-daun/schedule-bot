@@ -4,25 +4,33 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Class;
 
-use App\BotCommands\Exceptions\IncorrectMessageException;
+use App\Exceptions\IncorrectMessageException;
 use App\Exceptions\UnknownRoleException;
+use App\Helpers\MessageKeyboardGenerator;
+use App\Helpers\ParserService;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 class ChangeRoleConversation extends Conversation
 {
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
+    {
+    }
+
     public function start(Nutgram $bot)
     {
-        $this->bot = $bot;
-        $user = $this->getUser();
+        $user = $this->getUser($bot);
 
         $classMembers = $this->findClassmembers($user->class_id, $user->id);
 
-        $keyboard = $this->buildUserKeyboard($classMembers);
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'changerole.select',
+            $classMembers,
+            fn (User $member) => '@'.($member->username ?? 'Без имени'),
+            fn (User $member) => $member->id
+        );
 
         $bot->sendMessage(
             text: 'Выберите пользователя',
@@ -32,9 +40,9 @@ class ChangeRoleConversation extends Conversation
         $this->next('handleUserSelection');
     }
 
-    private function getUser(): User
+    private function getUser(Nutgram $bot): User
     {
-        $telegramUser = $this->bot->user();
+        $telegramUser = $bot->user();
 
         return User::findOrFail($telegramUser->id);
     }
@@ -46,41 +54,39 @@ class ChangeRoleConversation extends Conversation
             ->get();
     }
 
-    private function buildUserKeyboard($classMembers): InlineKeyboardMarkup
-    {
-        $buttons = [];
-
-        foreach ($classMembers as $member) {
-            $username = $member->username ?? 'Без имени';
-            $buttons[] = InlineKeyboardButton::make(
-                text: '@'.$username,
-                callback_data: 'changerole.select.'.$member->id
-            );
-        }
-
-        $markup = InlineKeyboardMarkup::make();
-        foreach (array_chunk($buttons, 2) as $btns) {
-            $markup->addRow($btns);
-        }
-
-        return $markup;
-    }
-
     public function handleUserSelection(Nutgram $bot)
     {
-        $this->bot = $bot;
-        try {
-            $callbackData = $this->getSelectedOption();
-        } catch (IncorrectMessageException) {
+        if (! $bot->isCallbackQuery()) {
             $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
             $this->next('handleUserSelection');
 
             return;
         }
 
-        $selectedUserId = $this->parseUserId($callbackData);
+        $callbackData = $bot->callbackQuery()->data;
 
-        $keyboard = $this->buildRoleKeyboard($selectedUserId);
+        if (! str_starts_with($callbackData, 'changerole.select.')) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('handleUserSelection');
+
+            return;
+        }
+
+        $selectedUserId = (int) $this->parser->parseCallbackData($callbackData);
+
+        $roles = collect([
+            ['text' => 'ученик', 'data' => 'ученик_'.$selectedUserId],
+            ['text' => 'учитель', 'data' => 'учитель_'.$selectedUserId],
+            ['text' => 'дежурный', 'data' => 'дежурный_'.$selectedUserId],
+            ['text' => 'админ', 'data' => 'админ_'.$selectedUserId],
+        ]);
+
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'changerole.role',
+            $roles,
+            fn ($role) => $role['text'],
+            fn ($role) => $role['data']
+        );
 
         $bot->sendMessage('Выберите роль',
             reply_markup: $keyboard,
@@ -89,40 +95,37 @@ class ChangeRoleConversation extends Conversation
         $this->next('handleRoleSelection');
     }
 
-    private function getSelectedOption(): string
-    {
-        if (! $this->bot->isCallbackQuery()) {
-            throw new IncorrectMessageException;
-        }
-
-        return $this->bot->callbackQuery()->data;
-    }
-
-    private function parseUserId(string $callbackData): int
-    {
-        if (! str_starts_with($callbackData, 'changerole.select.')) {
-            // don't catch it because it happens when our callback query is wrong
-            throw new IncorrectMessageException;
-        }
-
-        return (int) str_replace('changerole.select.', '', $callbackData);
-
-    }
-
     public function handleRoleSelection(Nutgram $bot)
     {
-        try {
-            $callbackData = $this->getSelectedOption();
-        } catch (IncorrectMessageException) {
+        if (! $bot->isCallbackQuery()) {
             $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
             $this->next('handleRoleSelection');
 
             return;
         }
 
-        [$role, $selectedUserId] = $this->parseRoleAndUserId($callbackData);
+        $callbackData = $bot->callbackQuery()->data;
 
-        $admin = $this->getUser();
+        if (! str_starts_with($callbackData, 'changerole.role.')) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('handleRoleSelection');
+
+            return;
+        }
+
+        $value = $this->parser->parseCallbackData($callbackData);
+
+        if (! str_contains($value, '_')) {
+            $bot->sendMessage('Нажмите на кнопку или введите /cancel для отмены.');
+            $this->next('handleRoleSelection');
+
+            return;
+        }
+
+        [$role, $selectedUserId] = explode('_', $value, 2);
+        $selectedUserId = (int) $selectedUserId;
+
+        $admin = $this->getUser($bot);
 
         if ($selectedUserId === $admin->id) {
             $bot->answerCallbackQuery('Нельзя изменить роль самого себя');
@@ -144,25 +147,6 @@ class ChangeRoleConversation extends Conversation
         $this->end();
     }
 
-    private function parseRoleAndUserId(string $callbackData): array
-    {
-        if (! str_starts_with($callbackData, 'changerole.role.')) {
-            throw new IncorrectMessageException;
-        }
-
-        $role = str_replace('changerole.role.', '', $callbackData);
-
-        if (str_contains($role, '_')) {
-            $parts = explode('_', $role);
-            $role = $parts[0];
-            $userId = (int) $parts[1];
-        } else {
-            throw new IncorrectMessageException;
-        }
-
-        return [$role, $userId];
-    }
-
     private function findUser(int $id): User
     {
         $targetUser = User::find($id);
@@ -172,34 +156,5 @@ class ChangeRoleConversation extends Conversation
         }
 
         return $targetUser;
-    }
-
-    private function buildRoleKeyboard(int $selectedUserId): InlineKeyboardMarkup
-    {
-        $buttons = [
-            InlineKeyboardButton::make(
-                text: 'ученик',
-                callback_data: 'changerole.role.ученик_'.$selectedUserId
-            ),
-            InlineKeyboardButton::make(
-                text: 'учитель',
-                callback_data: 'changerole.role.учитель_'.$selectedUserId
-            ),
-            InlineKeyboardButton::make(
-                text: 'дежурный',
-                callback_data: 'changerole.role.дежурный_'.$selectedUserId
-            ),
-            InlineKeyboardButton::make(
-                text: 'админ',
-                callback_data: 'changerole.role.админ_'.$selectedUserId
-            ),
-        ];
-
-        $markup = InlineKeyboardMarkup::make();
-        foreach (array_chunk($buttons, 2) as $btns) {
-            $markup->addRow($btns);
-        }
-
-        return $markup;
     }
 }

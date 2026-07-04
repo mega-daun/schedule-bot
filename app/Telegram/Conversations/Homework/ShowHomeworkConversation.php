@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace App\Telegram\Conversations\Homework;
 
 use App\Helpers\DateHelper;
+use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\MessageTextGenerator;
+use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use DateTime;
+use Exception;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
-use SergiX44\Nutgram\Telegram\Properties\ParseMode;
 
 class ShowHomeworkConversation extends Conversation
 {
-    use DateHelper;
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
+    {
+    }
 
     public ?int $userId = null;
 
@@ -34,9 +40,16 @@ class ShowHomeworkConversation extends Conversation
 
         $this->userId = $user->id;
 
-        $keyboard = $this->buildDateRangeKeyboard(
-            'showhomework.date',
-            ['tomorrow' => 'Завтра']
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'showhomework.date', 
+            collect([
+                ['text' => 'На завтра', 'data' => 'tomorrow'],
+                ['text' => 'На эту неделю', 'data' => 'thisweek'],
+                ['text' => 'На следующую неделю', 'data' => 'nextweek'],
+                ['text' => 'Свой вариант', 'data' => 'custom'],
+            ]),
+            fn ($item) => $item['text'],
+            fn ($item) => $item['data']
         );
         $bot->sendMessage(text: 'Выберите период', reply_markup: $keyboard);
 
@@ -61,7 +74,7 @@ class ShowHomeworkConversation extends Conversation
             return;
         }
 
-        $selectedRange = $this->parseDateRange($callbackData);
+        $selectedRange = $this->parser->parseCallbackData($callbackData);
 
         if ($selectedRange === 'custom') {
             $bot->sendMessage('Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
@@ -93,15 +106,13 @@ class ShowHomeworkConversation extends Conversation
             return;
         }
 
-        $parsed = $this->parseTextDate($input);
-
-        if ($parsed === null) {
+        $parsed = $this->parser->parseDate($input);
+        if ($parsed == null) {
             $bot->sendMessage('Неверный формат даты. Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
             $this->next('promptDate');
 
             return;
         }
-
         $this->dateRange = $parsed->format('Y-m-d');
 
         $this->showHomework($bot);
@@ -130,13 +141,7 @@ class ShowHomeworkConversation extends Conversation
             ->orderBy('date')
             ->get();
 
-        if ($homeworks->isEmpty()) {
-            $bot->sendMessage('Нет домашних заданий за выбранный период');
-            $this->end();
-
-            return;
-        }
-
+        
         $message = (new MessageTextGenerator)->homeworkView($homeworks, new DateTime($startDate), new DateTime($endDate));
         $bot->sendMessage($message);
         $this->end();
@@ -147,10 +152,5 @@ class ShowHomeworkConversation extends Conversation
         $telegramUser = $bot->user();
 
         return User::findOrFail($telegramUser->id);
-    }
-
-    private function parseDateRange(string $data): string
-    {
-        return explode('.', $data)[2];
     }
 }

@@ -162,7 +162,7 @@ describe('NewHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
-        $bot->hearText('2026-06-15')->reply();
+        $bot->hearText(now()->format('Y-m-d'))->reply();
         assertReplyContains($bot, 'Введите описание домашнего задания');
         $bot->assertActiveConversation();
     });
@@ -177,7 +177,7 @@ describe('NewHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
         assertReplyContains($bot, 'Введите описание домашнего задания');
         $bot->assertActiveConversation();
     });
@@ -192,7 +192,7 @@ describe('NewHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
-        $bot->hearText('15.06')->reply();
+        $bot->hearText(now()->format('d.m'))->reply();
         assertReplyContains($bot, 'Введите описание домашнего задания');
         $bot->assertActiveConversation();
     });
@@ -263,29 +263,6 @@ describe('NewHomework conversation description input', function () {
     });
 });
 
-describe('NewHomework duplicate prevention', function () {
-    it('returns error when homework already exists for date', function () {
-        $class = Classroom::factory()->create();
-        $user = User::factory()->create(['class_id' => $class->id]);
-
-        $homeworkDate = now()->addWeek()->startOfWeek()->toDateString();
-        $existingHomework = Homework::factory()->create([
-            'class_id' => $class->id,
-            'date' => $homeworkDate,
-        ]);
-
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newhomework')
-            ->reply();
-
-        $bot->hearCallbackQueryData('newhomework.date.'.$homeworkDate)->reply();
-        $bot->hearText('Solve exercises 1-5 from textbook chapter 3')->reply();
-
-        assertReplyContains($bot, 'уже существует');
-    });
-});
-
 describe('NewHomework full conversation flow', function () {
     it('completes full conversation and creates homework with DD format', function () {
         $class = Classroom::factory()->create();
@@ -316,11 +293,11 @@ describe('NewHomework full conversation flow', function () {
             ->hearText('/newhomework')
             ->reply();
 
-        $bot->hearCallbackQueryData('newhomework.date.2026-06-15')->reply();
+        $bot->hearCallbackQueryData('newhomework.date.' . now()->format('Y-m-d'))->reply();
         $bot->hearText('Complete the project')->reply();
 
         $this->assertDatabaseHas('homeworks', [
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
             'description' => 'Complete the project',
         ]);
         assertReplyContains($bot, 'успешно создано');

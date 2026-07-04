@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace App\Telegram\Conversations\Homework;
 
 use App\Enums\UserRole;
-use App\Helpers\DateHelper;
+use App\Helpers\MessageKeyboardGenerator;
+use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
-use DateTime;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 class DeleteHomeworkConversation extends Conversation
 {
-    use DateHelper;
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
+    {
+    }
 
     public ?int $userId = null;
 
@@ -42,7 +44,16 @@ class DeleteHomeworkConversation extends Conversation
 
         $this->userId = $user->id;
 
-        $keyboard = $this->buildDateRangeSelectionKeyboard();
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'deletehomework.date',
+            collect([
+                ['text' => 'На эту неделю', 'data' => 'thisweek'],
+                ['text' => 'На следующую неделю', 'data' => 'nextweek'],
+                ['text' => 'Свой вариант', 'data' => 'custom'],
+            ]),
+            fn ($item) => $item['text'],
+            fn ($item) => $item['data']
+        );
         $bot->sendMessage(text: 'Выберите период', reply_markup: $keyboard);
 
         $this->next('dateSelection');
@@ -66,7 +77,7 @@ class DeleteHomeworkConversation extends Conversation
             return;
         }
 
-        $selectedRange = $this->parseDateRange($callbackData);
+        $selectedRange = $this->parser->parseCallbackData($callbackData);
 
         if ($selectedRange === 'custom') {
             $bot->sendMessage('Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
@@ -98,9 +109,8 @@ class DeleteHomeworkConversation extends Conversation
             return;
         }
 
-        $parsed = $this->parseTextDate($input);
-
-        if ($parsed === null) {
+        $parsed = $this->parser->parseDate($input);
+        if ($parsed == null) {
             $bot->sendMessage('Неверный формат даты. Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
             $this->next('promptDate');
 
@@ -130,7 +140,7 @@ class DeleteHomeworkConversation extends Conversation
             return;
         }
 
-        $homeworkId = $this->parseHomeworkId($callbackData);
+        $homeworkId = (int) $this->parser->parseCallbackData($callbackData);
 
         $homework = Homework::find($homeworkId);
 
@@ -190,66 +200,10 @@ class DeleteHomeworkConversation extends Conversation
             return;
         }
 
-        $keyboard = $this->buildHomeworkSelectionKeyboard($homeworks);
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard('deletehomework.select', $homeworks, fn (Homework $hw) => $hw->date->format('d.m') . " - " . $hw->description, fn (Homework $hw) => $hw->id);
         $bot->sendMessage(text: 'Выберите домашнее задание для удаления', reply_markup: $keyboard);
 
         $this->next('homeworkSelection');
     }
 
-    private function buildDateRangeSelectionKeyboard(): InlineKeyboardMarkup
-    {
-        return InlineKeyboardMarkup::make()
-            ->addRow([
-                InlineKeyboardButton::make(
-                    text: 'Эта неделя',
-                    callback_data: 'deletehomework.date.thisweek'
-                ),
-            ])
-            ->addRow([
-                InlineKeyboardButton::make(
-                    text: 'Следующая неделя',
-                    callback_data: 'deletehomework.date.nextweek'
-                ),
-            ])
-            ->addRow([
-                InlineKeyboardButton::make(
-                    text: 'Свой вариант',
-                    callback_data: 'deletehomework.date.custom'
-                ),
-            ]);
-    }
-
-    private function buildHomeworkSelectionKeyboard($homeworks): InlineKeyboardMarkup
-    {
-        $buttons = [];
-
-        foreach ($homeworks as $hw) {
-            $date = (new DateTime($hw->date))->format('d.m');
-            $description = $this->truncateDescription($hw->description);
-            $text = "{$date} - {$description}";
-
-            $buttons[] = InlineKeyboardButton::make(
-                text: $text,
-                callback_data: "deletehomework.select.{$hw->id}"
-            );
-        }
-
-        $markup = InlineKeyboardMarkup::make();
-
-        foreach (array_chunk($buttons, 2) as $row) {
-            $markup->addRow($row);
-        }
-
-        return $markup;
-    }
-
-    private function parseDateRange(string $data): string
-    {
-        return explode('.', $data)[2];
-    }
-
-    private function parseHomeworkId(string $data): int
-    {
-        return (int) explode('.', $data)[2];
-    }
 }

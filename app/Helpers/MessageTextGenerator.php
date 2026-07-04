@@ -11,7 +11,7 @@ class MessageTextGenerator
 {
     public function homeworkView(Collection $homeworks, DateTime $start, DateTime $end): string {
         $parts = [];
-        $homeworks = $homeworks->groupBy('date')->sort();
+        $homeworks = $homeworks->groupBy(fn ($homework) => $homework->date->format('Y-m-d'))->sort();
 
         $parts[] = $this->makeHeader($start, $end);
 

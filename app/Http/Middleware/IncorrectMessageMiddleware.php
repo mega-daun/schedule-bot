@@ -15,6 +15,7 @@ class IncorrectMessageMiddleware
         try {
             $next($bot);
         } catch (IncorrectMessageException $e) {
+            $bot->sendMessage($e->getMessage());
             if ($e->shouldClearConversation()) {
                 $user = $bot->user();
                 if ($user) {
@@ -22,7 +23,6 @@ class IncorrectMessageMiddleware
                 }
             }
 
-            $bot->sendMessage($e->getMessage());
         } catch (\Exception $e) {
             Log::error('Command failed: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),

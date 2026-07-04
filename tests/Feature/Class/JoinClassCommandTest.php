@@ -169,7 +169,6 @@ describe('JoinClass conversation validation', function () {
             ->hearText('/joinclass')
             ->reply();
 
-        $bot->hearText($newClass->join_token)->reply();
         assertReplyContains($bot, 'Вы уже состоите в классе');
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);

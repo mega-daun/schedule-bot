@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Telegram\Conversations\Homework;
 
 use App\Helpers\DateHelper;
+use App\Helpers\MessageKeyboardGenerator;
+use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
@@ -16,8 +20,6 @@ use function Symfony\Component\Clock\now;
 
 class NewHomeworkConversation extends Conversation
 {
-    use DateHelper;
-
     private const MIN_DESCRIPTION_LENGTH = 12;
 
     public ?int $userId = null;
@@ -25,6 +27,10 @@ class NewHomeworkConversation extends Conversation
     public ?string $date = null;
 
     public ?string $description = null;
+
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
+    {
+    }
 
     public function start(Nutgram $bot): void
     {
@@ -39,7 +45,21 @@ class NewHomeworkConversation extends Conversation
 
         $this->userId = $user->id;
 
-        $keyboard = $this->buildDateKeyboard();
+        $dayNum = (int)now()->format('N');
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'newhomework.date',
+            collect([
+                ['text' => 'На следующий понедельник', 'data' => (clone now())->modify('+'.(7 - $dayNum + 1).' days')->format('Y-m-d')],
+                ['text' => 'На следующий вторник', 'data' => (clone now())->modify('+'.(7 - $dayNum + 2).' days')->format('Y-m-d')],
+                ['text' =>'На следующую среду', 'data' => (clone now())->modify('+'.(7 - $dayNum + 3).' days')->format('Y-m-d')],
+                ['text' => 'На следующий четверг', 'data' => (clone now())->modify('+'.(7 - $dayNum + 4).' days')->format('Y-m-d')],
+                ['text' => 'На следующую пятницу', 'data' => (clone now())->modify('+'.(7 - $dayNum + 5).' days')->format('Y-m-d')],
+                ['text' => 'На следующую субботу', 'data' => (clone now())->modify('+'.(7 - $dayNum + 6).' days')->format('Y-m-d')],
+                ['text' => 'Свой вариант', 'data' => 'custom'],
+            ]),
+            fn ($item) => $item['text'],
+            fn ($item) => $item['data']
+        );
         $bot->sendMessage(text: 'Выберите дату', reply_markup: $keyboard);
 
         $this->next('dateSelection');
@@ -63,7 +83,7 @@ class NewHomeworkConversation extends Conversation
             return;
         }
 
-        $selectedDate = $this->parseDate($callbackData);
+        $selectedDate = $this->parser->parseCallbackData($callbackData);
 
         if ($selectedDate === 'custom') {
             $bot->sendMessage('Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
@@ -96,9 +116,8 @@ class NewHomeworkConversation extends Conversation
             return;
         }
 
-        $parsed = $this->parseTextDate($input);
-
-        if ($parsed === null) {
+        $parsed = $this->parser->parseDate(trim($input));
+        if ($parsed == null) {
             $bot->sendMessage('Неверный формат даты. Введите дату в формате ДД, ДД.ММ или ДД.ММ.ГГГГ');
             $this->next('promptDate');
 
@@ -135,17 +154,6 @@ class NewHomeworkConversation extends Conversation
 
         $user = $this->getUser($bot);
 
-        $exists = Homework::where('date', $this->date)
-            ->where('class_id', $user->class_id)
-            ->exists();
-
-        if ($exists) {
-            $bot->sendMessage('Домашнее задание на эту дату уже существует');
-            $this->end();
-
-            return;
-        }
-
         Homework::create([
             'class_id' => $user->class_id,
             'date' => $this->date,
@@ -161,38 +169,5 @@ class NewHomeworkConversation extends Conversation
         $telegramUser = $bot->user();
 
         return User::findOrFail($telegramUser->id);
-    }
-
-    private function buildDateKeyboard(): InlineKeyboardMarkup
-    {
-        $dayNum = (int) now()->format('N');
-
-        $dates = [
-            'На следующий понедельник' => (clone now())->modify('+'.(7 - $dayNum + 1).' days')->format('Y-m-d'),
-            'На следующий вторник' => (clone now())->modify('+'.(7 - $dayNum + 2).' days')->format('Y-m-d'),
-            'На следующую среду' => (clone now())->modify('+'.(7 - $dayNum + 3).' days')->format('Y-m-d'),
-            'На следующий четверг' => (clone now())->modify('+'.(7 - $dayNum + 4).' days')->format('Y-m-d'),
-            'На следующую пятницу' => (clone now())->modify('+'.(7 - $dayNum + 5).' days')->format('Y-m-d'),
-            'На следующую субботу' => (clone now())->modify('+'.(7 - $dayNum + 6).' days')->format('Y-m-d'),
-            'Свой вариант' => 'custom',
-        ];
-
-        $markup = InlineKeyboardMarkup::make();
-
-        foreach ($dates as $name => $date) {
-            $markup->addRow([
-                InlineKeyboardButton::make(
-                    text: $name,
-                    callback_data: "newhomework.date.{$date}"
-                ),
-            ]);
-        }
-
-        return $markup;
-    }
-
-    protected function parseDate(string $data): string
-    {
-        return explode('.', $data)[2];
     }
 }

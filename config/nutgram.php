@@ -11,7 +11,7 @@ return [
     'config' => [
         'api_url' => env('TELEGRAM_API_URL', 'https://api.telegram.org'),
     ],
-
+    
     // Set if the service provider should automatically load
     // handlers from /routes/telegram.php
     'routes' => true,

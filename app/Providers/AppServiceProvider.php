@@ -3,7 +3,10 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use GuzzleHttp\Client;
 use Illuminate\Support\ServiceProvider;
+use SergiX44\Nutgram\Conversations\Conversation;
+use SergiX44\Nutgram\Nutgram;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Conversation::refreshOnDeserialize(true);
     }
 }

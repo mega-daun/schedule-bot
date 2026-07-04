@@ -19,9 +19,9 @@ describe('DeleteHomework command', function () {
             'text' => 'Выберите период',
         ]);
         assertReplyMarkupContains($bot, [
-            'Эта неделя',
+            'На эту неделю',
             'deletehomework.date.thisweek',
-            'Следующая неделя',
+            'На следующую неделю',
             'deletehomework.date.nextweek',
             'Свой вариант',
             'deletehomework.date.custom',
@@ -266,7 +266,7 @@ describe('DeleteHomework custom date input', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -275,12 +275,12 @@ describe('DeleteHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('2026-06-15')->reply();
+        $bot->hearText(now()->format('Y-m-d'))->reply();
         $bot->assertActiveConversation();
         assertReplyContains($bot, 'Выберите домашнее задание для удаления');
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
-            '15.06',
+            now()->format('d.m'),
         ]);
     });
 
@@ -289,7 +289,7 @@ describe('DeleteHomework custom date input', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -298,12 +298,12 @@ describe('DeleteHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
         $bot->assertActiveConversation();
         assertReplyContains($bot, 'Выберите домашнее задание для удаления');
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
-            '15.06',
+            now()->format('d.m'),
         ]);
     });
 
@@ -312,7 +312,7 @@ describe('DeleteHomework custom date input', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -321,12 +321,12 @@ describe('DeleteHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15.06')->reply();
+        $bot->hearText(now()->format('d.m'))->reply();
         $bot->assertActiveConversation();
         assertReplyContains($bot, 'Выберите домашнее задание для удаления');
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
-            '15.06',
+            now()->format('d.m'),
         ]);
     });
 
@@ -335,7 +335,7 @@ describe('DeleteHomework custom date input', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -344,12 +344,12 @@ describe('DeleteHomework custom date input', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15')->reply();
+        $bot->hearText(now()->format('d'))->reply();
         $bot->assertActiveConversation();
         assertReplyContains($bot, 'Выберите домашнее задание для удаления');
         assertReplyMarkupContains($bot, [
             'deletehomework.select.'.$homework->id,
-            '15.06',
+            now()->format('d.m'),
         ]);
     });
 });
@@ -396,7 +396,7 @@ describe('DeleteHomework homework list display', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -405,8 +405,8 @@ describe('DeleteHomework homework list display', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
-        assertReplyContains($bot, '15.06');
+        $bot->hearText(now()->format('d.m.Y'))->reply();
+        assertReplyContains($bot, now()->format('d.m'));
         $bot->assertActiveConversation();
     });
 
@@ -707,7 +707,7 @@ describe('DeleteHomework full conversation flow', function () {
         $user = User::factory()->teacher()->create(['class_id' => $class->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => '2026-06-15',
+            'date' => now()->format('Y-m-d'),
         ]);
 
         $bot = bot($user);
@@ -718,7 +718,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->assertActiveConversation();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
         $bot->hearCallbackQueryData('deletehomework.select.'.$homework->id)->reply();
 
         $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
@@ -738,7 +738,7 @@ describe('DeleteHomework full conversation flow', function () {
         $bot->assertActiveConversation();
 
         $bot->hearCallbackQueryData('deletehomework.date.custom')->reply();
-        $bot->hearText('15.06.2026')->reply();
+        $bot->hearText(now()->format('d.m.Y'))->reply();
 
         assertReplyContains($bot, 'Нет домашних заданий за выбранный период');
         $bot->assertNoConversation();

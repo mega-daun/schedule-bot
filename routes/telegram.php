@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 /** @var Nutgram $bot */
 
+use App\BotCommands\Subject\DeleteSubjectConversation;
+use App\BotCommands\Subject\NewSubjectConversation;
+use App\Http\Middleware\HasClassMembersMiddleware;
+use App\Http\Middleware\HasClassMiddleware;
+use App\Http\Middleware\HasOnDutyRoleMiddleware;
+use App\Http\Middleware\HasSubjectsMiddleware;
 use App\Http\Middleware\IncorrectMessageMiddleware;
 use App\Http\Middleware\IsAdminMiddleware;
 use App\Http\Middleware\NoClassMiddleware;
@@ -55,16 +61,4 @@ $bot->onCommand('newhomework', NewHomeworkConversation::class)->description('Д�
 $bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->description('Удалить домашнее задание');
 
 $bot->onCommand('showhomework', ShowHomeworkConversation::class)->description('Показать домашнее задание');
-$bot->onCommand('newsubject', NewSubjectConversation::class)
-    ->middleware(HasOnDutyRoleMiddleware::class)
-    ->description('Добавить предмет');
-$bot->onCommand('deletesubject', DeleteSubjectConversation::class)
-    ->middleware(HasSubjectsMiddleware::class)
-    ->middleware(HasOnDutyRoleMiddleware::class)
-    ->description('Удалить предмет');
 
-$bot->onCallbackQueryData('deletesubject.select.', DeleteSubjectConversation::class);
-
-$bot->onCommand('newschedule', NewScheduleCommand::class)->description('Добавить расписание');
-$bot->onCommand('newhomework', NewHomeworkCommand::class)->description('Добавить домашнее задание');
-$bot->onCommand('deletehomework', DeleteHomeworkCommand::class)->description('Удалить домашнее задание');

@@ -36,7 +36,7 @@ class Homework extends Model
     protected function casts(): array 
     {
         return [
-            'date' => 'date:m.d',
+            'date' => 'date:Y-m-d',
         ];
     }
 
