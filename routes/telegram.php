@@ -56,7 +56,7 @@ $bot->onCommand('changerole', ChangeRoleConversation::class)
 
 $bot->onCommand('leaveclass', LeaveClassCommand::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.leaveclass'));
 
-$bot->onCommand('newhomework', NewHomeworkConversation::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.newhomework'));
+$bot->onCommand('newhomework', NewHomeworkConversation::class)->middleware(HasSubjectsMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.newhomework'));
 
 $bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.deletehomework'));
 

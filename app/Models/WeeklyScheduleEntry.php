@@ -11,10 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $class_id
+ * @property int $subject_id
  * @property int $weekday
  * @property int $lesson_number
  * @property-read \Carbon\Carbon $created_at
  * @property-read \Carbon\Carbon $updated_at
+ * @property-read Classroom $classroom
+ * @property-read Subject $subject
  */
 class WeeklyScheduleEntry extends Model
 {

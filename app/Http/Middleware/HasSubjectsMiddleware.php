@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Exceptions\IncorrectMessageException;
 use App\Models\User;
 use SergiX44\Nutgram\Nutgram;
 
@@ -14,18 +15,8 @@ class HasSubjectsMiddleware
         $telegramUser = $bot->user();
         $user = User::find($telegramUser->id);
 
-        if (! $user || ! $user->class) {
-            $next($bot);
-
-            return;
-        }
-
         if ($user->class->subjects->isEmpty()) {
-            $bot->sendMessage(
-                text: __('error.class.no_subjects')
-            );
-
-            return;
+            throw new IncorrectMessageException(__('error.class.no_subjects'), true);
         }
 
         $next($bot);

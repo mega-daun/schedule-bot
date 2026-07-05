@@ -11,10 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id
  * @property int $class_id
+ * @property int $subject_id
  * @property \Carbon\Carbon $date
  * @property string $description
  * @property-read \Carbon\Carbon $created_at
  * @property-read \Carbon\Carbon $updated_at
+ * @property-read Classroom $classroom
+ * @property-read Subject $subject
  */
 class Homework extends Model
 {
@@ -31,6 +34,7 @@ class Homework extends Model
         'class_id',
         'date',
         'description',
+        'subject_id'
     ];
 
     protected function casts(): array 

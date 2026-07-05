@@ -8,6 +8,7 @@ use App\Helpers\DateHelper;
 use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
+use App\Models\Subject;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
@@ -27,6 +28,8 @@ class NewHomeworkConversation extends Conversation
     public ?string $date = null;
 
     public ?string $description = null;
+
+    public ?int $subjectId = null;
 
     public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
     {
@@ -87,8 +90,14 @@ class NewHomeworkConversation extends Conversation
 
         $this->date = $selectedDate;
 
-        $bot->sendMessage(__('prompt.homework.enter_description'));
-        $this->next('promptDescription');
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'newhomework.subject', 
+            $this->getUser($bot)->class->subjects, 
+            fn (Subject $item) => $item->name, 
+            fn (Subject $item) => $item->id
+        );
+        $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
+        $this->next('subjectSelection');
     }
 
     public function promptDate(Nutgram $bot): void
@@ -119,6 +128,28 @@ class NewHomeworkConversation extends Conversation
 
         $this->date = $parsed->format('Y-m-d');
 
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
+            'newhomework.subject', 
+            $this->getUser($bot)->class->subjects, 
+            fn (Subject $item) => $item->name, 
+            fn (Subject $item) => $item->id
+        );
+        $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
+        $this->next('subjectSelection');
+    }
+
+    public function subjectSelection(Nutgram $bot): void 
+    {
+        if (! $subjectId = $this->validateCallbackData(
+                $bot, 
+                'newhomework.subject', 
+                'subjectSelection', 
+                fn (string $data) => in_array($data, $this->getUser($bot)->class->subjects->pluck('id')->toArray())
+            )
+        ) {
+            return;
+        }
+        $this->subjectId = (int)$subjectId;
         $bot->sendMessage(__('prompt.homework.enter_description'));
         $this->next('promptDescription');
     }
@@ -151,6 +182,7 @@ class NewHomeworkConversation extends Conversation
             'class_id' => $user->class_id,
             'date' => $this->date,
             'description' => $this->description,
+            'subject_id' => $this->subjectId
         ]);
 
         $bot->sendMessage(__('info.homework.created'));
@@ -162,5 +194,33 @@ class NewHomeworkConversation extends Conversation
         $telegramUser = $bot->user();
 
         return User::findOrFail($telegramUser->id);
+    }
+
+    private function validateCallbackData(Nutgram $bot, string $prefix, string $currentStep, callable|null $additionalValidation = null): string|bool {
+        if (! $bot->isCallbackQuery()) {
+            $bot->sendMessage(__('prompt.general.click_button'));
+            $this->next($currentStep);
+
+            return false;
+        }
+
+        $callbackData = $bot->callbackQuery()->data;
+
+        if (! str_starts_with($callbackData, $prefix)) {
+            $bot->sendMessage(__('prompt.general.click_button'));
+            $this->next($currentStep);
+
+            return false;
+        }
+
+        $data = $this->parser->parseCallbackData($callbackData);
+
+        if ($additionalValidation != null && ! $additionalValidation($data)) {
+            $bot->sendMessage(__('prompt.general.click_button'));
+            $this->next($currentStep);
+
+            return false;
+        }
+        return $data;
     }
 }

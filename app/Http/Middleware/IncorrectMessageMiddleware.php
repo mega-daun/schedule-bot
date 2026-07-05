@@ -17,10 +17,7 @@ class IncorrectMessageMiddleware
         } catch (IncorrectMessageException $e) {
             $bot->sendMessage($e->getMessage());
             if ($e->shouldClearConversation()) {
-                $user = $bot->user();
-                if ($user) {
-                    $bot->endConversation();
-                }
+                $bot->endConversation();
             }
 
         } catch (\Exception $e) {

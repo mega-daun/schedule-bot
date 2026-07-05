@@ -16,6 +16,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $join_token
  * @property-read \Carbon\Carbon $created_at
  * @property-read \Carbon\Carbon $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
+ * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
+ * @property-read \Illuminate\Database\Eloquent\Collection<Subject> $subjects
+ * @property-read \Illuminate\Database\Eloquent\Collection<User> $users
  */
 class Classroom extends Model
 {
@@ -56,6 +60,15 @@ class Classroom extends Model
     public function homeworks(): HasMany
     {
         return $this->hasMany(Homework::class, 'class_id');
+    }
+
+    /**
+     * Get the subjects for this class.
+     *
+     * @return HasMany<Subject>
+     */
+    public function subjects(): HasMany {
+        return $this->hasMany(Subject::class, 'class_id');
     }
 
     public static function generateJoinToken(): string

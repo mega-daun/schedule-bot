@@ -53,7 +53,9 @@ class User extends Model
     }
 
     /**
-     * @return BelongsTo<Classroom>
+     * Get the classroom this user belongs to.
+     *
+     * @return BelongsTo<Classroom, User>
      */
     public function class(): BelongsTo
     {

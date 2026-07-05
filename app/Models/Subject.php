@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property-read \Carbon\Carbon $created_at
  * @property-read \Carbon\Carbon $updated_at
+ * @property-read Classroom $classroom
+ * @property-read \Illuminate\Database\Eloquent\Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
+ * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
  */
 class Subject extends Model
 {
