@@ -21,6 +21,10 @@ return [
         'view_item' => '▫️ :description',
         'view_day' => '⬜️ :weekday(:date)',
     ],
+    'subject' => [
+        'created' => 'Предмет :name успешно создан',
+        'deleted' => 'Предмет :name успешно удалён',
+    ],
     'cancel' => [
         'done' => 'Действие отменено.',
     ],
