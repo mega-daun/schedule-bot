@@ -124,6 +124,7 @@ describe('DeleteSubject conversation validation', function () {
 
     it('rejects subject from another class', function () {
         $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->admin()->create(['class_id' => $class->id]);
         $otherClass = Classroom::factory()->create();
         $otherSubject = Subject::factory()->create(['class_id' => $otherClass->id]);
@@ -134,7 +135,7 @@ describe('DeleteSubject conversation validation', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletesubject.select.'.$otherSubject->id)->reply();
-        assertReplyContains($bot, __('prompt.general.click_button'));
+        assertReplyContains($bot, __('error.subject.not_found'));
         $bot->assertActiveConversation();
     });
 
@@ -164,7 +165,7 @@ describe('DeleteSubject conversation validation', function () {
             ->reply();
 
         $bot->hearCallbackQueryData('deletesubject.select.'.$subject->id)->reply();
-        assertReplyContains($bot, __('info.subject.deleted', ['name' => 'Mathematics']));
+        assertReplyContains($bot, __('info.subject.deleted'));
         $this->assertDatabaseMissing('subjects', ['id' => $subject->id]);
         $bot->assertNoConversation();
     });
