@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\HasClassMembersMiddleware;
 use App\Http\Middleware\HasClassMiddleware;
+use App\Http\Middleware\HasOnDutyRoleMiddleware;
 use App\Http\Middleware\HasSubjectsMiddleware;
 use App\Http\Middleware\IncorrectMessageMiddleware;
 use App\Http\Middleware\IsAdminMiddleware;
@@ -20,11 +21,11 @@ use App\Telegram\Commands\StartCommand;
 use App\Telegram\Conversations\Class\ChangeRoleConversation;
 use App\Telegram\Conversations\Class\JoinClassConversation;
 use App\Telegram\Conversations\Class\NewClassConversation;
-use App\Telegram\Conversations\DeleteSubjectConversation;
 use App\Telegram\Conversations\Homework\DeleteHomeworkConversation;
 use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 use App\Telegram\Conversations\Homework\ShowHomeworkConversation;
-use App\Telegram\Conversations\NewSubjectConversation;
+use App\Telegram\Conversations\Subject\DeleteSubjectConversation;
+use App\Telegram\Conversations\Subject\NewSubjectConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
@@ -61,6 +62,6 @@ $bot->onCommand('deletehomework', DeleteHomeworkConversation::class)->middleware
 
 $bot->onCommand('showhomework', ShowHomeworkConversation::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.showhomework'));
 
-$bot->onCommand('newsubject', NewSubjectConversation::class)->middleware(HasClassMembersMiddleware::class)->description(__('command_descriptions.cmd.newsubject'));
+$bot->onCommand('newsubject', NewSubjectConversation::class)->middleware(HasOnDutyRoleMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.newsubject'));
 
-$bot->onCommand('deletesubject', DeleteSubjectConversation::class)->middleware(HasSubjectsMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.deletesubject'));
+$bot->onCommand('deletesubject', DeleteSubjectConversation::class)->middleware(HasSubjectsMiddleware::class)->middleware(HasOnDutyRoleMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.deletesubject'));

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Telegram\Conversations;
+namespace App\Telegram\Conversations\Subject;
 
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
