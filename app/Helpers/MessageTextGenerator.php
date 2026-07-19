@@ -2,34 +2,33 @@
 
 namespace App\Helpers;
 
-use DateInterval;
-use DatePeriod;
-use DateTime;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class MessageTextGenerator
 {
-    public function homeworkView(Collection $homeworks, DateTime $start, DateTime $end): string {
+    public function homeworkView(Collection $homeworks, Carbon $start, Carbon $end): string
+    {
         $parts = [];
         $homeworks = $homeworks->groupBy(fn ($homework) => $homework->date->format('Y-m-d'))->sort();
 
         $parts[] = $this->makeHeader($start, $end);
 
-        $dateRange = new DatePeriod($start, new DateInterval('P1D'), (clone $end)->modify('+1 day'));
+        $dateRange = $start->toPeriod($end);
         foreach ($dateRange as $date) {
             $parts[] = $this->makeDaySubheader($date);
 
             if ($homeworks->has($date->format('Y-m-d'))) {
                 $parts[] = $this->makeHomeworksList($homeworks[$date->format('Y-m-d')]);
-            }
-            else {
+            } else {
                 $parts[] = $this->makeNoHomeworksMessage();
             }
         }
+
         return implode('', $parts);
     }
 
-    private function makeHeader(DateTime $start, DateTime $end)
+    private function makeHeader(Carbon $start, Carbon $end)
     {
         if ($start->format('Y-m-d') != $end->format('Y-m-d')) {
             return __('info.homework.view_header_range', [
@@ -49,6 +48,7 @@ class MessageTextGenerator
         foreach ($homeworks as $homework) {
             $list .= __('info.homework.view_item', ['description' => $homework->description])."\n";
         }
+
         return $list;
     }
 
@@ -57,11 +57,25 @@ class MessageTextGenerator
         return __('info.homework.no_homework')."\n";
     }
 
-    private function makeDaySubheader(DateTime $day)
+    private function makeDaySubheader(Carbon $day)
     {
         return __('info.homework.view_day', [
             'weekday' => __('general.weekday.'.$day->format('N')),
             'date' => $day->format('d.m'),
         ])."\n";
+    }
+
+    public function scheduleConfirm(array $entries): string
+    {
+        $parts = [];
+        foreach ($entries as $weekDay => $lessons) {
+            $parts[] = __('weekday'.($weekDay + 1));
+            foreach ($lessons as $lesson_num => $subjectName) {
+                $parts[] = ($lesson_num + 1).'. '.$subjectName;
+            }
+            $parts[] = '';
+        }
+
+        return implode('\\n', $parts);
     }
 }

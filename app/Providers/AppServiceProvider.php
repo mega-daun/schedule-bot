@@ -1,12 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Providers;
 
-use GuzzleHttp\Client;
+use App\Repositories\EloquentWeeklyScheduleEntryRepository;
+use App\Repositories\WeeklyScheduleEntryRepository;
 use Illuminate\Support\ServiceProvider;
 use SergiX44\Nutgram\Conversations\Conversation;
-use SergiX44\Nutgram\Nutgram;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(WeeklyScheduleEntryRepository::class, EloquentWeeklyScheduleEntryRepository::class);
     }
 
     /**

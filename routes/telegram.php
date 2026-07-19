@@ -24,6 +24,7 @@ use App\Telegram\Conversations\Class\NewClassConversation;
 use App\Telegram\Conversations\Homework\DeleteHomeworkConversation;
 use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 use App\Telegram\Conversations\Homework\ShowHomeworkConversation;
+use App\Telegram\Conversations\NewScheduleConversation;
 use App\Telegram\Conversations\Subject\DeleteSubjectConversation;
 use App\Telegram\Conversations\Subject\NewSubjectConversation;
 
@@ -65,3 +66,5 @@ $bot->onCommand('showhomework', ShowHomeworkConversation::class)->middleware(Has
 $bot->onCommand('newsubject', NewSubjectConversation::class)->middleware(HasOnDutyRoleMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.newsubject'));
 
 $bot->onCommand('deletesubject', DeleteSubjectConversation::class)->middleware(HasSubjectsMiddleware::class)->middleware(HasOnDutyRoleMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.deletesubject'));
+
+$bot->onCommand('newschedule', NewScheduleConversation::class)->middleware(HasOnDutyRoleMiddleware::class)->middleware(HasSubjectsMiddleware::class)->middleware(HasClassMiddleware::class)->description(__('command_descriptions.cmd.newschedule'));

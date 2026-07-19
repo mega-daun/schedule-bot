@@ -30,6 +30,7 @@ class WeeklyScheduleEntry extends Model
      */
     protected $fillable = [
         'class_id',
+        'subject_id',
         'weekday',
         'lesson_number',
     ];

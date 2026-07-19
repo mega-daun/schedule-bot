@@ -10,42 +10,7 @@ use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 class MessageKeyboardGenerator
 {
-    private function buildDateRangeKeyboard(string $prefix, array $additional_options = []): InlineKeyboardMarkup
-    {
-        $mkup = InlineKeyboardMarkup::make();
-
-        foreach ($additional_options as $option_data => $option_name) {
-            $mkup->addRow([
-                InlineKeyboardButton::make(
-                    text: $option_name,
-                    callback_data: $prefix.'.'.$option_data,
-                ),
-            ]);
-        }
-
-        $mkup->addRow([
-            InlineKeyboardButton::make(
-                text: 'Эта неделя',
-                callback_data: $prefix.'.thisweek'
-            ),
-        ])
-            ->addRow([
-                InlineKeyboardButton::make(
-                    text: 'Следующая неделя',
-                    callback_data: $prefix.'.nextweek'
-                ),
-            ])
-            ->addRow([
-                InlineKeyboardButton::make(
-                    text: 'Свой вариант',
-                    callback_data: $prefix.'.custom'
-                ),
-            ]);
-
-        return $mkup;
-    }
-
-    public function buildSelectionKeyboard(string $prefix, Collection $items, callable $generateText, callable $generateCallbackDataEntry): InlineKeyboardMarkup
+    public function buildSelectionKeyboard(string $prefix, Collection $items, callable $generateText, callable $generateCallbackDataEntry, int $buttons_per_row = 2, array $additional_options = []): InlineKeyboardMarkup
     {
         $buttons = [];
 
@@ -56,9 +21,16 @@ class MessageKeyboardGenerator
             );
         }
 
+        foreach ($additional_options as $opt_data => $opt_name) {
+            $buttons[] = InlineKeyboardButton::make(
+                text: $opt_name,
+                callback_data: $opt_data
+            );
+        }
+
         $markup = InlineKeyboardMarkup::make();
 
-        foreach (array_chunk($buttons, 2) as $row) {
+        foreach (array_chunk($buttons, $buttons_per_row) as $row) {
             $markup->addRow($row);
         }
 

@@ -95,4 +95,4 @@ uses(TestCase::class)
     ->beforeEach(function () {
         Bus::fake();
     })
-    ->in('Feature');
+    ->in('Feature', 'Unit');

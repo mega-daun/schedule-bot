@@ -4,24 +4,18 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
-use App\Helpers\DateHelper;
 use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\MessageTextGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
-use Carbon\Carbon;
-use Carbon\Exceptions\InvalidFormatException;
-use DateTime;
-use Exception;
+use Illuminate\Support\Carbon;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 
 class ShowHomeworkConversation extends Conversation
 {
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
-    {
-    }
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
 
     public ?int $userId = null;
 
@@ -141,8 +135,7 @@ class ShowHomeworkConversation extends Conversation
             ->orderBy('date')
             ->get();
 
-
-        $message = (new MessageTextGenerator)->homeworkView($homeworks, new DateTime($startDate), new DateTime($endDate));
+        $message = (new MessageTextGenerator)->homeworkView($homeworks, Carbon::parse($startDate), Carbon::parse($endDate));
         $bot->sendMessage($message);
         $this->end();
     }

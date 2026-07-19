@@ -22,4 +22,9 @@ return [
     'general' => [
         'no_name' => 'Без имени',
     ],
+    'schedule' => [
+        'done' => 'Готово',
+        'confirm_yes' => 'Да',
+        'confirm_no' => 'Нет',
+    ],
 ];
