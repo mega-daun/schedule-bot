@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
-use App\Repositories\EloquentWeeklyScheduleEntryRepository;
-use App\Repositories\WeeklyScheduleEntryRepository;
+use App\Repositories\EloquentScheduleRepository;
+use App\Repositories\ScheduleRepository;
 use Illuminate\Support\ServiceProvider;
 use SergiX44\Nutgram\Conversations\Conversation;
 
@@ -16,7 +16,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(WeeklyScheduleEntryRepository::class, EloquentWeeklyScheduleEntryRepository::class);
+        $this->app->bind(ScheduleRepository::class, EloquentScheduleRepository::class);
     }
 
     /**

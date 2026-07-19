@@ -6,7 +6,7 @@ namespace App\Repositories;
 
 use App\DataObjects\Schedule\Schedule;
 
-interface WeeklyScheduleEntryRepository
+interface ScheduleRepository
 {
     /**
      * @return Schedule $schedule

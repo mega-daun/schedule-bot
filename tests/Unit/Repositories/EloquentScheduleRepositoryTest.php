@@ -5,11 +5,11 @@ declare(strict_types=1);
 use App\DataObjects\Schedule\Schedule;
 use App\Models\Classroom;
 use App\Models\Subject;
-use App\Repositories\EloquentWeeklyScheduleEntryRepository;
+use App\Repositories\EloquentScheduleRepository;
 use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
-    $this->repo = new EloquentWeeklyScheduleEntryRepository();
+    $this->repo = new EloquentScheduleRepository();
 });
 
 it('returns true for empty schedule', function () {

@@ -7,7 +7,7 @@ namespace App\Repositories;
 use App\DataObjects\Schedule\Schedule;
 use Illuminate\Support\Facades\DB;
 
-class EloquentWeeklyScheduleEntryRepository implements WeeklyScheduleEntryRepository
+class EloquentScheduleRepository implements ScheduleRepository
 {
     public function createSchedule(Schedule $schedule, int $class_id): bool
     {
