@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use Illuminate\Support\Collection;
+use App\DataObjects\Schedule\Schedule;
 
 interface WeeklyScheduleEntryRepository
 {
     /**
-     * @param  Collection<int, array{subject_id: int, weekday: int, lesson_number: int}>  $entries
-     * @return Collection<int, array{id: int, subject_id: int, weekday: int, lesson_number: int}>
+     * @return Schedule $schedule
      */
-    public function createSchedule(Collection $entries): Collection;
+    public function createSchedule(Schedule $schedule, int $class_id): bool;
 }

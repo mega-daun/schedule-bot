@@ -4,29 +4,21 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
-use App\Models\WeeklyScheduleEntry;
-use Illuminate\Support\Collection;
+use App\DataObjects\Schedule\Schedule;
 use Illuminate\Support\Facades\DB;
 
 class EloquentWeeklyScheduleEntryRepository implements WeeklyScheduleEntryRepository
 {
-    public function createSchedule(Collection $entries): Collection
+    public function createSchedule(Schedule $schedule, int $class_id): bool
     {
-        if ($entries->isEmpty()) {
-            return Collection::make();
+        $entries = collect();
+        foreach ($schedule->getWeekdays() as $weekday) {
+            foreach ($weekday->getLessons() as $lesson) {
+                $entries->add(['subject_id' => $lesson->getSubjectId(), 'lesson_number' => $lesson->getNumber(), 'weekday' => $lesson->getWeekday(), 'class_id' => $class_id]);
+            }
         }
 
-        DB::table('weekly_schedule_entries')
+        return DB::table('weekly_schedule_entries')
             ->insert($entries->all());
-
-        $lastId = (int) DB::connection()->getPdo()->lastInsertId();
-
-        $startId = $lastId - $entries->count() + 1;
-
-        $rows = $entries
-            ->map(fn (array $entry, int $i): array => array_merge($entry, ['id' => $startId + $i]))
-            ->toArray();
-
-        return WeeklyScheduleEntry::query()->hydrate($rows);
     }
 }
