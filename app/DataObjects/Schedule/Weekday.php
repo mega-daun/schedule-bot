@@ -87,6 +87,19 @@ class Weekday
     }
 
     /**
+     * Get a list of subjects taught on this weekday.
+     *
+     * Returns each subject as an associative array with `id` and `name` keys,
+     * one entry per lesson (duplicates are preserved).
+     *
+     * @return Collection<int, array{id: int, name: string}>
+     */
+    public function getSubjects(): Collection
+    {
+        return $this->getLessons()->map(fn (Lesson $lesson) => ['id' => $lesson->getSubjectId(), 'name' => $lesson->getSubjectName()]);
+    }
+
+    /**
      * Append a new lesson at the end of this weekday.
      *
      * @param  int  $subjectId  The subject identifier.

@@ -3,25 +3,23 @@
 declare(strict_types=1);
 
 use App\Actions\Schedule\CreateScheduleAction;
+use App\DataObjects\Schedule\Schedule;
 use App\Exceptions\InvalidInputException;
 use App\Models\Classroom;
 use App\Models\Subject;
-use App\Repositories\WeeklyScheduleEntryRepository;
-use Illuminate\Support\Collection;
+use App\Repositories\ScheduleRepository;
 
 afterEach(function () {
     Mockery::close();
 });
 
 it('rejects non-existent class', function () {
-    $repository = Mockery::mock(WeeklyScheduleEntryRepository::class);
+    $repository = Mockery::mock(ScheduleRepository::class);
 
-    $entries = Collection::make([
-        ['class_id' => 999, 'subject_id' => 1, 'weekday' => 1, 'lesson_number' => 1],
-    ]);
+    $schedule = new Schedule();
 
     $action = new CreateScheduleAction(repository: $repository);
-    $action(class_id: 999, entries: $entries);
+    $action(class_id: 999, schedule: $schedule);
 })->throws(InvalidInputException::class);
 
 it('rejects subject not belonging to class', function () {
@@ -29,66 +27,57 @@ it('rejects subject not belonging to class', function () {
     $otherClassroom = Classroom::factory()->create();
     $subject = Subject::factory()->create(['class_id' => $otherClassroom->id]);
 
-    $repository = Mockery::mock(WeeklyScheduleEntryRepository::class);
+    $repository = Mockery::mock(ScheduleRepository::class);
 
-    $entries = Collection::make([
-        ['class_id' => $classroom->id, 'subject_id' => $subject->id, 'weekday' => 1, 'lesson_number' => 1],
-    ]);
+    $schedule = new Schedule();
+    $schedule->addLesson(1, $subject->id, $subject->name);
 
     $action = new CreateScheduleAction(repository: $repository);
-    $action(class_id: $classroom->id, entries: $entries);
+    $action(class_id: $classroom->id, schedule: $schedule);
 })->throws(InvalidInputException::class);
 
 it('rejects non-existent subject', function () {
     $classroom = Classroom::factory()->create();
 
-    $repository = Mockery::mock(WeeklyScheduleEntryRepository::class);
+    $repository = Mockery::mock(ScheduleRepository::class);
 
-    $entries = Collection::make([
-        ['class_id' => $classroom->id, 'subject_id' => 99999, 'weekday' => 1, 'lesson_number' => 1],
-    ]);
+    $schedule = new Schedule();
+    $schedule->addLesson(1, 99999, 'Non-existent Subject');
 
     $action = new CreateScheduleAction(repository: $repository);
-    $action(class_id: $classroom->id, entries: $entries);
+    $action(class_id: $classroom->id, schedule: $schedule);
 })->throws(InvalidInputException::class);
 
 it('calls repository and returns result on success', function () {
     $classroom = Classroom::factory()->create();
     $subjects = Subject::factory()->count(2)->create(['class_id' => $classroom->id]);
 
-    $entries = Collection::make([
-        ['class_id' => $classroom->id, 'subject_id' => $subjects[0]->id, 'weekday' => 1, 'lesson_number' => 1],
-        ['class_id' => $classroom->id, 'subject_id' => $subjects[1]->id, 'weekday' => 1, 'lesson_number' => 2],
-    ]);
+    $schedule = new Schedule();
+    $schedule->addLesson(1, $subjects[0]->id, $subjects[0]->name);
+    $schedule->addLesson(1, $subjects[1]->id, $subjects[1]->name);
 
-    $expectedResult = Collection::make([
-        ['id' => 1, 'class_id' => $classroom->id, 'subject_id' => $subjects[0]->id, 'weekday' => 1, 'lesson_number' => 1],
-        ['id' => 2, 'class_id' => $classroom->id, 'subject_id' => $subjects[1]->id, 'weekday' => 1, 'lesson_number' => 2],
-    ]);
-
-    $repository = Mockery::mock(WeeklyScheduleEntryRepository::class);
+    $repository = Mockery::mock(ScheduleRepository::class);
     $repository->shouldReceive('createSchedule')
         ->once()
-        ->with($entries)
-        ->andReturn($expectedResult);
+        ->with($schedule, $classroom->id)
+        ->andReturn(true);
 
     $action = new CreateScheduleAction(repository: $repository);
-    $result = $action(class_id: $classroom->id, entries: $entries);
+    $result = $action(class_id: $classroom->id, schedule: $schedule);
 
-    expect($result)->toBe($expectedResult);
+    expect($result)->toBeTrue();
 });
 
 it('validates multiple subjects with single query', function () {
     $classroom = Classroom::factory()->create();
     $validSubject = Subject::factory()->create(['class_id' => $classroom->id]);
 
-    $repository = Mockery::mock(WeeklyScheduleEntryRepository::class);
+    $repository = Mockery::mock(ScheduleRepository::class);
 
-    $entries = Collection::make([
-        ['class_id' => $classroom->id, 'subject_id' => $validSubject->id, 'weekday' => 1, 'lesson_number' => 1],
-        ['class_id' => $classroom->id, 'subject_id' => 99999, 'weekday' => 1, 'lesson_number' => 2],
-    ]);
+    $schedule = new Schedule();
+    $schedule->addLesson(1, $validSubject->id, $validSubject->name);
+    $schedule->addLesson(1, 99999, 'Non-existent Subject');
 
     $action = new CreateScheduleAction(repository: $repository);
-    $action(class_id: $classroom->id, entries: $entries);
+    $action(class_id: $classroom->id, schedule: $schedule);
 })->throws(InvalidInputException::class);

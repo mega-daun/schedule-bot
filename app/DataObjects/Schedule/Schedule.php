@@ -94,6 +94,28 @@ class Schedule
     }
 
     /**
+     * Get subjects from the schedule, optionally filtered by weekday.
+     *
+     * When no weekday is specified, subjects from all weekdays are flattened
+     * into a single collection. When a weekday is provided, only that day's
+     * subjects are returned.
+     *
+     * @param  int|null  $weekday  Day of week (1 = Monday, 7 = Sunday), or null for all days.
+     *
+     * @return Collection<int, array{id: int, name: string}>
+     *
+     * @throws InvalidArgumentException If $weekday is not a valid work day.
+     */
+    public function getSubjects(?int $weekday = null): Collection
+    {
+        if ($weekday == null) {
+            return $this->getWeekdays()->flatMap(fn (Weekday $weekday) => $weekday->getSubjects());
+        }
+
+        return $this->getWeekday($weekday)->getSubjects();
+    }
+
+    /**
      * Append a lesson to the end of the specified weekday.
      *
      * @param  int  $weekday  Day of week (1–7).
@@ -157,8 +179,12 @@ class Schedule
      * @param  int  $weekday  Day of week (1–7).
      * @return Collection<int, Lesson>
      */
-    public function getLessons(int $weekday): Collection
+    public function getLessons(?int $weekday = null): Collection
     {
+        if (is_null($weekday)) {
+            return $this->getWeekdays()->flatMap(fn (Weekday $weekday) => $weekday->getLessons());
+        }
+
         return $this->getWeekday($weekday)->getLessons();
     }
 

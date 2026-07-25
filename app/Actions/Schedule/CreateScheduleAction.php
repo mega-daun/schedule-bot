@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace App\Actions\Schedule;
 
+use App\DataObjects\Schedule\Schedule;
 use App\Exceptions\InvalidInputException;
 use App\Models\Classroom;
 use App\Models\Subject;
-use App\Repositories\WeeklyScheduleEntryRepository;
-use Illuminate\Support\Collection;
+use App\Repositories\ScheduleRepository;
 
 class CreateScheduleAction
 {
     public function __construct(
-        private WeeklyScheduleEntryRepository $repository,
+        private ScheduleRepository $repository,
     ) {}
 
-    public function __invoke(int $class_id, Collection $entries): Collection
+    public function __invoke(int $class_id, Schedule $schedule): bool
     {
         $classroom = Classroom::find($class_id);
 
@@ -24,7 +24,7 @@ class CreateScheduleAction
             throw new InvalidInputException(__('error.class.not_member'));
         }
 
-        $subjectIds = $entries->pluck('subject_id')->unique()->values()->toArray();
+        $subjectIds = $schedule->getSubjects()->pluck('id')->unique()->toArray();
 
         $validCount = Subject::where('class_id', $class_id)
             ->whereIn('id', $subjectIds)
@@ -34,6 +34,6 @@ class CreateScheduleAction
             throw new InvalidInputException(__('error.subject.not_found'));
         }
 
-        return $this->repository->createSchedule($entries);
+        return $this->repository->createSchedule($schedule, $class_id);
     }
 }
