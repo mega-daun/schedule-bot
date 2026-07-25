@@ -6,8 +6,10 @@ namespace App\DataObjects\Schedule;
 
 use App\Exceptions\InvalidWeekdayException;
 use App\Models\Subject;
+use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
+use JsonException;
 
 /**
  * Representation of a full weekly schedule.
@@ -25,7 +27,7 @@ use InvalidArgumentException;
  * $schedule = Schedule::fromWeekdays($collection);
  * ```
  */
-class Schedule
+class Schedule implements Jsonable
 {
     /**
      * @var Collection<int, Weekday> Weekdays keyed by day number (1–7).
@@ -101,7 +103,6 @@ class Schedule
      * subjects are returned.
      *
      * @param  int|null  $weekday  Day of week (1 = Monday, 7 = Sunday), or null for all days.
-     *
      * @return Collection<int, array{id: int, name: string}>
      *
      * @throws InvalidArgumentException If $weekday is not a valid work day.
@@ -209,5 +210,42 @@ class Schedule
         if (! in_array($number, $this->workDays) || $number > 7 || $number < 1) {
             throw new InvalidArgumentException;
         }
+    }
+
+    public function toJson($options = 0): string
+    {
+        $payload = [
+            'lessons' => $this->getWeekdays()
+                ->flatMap(
+                    fn (Weekday $weekday) => $weekday->getLessons()->toArray()
+                )->values(),
+            'work_days' => $this->workDays,
+        ];
+
+        return json_encode($payload, $options);
+    }
+
+    public static function fromJson(string $json): static
+    {
+        $data = json_decode($json, true);
+        if (is_null($data) || ! isset($data['lessons']) || ! isset($data['work_days']) || ! is_array($data['lessons']) || ! is_array($data['work_days'])) {
+            throw new JsonException('Invalid schedule structure');
+        }
+        [$lessons, $workDays] = [$data['lessons'], $data['work_days']];
+        try {
+            $schedule = new static($workDays);
+        } catch (InvalidArgumentException) {
+            throw new JsonException('Invalid work days');
+        }
+        $lessons = collect($lessons);
+        if (! $lessons->every(fn ($lesson) => is_array($lesson) && isset($lesson['weekday']) && is_int($lesson['weekday']) && in_array($lesson['weekday'], $workDays) && isset($lesson['lesson_number']) && is_int($lesson['lesson_number']) && isset($lesson['subject_id']) && is_int($lesson['subject_id']) && isset($lesson['subject_name']) && is_string($lesson['subject_name']))) {
+            throw new JsonException('Invalid lesson structure');
+        }
+        $lessons = $lessons->sortBy('weekday')->sortBy('lesson_number');
+        foreach ($lessons as $lesson) {
+            $schedule->addLesson($lesson['weekday'], $lesson['subject_id'], $lesson['subject_name']);
+        }
+
+        return $schedule;
     }
 }

@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\DataObjects\Schedule;
 
+use Illuminate\Contracts\Support\Arrayable;
+
 /**
  * Immutable value object representing a single lesson within a weekday schedule.
  *
  * A Lesson ties a subject to a specific position (number) within a weekday.
  * It is always created and managed by a {@see Weekday} instance.
  */
-class Lesson
+class Lesson implements Arrayable
 {
     /**
      * @param  int  $weekday  Day of week (1 = Monday, 7 = Sunday).
@@ -55,5 +57,15 @@ class Lesson
     public function getWeekday(): int
     {
         return $this->weekday;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'subject_id' => $this->subjectId,
+            'subject_name' => $this->subjectName,
+            'weekday' => $this->weekday,
+            'lesson_number' => $this->number,
+        ];
     }
 }
