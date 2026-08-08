@@ -34,6 +34,8 @@ class CreateScheduleAction
             throw new InvalidInputException(__('error.subject.not_found'));
         }
 
+        $this->repository->purgeSchedule($class_id);
+
         return $this->repository->createSchedule($schedule, $class_id);
     }
 }

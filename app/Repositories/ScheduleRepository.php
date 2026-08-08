@@ -8,8 +8,7 @@ use App\DataObjects\Schedule\Schedule;
 
 interface ScheduleRepository
 {
-    /**
-     * @return Schedule $schedule
-     */
     public function createSchedule(Schedule $schedule, int $class_id): bool;
+
+    public function purgeSchedule(int $class_id): bool;
 }

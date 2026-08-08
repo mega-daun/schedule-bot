@@ -21,4 +21,9 @@ class EloquentScheduleRepository implements ScheduleRepository
         return DB::table('weekly_schedule_entries')
             ->insert($entries->all());
     }
+
+    public function purgeSchedule(int $class_id): bool
+    {
+        return DB::table('weekly_schedule_entries')->where('class_id', $class_id)->delete() > 0;
+    }
 }

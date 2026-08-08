@@ -3,6 +3,7 @@
 use App\Models\Classroom;
 use App\Models\Subject;
 use App\Models\User;
+use App\Models\WeeklyScheduleEntry;
 
 describe('NewSchedule access control', function () {
     it('returns error when user not in any class', function () {
@@ -628,6 +629,26 @@ describe('Schedule creation and completion', function () {
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
         $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 2);
+    });
+
+    it('resets previous schedule entries', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
+        $scheduleEntry = WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject2->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertModelMissing($scheduleEntry);
         $this->assertDatabaseCount('weekly_schedule_entries', 2);
     });
 
