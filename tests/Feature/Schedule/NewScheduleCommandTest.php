@@ -4,7 +4,7 @@ use App\Models\Classroom;
 use App\Models\Subject;
 use App\Models\User;
 
-describe('NewSchedule command', function () {
+describe('NewSchedule access control', function () {
     it('returns error when user not in any class', function () {
         $user = User::factory()->create(['class_id' => null]);
         $bot = bot($user);
@@ -16,6 +16,7 @@ describe('NewSchedule command', function () {
 
     it('returns error when user has Student role', function () {
         $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
@@ -42,7 +43,7 @@ describe('NewSchedule command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
+        assertReplyContains($bot, __('prompt.schedule.select_weekdays'));
         $bot->assertActiveConversation();
     });
 
@@ -54,7 +55,7 @@ describe('NewSchedule command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
+        assertReplyContains($bot, __('prompt.schedule.select_weekdays'));
         $bot->assertActiveConversation();
     });
 
@@ -66,7 +67,7 @@ describe('NewSchedule command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
+        assertReplyContains($bot, __('prompt.schedule.select_weekdays'));
         $bot->assertActiveConversation();
     });
 
@@ -90,8 +91,8 @@ describe('NewSchedule command', function () {
     });
 });
 
-describe('NewSchedule subject selection', function () {
-    it('shows Monday menu with correct text', function () {
+describe('Weekday selection menu', function () {
+    it('shows weekday selection menu after /newschedule', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -99,21 +100,27 @@ describe('NewSchedule subject selection', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
+        assertReplyContains($bot, __('prompt.schedule.select_weekdays'));
         $bot->assertActiveConversation();
     });
 
-    it('menu contains all subjects as buttons', function () {
+    it('menu contains all 7 weekday buttons', function () {
         $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $subject3 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Chemistry']);
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        assertReplyMarkupContains($bot, ['Mathematics', 'Physics', 'Chemistry', 'Готово']);
+        assertReplyMarkupContains($bot, [
+            __('general.weekday.1'),
+            __('general.weekday.2'),
+            __('general.weekday.3'),
+            __('general.weekday.4'),
+            __('general.weekday.5'),
+            __('general.weekday.6'),
+            __('general.weekday.7'),
+        ]);
         $bot->assertActiveConversation();
     });
 
@@ -129,112 +136,23 @@ describe('NewSchedule subject selection', function () {
         $bot->assertActiveConversation();
     });
 
-    it('selecting subject adds marker via editMessage', function () {
+    it('callback data format is correct for weekdays', function () {
         $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->assertReplyMessage(['text' => __('prompt.schedule.select_subjects', ['weekday' => 'понедельник'])], index: 0);
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('selecting second subject adds marker', function () {
-        $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)', 'Physics✅ (2)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('unmarking subject removes marker', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics']);
-        assertReplyMarkupNotContains($bot, ['Mathematics✅ (1)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('unmarking decrements subsequent numbers', function () {
-        $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $subject3 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Chemistry']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject3->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)', 'Chemistry✅ (2)', 'Physics']);
-        $bot->assertActiveConversation();
-    });
-
-    it('subject stays in menu when unmarked', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics']);
-        $bot->assertActiveConversation();
-    });
-
-    it('can select all subjects', function () {
-        $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)', 'Physics✅ (2)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('can deselect all subjects', function () {
-        $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics', 'Physics']);
-        assertReplyMarkupNotContains($bot, ['Mathematics✅ (1)', 'Physics✅ (1)']);
+        assertReplyMarkupContains($bot, [
+            'newschedule.weekday.add.1',
+            'newschedule.weekday.add.2',
+            'newschedule.weekday.add.3',
+            'newschedule.weekday.add.4',
+            'newschedule.weekday.add.5',
+            'newschedule.weekday.add.6',
+            'newschedule.weekday.add.7',
+        ]);
         $bot->assertActiveConversation();
     });
 
@@ -251,7 +169,7 @@ describe('NewSchedule subject selection', function () {
         $bot->assertActiveConversation();
     });
 
-    it('non-callback at selection step shows error', function () {
+    it('non-callback at weekday selection step shows error', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -265,22 +183,153 @@ describe('NewSchedule subject selection', function () {
     });
 });
 
-describe('NewSchedule confirmation flow', function () {
-    it('clicking Готово shows preview', function () {
+describe('Weekday marking and unmarking', function () {
+    it('clicking unmarked weekday marks it with checkmark', function () {
         $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        assertReplyContains($bot, __('prompt.schedule.schedule_preview', ['weekday' => 'понедельник']));
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        assertReplyMarkupContains($bot, [__('general.weekday.1').'✅']);
         $bot->assertActiveConversation();
     });
 
-    it('preview format is correct', function () {
+    it('clicking marked weekday unmarks it', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.remove.1')->reply();
+        assertReplyMarkupNotContains($bot, [__('general.weekday.1').'✅']);
+        $bot->assertActiveConversation();
+    });
+
+    it('multiple weekdays can be marked', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.5')->reply();
+        assertReplyMarkupContains($bot, [
+            __('general.weekday.1').'✅',
+            __('general.weekday.3').'✅',
+            __('general.weekday.5').'✅',
+        ]);
+        $bot->assertActiveConversation();
+    });
+
+    it('marking does not show order numbers', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.2')->reply();
+        assertReplyMarkupNotContains($bot, ['(1)', '(2)']);
+        assertReplyMarkupContains($bot, [
+            __('general.weekday.1').'✅',
+            __('general.weekday.2').'✅',
+        ]);
+        $bot->assertActiveConversation();
+    });
+
+    it('menu shows current state after each toggle', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        assertReplyMarkupContains($bot, [__('general.weekday.1').'✅']);
+        assertReplyMarkupNotContains($bot, [__('general.weekday.2').'✅']);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        assertReplyMarkupContains($bot, [
+            __('general.weekday.1').'✅',
+            __('general.weekday.3').'✅',
+        ]);
+        assertReplyMarkupNotContains($bot, [__('general.weekday.2').'✅']);
+        $bot->assertActiveConversation();
+    });
+});
+
+describe('Weekday selection completion', function () {
+    it('clicking Готово with marked weekdays begins creation', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.1'))]));
+        $bot->assertActiveConversation();
+    });
+
+    it('clicking Готово with no marked weekdays shows error', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.should_have_workdays'));
+        $bot->assertActiveConversation();
+    });
+
+    it('marked weekdays are processed in ascending order', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.5')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.1'))]));
+        $bot->assertActiveConversation();
+    });
+});
+
+describe('Lesson selection per weekday', function () {
+    it('shows creating schedule message with correct weekday', function () {
+        $class = Classroom::factory()->create();
+        Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.1'))]));
+        $bot->assertActiveConversation();
+    });
+
+    it('menu contains all subjects as buttons', function () {
         $class = Classroom::factory()->create();
         $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
@@ -290,15 +339,62 @@ describe('NewSchedule confirmation flow', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject3->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        assertReplyContains($bot, '1. Mathematics\\n2. Physics\\n3. Chemistry');
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyMarkupContains($bot, ['Mathematics', 'Physics', 'Chemistry'], 1);
         $bot->assertActiveConversation();
     });
 
-    it('preview shows Нет уроков for empty', function () {
+    it('menu contains Готово button', function () {
+        $class = Classroom::factory()->create();
+        $s = Subject::factory()->create(['class_id' => $class->id]);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$s->id)->reply();
+        assertReplyMarkupContains($bot, ['Готово'], 0);
+        $bot->assertActiveConversation();
+    });
+
+    it('selecting subject shows fresh menu for next lesson', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        assertReplyMarkupContains($bot, ['Mathematics']);
+        assertReplyMarkupNotContains($bot, ['Mathematics✅']);
+        $bot->assertActiveConversation();
+    });
+
+    it('same subject can be selected for multiple lessons', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        assertReplyContains($bot, '1. Mathematics', 0);
+        assertReplyContains($bot, '2. Mathematics', 0);
+        $bot->assertActiveConversation();
+    });
+
+    it('Готово with no subjects goes to confirmation with no lessons', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -306,43 +402,33 @@ describe('NewSchedule confirmation flow', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
         assertReplyContains($bot, __('prompt.schedule.no_lessons'));
         $bot->assertActiveConversation();
     });
 
-    it('confirming moves to Tuesday', function () {
+    it('Готово with subjects shows numbered list preview', function () {
         $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'вторник']));
+        assertReplyContains($bot, '1. Mathematics');
+        assertReplyContains($bot, '2. Physics');
         $bot->assertActiveConversation();
     });
 
-    it('not confirming returns to menu', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.no')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('confirmation buttons are Да and Нет', function () {
+    it('invalid callback at lesson selection shows error', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -350,14 +436,16 @@ describe('NewSchedule confirmation flow', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        assertReplyMarkupContains($bot, ['Да', 'Нет']);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('invalid.data')->reply();
+        assertReplyContains($bot, __('prompt.general.click_button'));
         $bot->assertActiveConversation();
     });
 });
 
-describe('NewSchedule weekday progression', function () {
-    it('Monday to Tuesday progression', function () {
+describe('Per-weekday confirmation', function () {
+    it('shows preview of this weekdays schedule', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -365,32 +453,31 @@ describe('NewSchedule weekday progression', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'вторник']));
+        assertReplyContains($bot, __('prompt.schedule.schedule_preview', ['weekday' => strtolower(__('general.weekday.1'))]));
         $bot->assertActiveConversation();
     });
 
-    it('Tuesday to Wednesday progression', function () {
+    it('confirmation buttons are Да and Нет', function () {
         $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $s = Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$s->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'среда']));
+        assertReplyMarkupContains($bot, ['Да', 'Нет'], 1);
         $bot->assertActiveConversation();
     });
 
-    it('Wednesday to Thursday progression', function () {
+    it('clicking Да moves to next marked weekday', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -398,20 +485,17 @@ describe('NewSchedule weekday progression', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
         $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'четверг']));
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.3'))]));
         $bot->assertActiveConversation();
     });
 
-    it('Thursday to Friday progression', function () {
+    it('clicking Нет clears current weekday and restarts lesson selection', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -419,16 +503,16 @@ describe('NewSchedule weekday progression', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 4; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'пятница']));
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.no')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.1'))]));
         $bot->assertActiveConversation();
     });
 
-    it('Friday to Saturday progression', function () {
+    it('after Нет, previous selections are forgotten', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -436,64 +520,19 @@ describe('NewSchedule weekday progression', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 5; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'суббота']));
-        $bot->assertActiveConversation();
-    });
-
-    it('each day shows correct Russian name', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'понедельник']));
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'вторник']));
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.no')->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'среда']));
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'четверг']));
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'пятница']));
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyContains($bot, __('prompt.schedule.select_subjects', ['weekday' => 'суббота']));
-    });
-
-    it('each day starts fresh', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        assertReplyMarkupNotContains($bot, ['Mathematics✅ (1)']);
+        assertReplyContains($bot, __('prompt.schedule.no_lessons'));
         $bot->assertActiveConversation();
     });
 });
 
-describe('NewSchedule completion', function () {
-    it('Saturday confirmation creates all entries', function () {
+describe('Weekday progression', function () {
+    it('processes marked weekdays in ascending order skipping unmarked', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -501,15 +540,23 @@ describe('NewSchedule completion', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        $this->assertDatabaseCount('weekly_schedule_entries', 6);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.5')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.1'))]));
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.3'))]));
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.5'))]));
+        $bot->assertActiveConversation();
     });
 
-    it('entries have correct class_id', function () {
+    it('each weekday starts fresh with no carryover', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -517,15 +564,19 @@ describe('NewSchedule completion', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        $this->assertDatabaseHas('weekly_schedule_entries', ['class_id' => $class->id]);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.2')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.2'))]));
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.no_lessons'));
+        $bot->assertActiveConversation();
     });
 
-    it('entries have correct subject_id', function () {
+    it('correct Russian weekday names are shown', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -533,15 +584,18 @@ describe('NewSchedule completion', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        $this->assertDatabaseHas('weekly_schedule_entries', ['subject_id' => $subject->id]);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.2')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, strtolower(__('general.weekday.1')));
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        assertReplyContains($bot, strtolower(__('general.weekday.2')));
+        $bot->assertActiveConversation();
     });
 
-    it('entries have correct weekday', function () {
+    it('after last marked weekday auto-completes', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -549,47 +603,87 @@ describe('NewSchedule completion', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        for ($i = 1; $i <= 6; $i++) {
-            $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => $i]);
-        }
-    });
-
-    it('entries have correct lesson_number', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        $this->assertDatabaseHas('weekly_schedule_entries', ['lesson_number' => 1]);
-    });
-
-    it('success message shown', function () {
-        $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
         assertReplyContains($bot, __('info.schedule.created'));
         $bot->assertNoConversation();
+    });
+});
+
+describe('Schedule creation and completion', function () {
+    it('database entries created for each lesson', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 2);
+    });
+
+    it('entries have correct class_id subject_id weekday and lesson_number', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseHas('weekly_schedule_entries', [
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+            'weekday' => 1,
+            'lesson_number' => 1,
+        ]);
+    });
+
+    it('no entries created for unmarked weekdays', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 1);
+        $this->assertDatabaseMissing('weekly_schedule_entries', ['weekday' => 2]);
+        $this->assertDatabaseMissing('weekly_schedule_entries', ['weekday' => 3]);
+    });
+
+    it('success message shown after completion', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        assertReplyContains($bot, __('info.schedule.created'));
     });
 
     it('conversation ends after completion', function () {
@@ -600,17 +694,17 @@ describe('NewSchedule completion', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
         $bot->assertNoConversation();
     });
 });
 
-describe('NewSchedule cancel behavior', function () {
-    it('/cancel at Monday menu ends conversation', function () {
+describe('Cancel behavior', function () {
+    it('/cancel at weekday selection ends conversation', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -623,7 +717,7 @@ describe('NewSchedule cancel behavior', function () {
         $bot->assertNoConversation();
     });
 
-    it('/cancel at confirmation step ends conversation', function () {
+    it('/cancel at lesson selection ends conversation', function () {
         $class = Classroom::factory()->create();
         Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -631,26 +725,27 @@ describe('NewSchedule cancel behavior', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->assertActiveConversation();
         $bot->hearText('/cancel')->reply();
         $bot->assertNoConversation();
     });
 
-    it('/cancel resets entire command progress', function () {
+    it('/cancel at confirmation ends conversation', function () {
         $class = Classroom::factory()->create();
-        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        Subject::factory()->create(['class_id' => $class->id]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $bot->assertActiveConversation();
         $bot->hearText('/cancel')->reply();
         $bot->assertNoConversation();
-        $this->assertDatabaseCount('weekly_schedule_entries', 0);
     });
 
     it('no database changes on cancel', function () {
@@ -661,14 +756,15 @@ describe('NewSchedule cancel behavior', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
         $bot->hearText('/cancel')->reply();
         $this->assertDatabaseCount('weekly_schedule_entries', 0);
     });
 });
 
-describe('NewSchedule edge cases', function () {
+describe('Edge cases', function () {
     it('single subject class works', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
@@ -677,12 +773,12 @@ describe('NewSchedule edge cases', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        for ($i = 0; $i < 6; $i++) {
-            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
-            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
-        }
-        $this->assertDatabaseCount('weekly_schedule_entries', 6);
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 1);
         assertReplyContains($bot, __('info.schedule.created'));
     });
 
@@ -694,25 +790,17 @@ describe('NewSchedule edge cases', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
-        $bot->assertActiveConversation();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        foreach ($subjects as $subject) {
+            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+        }
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 10);
     });
 
-    it('selecting subjects in different orders', function () {
-        $class = Classroom::factory()->create();
-        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
-        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newschedule')
-            ->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
-        assertReplyMarkupContains($bot, ['Physics✅ (1)', 'Mathematics✅ (2)']);
-        $bot->assertActiveConversation();
-    });
-
-    it('rapid selection/deselection', function () {
+    it('only Sunday selected works', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
@@ -720,10 +808,75 @@ describe('NewSchedule edge cases', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newschedule')
             ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.7')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        assertReplyContains($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.7'))]));
         $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
-        assertReplyMarkupContains($bot, ['Mathematics✅ (1)']);
-        $bot->assertActiveConversation();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseCount('weekly_schedule_entries', 1);
+        $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => 7]);
+    });
+
+    it('alternating weekdays marked processes correctly', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.3')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.5')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.7')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        for ($i = 0; $i < 4; $i++) {
+            $bot->hearCallbackQueryData('newschedule.select.'.$subject->id)->reply();
+            $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+            $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        }
+        $this->assertDatabaseCount('weekly_schedule_entries', 4);
+        $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => 1]);
+        $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => 3]);
+        $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => 5]);
+        $this->assertDatabaseHas('weekly_schedule_entries', ['weekday' => 7]);
+        $this->assertDatabaseMissing('weekly_schedule_entries', ['weekday' => 2]);
+        $this->assertDatabaseMissing('weekly_schedule_entries', ['weekday' => 4]);
+        $this->assertDatabaseMissing('weekly_schedule_entries', ['weekday' => 6]);
+    });
+
+    it('single weekday with many lessons saves in order', function () {
+        $class = Classroom::factory()->create();
+        $subject1 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
+        $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
+        $subject3 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Chemistry']);
+        $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
+        $bot = bot($user);
+        $bot->willStartConversation(remember: true)
+            ->hearText('/newschedule')
+            ->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.add.1')->reply();
+        $bot->hearCallbackQueryData('newschedule.weekday.done.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject2->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject1->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.'.$subject3->id)->reply();
+        $bot->hearCallbackQueryData('newschedule.select.done')->reply();
+        $bot->hearCallbackQueryData('newschedule.confirm.yes')->reply();
+        $this->assertDatabaseHas('weekly_schedule_entries', [
+            'weekday' => 1,
+            'lesson_number' => 1,
+            'subject_id' => $subject2->id,
+        ]);
+        $this->assertDatabaseHas('weekly_schedule_entries', [
+            'weekday' => 1,
+            'lesson_number' => 2,
+            'subject_id' => $subject1->id,
+        ]);
+        $this->assertDatabaseHas('weekly_schedule_entries', [
+            'weekday' => 1,
+            'lesson_number' => 3,
+            'subject_id' => $subject3->id,
+        ]);
     });
 });

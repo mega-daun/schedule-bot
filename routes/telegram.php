@@ -24,7 +24,7 @@ use App\Telegram\Conversations\Class\NewClassConversation;
 use App\Telegram\Conversations\Homework\DeleteHomeworkConversation;
 use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 use App\Telegram\Conversations\Homework\ShowHomeworkConversation;
-use App\Telegram\Conversations\NewScheduleConversation;
+use App\Telegram\Conversations\Schedule\NewScheduleConversation;
 use App\Telegram\Conversations\Subject\DeleteSubjectConversation;
 use App\Telegram\Conversations\Subject\NewSubjectConversation;
 

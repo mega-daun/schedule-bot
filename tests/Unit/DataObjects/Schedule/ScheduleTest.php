@@ -362,3 +362,137 @@ it('throws JsonException when lesson subject_id is not int', function () {
     ]);
     Schedule::fromJson($json);
 })->throws(JsonException::class);
+
+//
+// hasWorkday()
+//
+
+it('returns true for default work day', function () {
+    $schedule = new Schedule();
+
+    expect($schedule->hasWorkday(1))->toBeTrue()
+        ->and($schedule->hasWorkday(7))->toBeTrue();
+});
+
+it('returns false for day outside custom work days', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+
+    expect($schedule->hasWorkday(6))->toBeFalse();
+});
+
+it('returns true for custom work day', function () {
+    $schedule = new Schedule([1, 3, 5]);
+
+    expect($schedule->hasWorkday(3))->toBeTrue();
+});
+
+it('returns false for out-of-range days', function () {
+    $schedule = new Schedule();
+
+    expect($schedule->hasWorkday(0))->toBeFalse()
+        ->and($schedule->hasWorkday(8))->toBeFalse();
+});
+
+//
+// addWorkDay()
+//
+
+it('adds a new weekday to the collection', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+    $schedule->addWorkDay(6);
+
+    $weekdays = $schedule->getWeekdays();
+    expect($weekdays)->toHaveCount(6)
+        ->and($weekdays->has(6))->toBeTrue()
+        ->and($weekdays->get(6))->toBeInstanceOf(Weekday::class)
+        ->and($weekdays->get(6)->getDayNumber())->toBe(6);
+});
+
+it('makes the added work day usable', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+    $schedule->addWorkDay(6);
+    $schedule->addLesson(6, 10, 'Math');
+
+    expect($schedule->getWeekday(6))->toBeInstanceOf(Weekday::class)
+        ->and($schedule->getLessons(6))->toHaveCount(1);
+});
+
+it('hasWorkday returns true after adding', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+    $schedule->addWorkDay(6);
+
+    expect($schedule->hasWorkday(6))->toBeTrue();
+});
+
+it('throws when adding an existing work day', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+    $schedule->addWorkDay(5);
+})->throws(InvalidArgumentException::class);
+
+it('throws when adding day greater than 7', function () {
+    (new Schedule())->addWorkDay(8);
+})->throws(InvalidArgumentException::class);
+
+it('throws when adding day less than 1', function () {
+    (new Schedule())->addWorkDay(0);
+})->throws(InvalidArgumentException::class);
+
+it('round-trips added work day through toJson/fromJson', function () {
+    $original = new Schedule([1, 2, 3, 4, 5]);
+    $original->addWorkDay(6);
+
+    $restored = Schedule::fromJson($original->toJson());
+    $data = json_decode($original->toJson(), true);
+
+    expect($data['work_days'])->toBe([1, 2, 3, 4, 5, 6])
+        ->and($restored->getWeekdays())->toHaveCount(6)
+        ->and($restored->hasWorkday(6))->toBeTrue();
+});
+
+//
+// removeWorkDay()
+//
+
+it('removes the weekday from the collection', function () {
+    $schedule = new Schedule();
+    $schedule->removeWorkDay(5);
+
+    expect($schedule->getWeekdays()->has(5))->toBeFalse()
+        ->and($schedule->getWeekdays())->toHaveCount(6);
+});
+
+it('hasWorkday returns false after removal', function () {
+    $schedule = new Schedule();
+    $schedule->removeWorkDay(5);
+
+    expect($schedule->hasWorkday(5))->toBeFalse();
+});
+
+it('getWeekday throws after removal', function () {
+    $schedule = new Schedule();
+    $schedule->removeWorkDay(5);
+    $schedule->getWeekday(5);
+})->throws(InvalidArgumentException::class);
+
+it('throws when removing a non-work day', function () {
+    $schedule = new Schedule([1, 2, 3, 4, 5]);
+    $schedule->removeWorkDay(6);
+})->throws(InvalidArgumentException::class);
+
+it('drops lessons on the removed day', function () {
+    $schedule = new Schedule();
+    $schedule->addLesson(5, 10, 'Math');
+
+    $schedule->removeWorkDay(5);
+
+    expect($schedule->getLessons())->toHaveCount(0);
+});
+
+it('removes day from toJson work_days', function () {
+    $schedule = new Schedule();
+    $schedule->removeWorkDay(7);
+
+    $data = json_decode($schedule->toJson(), true);
+
+    expect($data['work_days'])->toBe([1, 2, 3, 4, 5, 6]);
+});

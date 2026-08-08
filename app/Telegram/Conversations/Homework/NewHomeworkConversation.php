@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
-use App\Helpers\DateHelper;
 use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\Subject;
 use App\Models\User;
-use Carbon\Carbon;
-use Carbon\Exceptions\InvalidFormatException;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
-use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
 use function Symfony\Component\Clock\now;
 
@@ -31,9 +26,7 @@ class NewHomeworkConversation extends Conversation
 
     public ?int $subjectId = null;
 
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
-    {
-    }
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
 
     public function start(Nutgram $bot): void
     {
@@ -41,7 +34,7 @@ class NewHomeworkConversation extends Conversation
 
         $this->userId = $user->id;
 
-        $dayNum = (int)now()->format('N');
+        $dayNum = (int) now()->format('N');
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
             'newhomework.date',
             collect([
@@ -91,9 +84,9 @@ class NewHomeworkConversation extends Conversation
         $this->date = $selectedDate;
 
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newhomework.subject', 
-            $this->getUser($bot)->class->subjects, 
-            fn (Subject $item) => $item->name, 
+            'newhomework.subject',
+            $this->getUser($bot)->class->subjects,
+            fn (Subject $item) => $item->name,
             fn (Subject $item) => $item->id
         );
         $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
@@ -129,27 +122,27 @@ class NewHomeworkConversation extends Conversation
         $this->date = $parsed->format('Y-m-d');
 
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newhomework.subject', 
-            $this->getUser($bot)->class->subjects, 
-            fn (Subject $item) => $item->name, 
+            'newhomework.subject',
+            $this->getUser($bot)->class->subjects,
+            fn (Subject $item) => $item->name,
             fn (Subject $item) => $item->id
         );
         $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
         $this->next('subjectSelection');
     }
 
-    public function subjectSelection(Nutgram $bot): void 
+    public function subjectSelection(Nutgram $bot): void
     {
         if (! $subjectId = $this->validateCallbackData(
-                $bot, 
-                'newhomework.subject', 
-                'subjectSelection', 
-                fn (string $data) => in_array($data, $this->getUser($bot)->class->subjects->pluck('id')->toArray())
-            )
+            $bot,
+            'newhomework.subject',
+            'subjectSelection',
+            fn (string $data) => in_array($data, $this->getUser($bot)->class->subjects->pluck('id')->toArray())
+        )
         ) {
             return;
         }
-        $this->subjectId = (int)$subjectId;
+        $this->subjectId = (int) $subjectId;
         $bot->sendMessage(__('prompt.homework.enter_description'));
         $this->next('promptDescription');
     }
@@ -182,7 +175,7 @@ class NewHomeworkConversation extends Conversation
             'class_id' => $user->class_id,
             'date' => $this->date,
             'description' => $this->description,
-            'subject_id' => $this->subjectId
+            'subject_id' => $this->subjectId,
         ]);
 
         $bot->sendMessage(__('info.homework.created'));
@@ -196,7 +189,8 @@ class NewHomeworkConversation extends Conversation
         return User::findOrFail($telegramUser->id);
     }
 
-    private function validateCallbackData(Nutgram $bot, string $prefix, string $currentStep, callable|null $additionalValidation = null): string|bool {
+    private function validateCallbackData(Nutgram $bot, string $prefix, string $currentStep, ?callable $additionalValidation = null): string|bool
+    {
         if (! $bot->isCallbackQuery()) {
             $bot->sendMessage(__('prompt.general.click_button'));
             $this->next($currentStep);
@@ -221,6 +215,7 @@ class NewHomeworkConversation extends Conversation
 
             return false;
         }
+
         return $data;
     }
 }

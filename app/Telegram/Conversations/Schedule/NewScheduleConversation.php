@@ -1,169 +1,256 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Telegram\Conversations\Schedule;
 
 use App\Actions\Schedule\CreateScheduleAction;
-use App\Exceptions\IncorrectMessageException;
-use App\Exceptions\InvalidInputException;
+use App\DataObjects\Schedule\Schedule;
 use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\MessageTextGenerator;
 use App\Helpers\ParserService;
 use App\Models\Subject;
 use App\Models\User;
+use App\Telegram\Menus\ConfirmationMenu;
+use App\Telegram\Menus\SubjectSelectionMenu;
+use App\Telegram\Menus\WeekdaySelectionMenu;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 
 class NewScheduleConversation extends Conversation
 {
+    use ConfirmationMenu, SubjectSelectionMenu, WeekdaySelectionMenu;
+
     public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser, private CreateScheduleAction $createScheduleAction, private MessageTextGenerator $messageGenerator) {}
 
-    public int $currentWeekday = 1;
+    protected function beforeStep(Nutgram $bot): void
+    {
+        if (is_string($this->schedule)) {
+            $this->schedule = Schedule::fromJson($this->schedule);
+        } elseif ($this->schedule === null) {
+            $this->schedule = new Schedule([]);
+        }
+    }
 
-    public array $selectedSubjects = [[], [], [], [], [], []];
+    public int $currentWeekday = 0;
+
+    public int $currentLesson = 0;
+
+    public array $subjects = [];
+
+    private Schedule|string|null $schedule = null;
 
     public ?int $class_id = null;
 
+    public function getSerializableAttributes(): array
+    {
+        return [
+            ...parent::getSerializableAttributes(),
+            'schedule' => $this->schedule->toJson(),
+        ];
+    }
+
     public function start(Nutgram $bot)
     {
-        $this->class_id = User::find($bot->user()->id)->class_id;
-        $this->next('lessonsSelection');
+        $this->class_id = User::where('id', $bot->user()->id)->get(['class_id'])->first()->class_id;
+        $this->subjects = Subject::where('class_id', $this->class_id)->get(['name', 'id'])->toArray();
+
+        $this->sendWeekdaySelectionMenu($bot);
+        $this->next('handleWorkDaysSelection');
     }
 
-    public function lessonsSelection(Nutgram $bot)
+    private function sendWeekdaySelectionMenu(Nutgram $bot): void
     {
-        $selectedSubjectForCurWeekday = $this->selectedSubjects[$this->currentWeekday - 1];
-        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newschedule.select',
-            Subject::where('class_id', $this->class_id)->get(),
-            fn (Subject $s) => in_array($s->name, $selectedSubjectForCurWeekday) ? __('prompt.subject.marked', ['name' => $s->name, 'lesson_number' => array_search($s->name, $selectedSubjectForCurWeekday) + 1]) : $s->name,
-            fn (Subject $s) => in_array($s->name, $selectedSubjectForCurWeekday) ? 'remove.'.$s->name : 'add.'.$s->name,
-            1,
-            ['done' => 'Готово']
-        );
-        $bot->sendMessage($this->createLessonsPrompt(), reply_markup: $keyboard);
-        $this->next('handleLessonsSelect');
+        $keyboard = $this->makeMultipleWeekdaySelectionMenu($this->schedule->getWorkdays(), 'newschedule.weekday');
+        $bot->sendMessage(__('prompt.schedule.select_weekdays'), reply_markup: $keyboard);
     }
 
-    public function handleLessonsSelect(Nutgram $bot)
+    public function handleWorkDaysSelection(Nutgram $bot)
     {
-        if (! $subjectName = $this->validateCallbackData($bot, 'newschedule.select', 'createLessons')) {
+        if (! $this->validateCallbackData($bot, 'newschedule.weekday')) {
+            $this->sendErrorMessage($bot, 'handleWorkDaysSelection');
+
             return;
         }
-        if ($subjectName == 'done') {
-            $this->currentWeekday += 1;
-        } else {
-            [$action, $subjectName] = explode('.', $subjectName);
-            switch ($action) {
-                case 'add': $this->addLesson($subjectName);
-                case 'remove': $this->removeLesson($subjectName);
-                default:
-                    $bot->sendMessage(__('prompt.general.click_button'));
-                    $this->next('handleLessonsSelect');
+        [$action, $weekdayNum] = explode('.', $this->parser->parseCallbackData($bot->callbackQuery()->data));
+        switch ($action) {
+            case 'done':
+                $hasNextWorkDay = $this->switchToTheNextWorkDay();
+                if ($hasNextWorkDay) {
+                    $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+                    $this->sendSubjectSelectionMenu($bot);
+
+                    $this->next('handleLessonsSelection');
 
                     return;
+                }
+                $bot->sendMessage(__('prompt.schedule.should_have_workdays'));
+                $this->sendWeekdaySelectionMenu($bot);
+                $this->next('handleWorkDaysSelection');
 
+                return;
+            case 'add':
+                $this->schedule->addWorkDay((int) $weekdayNum);
+                break;
+            case 'remove':
+                $this->schedule->removeWorkDay((int) $weekdayNum);
+                break;
+        }
+        $this->sendWeekdaySelectionMenu($bot);
+
+        $this->next('handleWorkDaysSelection');
+    }
+
+    public function switchToTheNextWorkDay(): bool
+    {
+        for ($i = $this->currentWeekday + 1; $i <= 7; $i++) {
+            if ($this->schedule->hasWorkday($i)) {
+                $this->currentWeekday = $i;
+                $this->currentLesson = 1;
+
+                return true;
             }
         }
 
-        if ($this->currentWeekday > 6) {
-            $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-                'newschedule.confirm',
-                collect(
-                    [
-                        ['label' => 'Да', 'data' => 'yes'],
-                        ['label' => 'Нет', 'data' => 'no'],
-                    ]
-                ),
-                fn (array $opt) => $opt['label'],
-                fn (array $opt) => $opt['data'],
-            );
-            $bot->sendMessage($this->messageGenerator->scheduleConfirm($this->selectedSubjects), reply_markup: $keyboard);
-            $this->next('scheduleConfirm');
+        return false;
+    }
+
+    public function handleLessonsSelection(Nutgram $bot)
+    {
+        if (! $this->validateCallbackData($bot, 'newschedule.select')) {
+            $this->sendErrorMessage($bot, 'handleLessonsSelection');
 
             return;
         }
-        $this->next('lessonsSelection');
-    }
 
-    private function removeLesson(string $subjectName)
-    {
-        $num = array_search($subjectName, $this->selectedSubjects[$this->currentWeekday - 1]);
-        unset($this->selectedSubjects[$this->currentWeekday - 1][$num]);
-        $this->selectedSubjects[$this->currentWeekday - 1] = array_values($this->selectedSubjects[$this->currentWeekday - 1]);
-    }
+        $data = $this->parser->parseCallbackData($bot->callbackQuery()->data);
+        if ($data == 'done') {
+            if ($this->schedule->getLessons($this->currentWeekday)->isEmpty()) {
+                $bot->sendMessage(__('prompt.schedule.no_lessons'));
+                $this->sendSubjectSelectionMenu($bot);
 
-    private function addLesson(string $subjectName)
-    {
-        $this->selectedSubjects[$this->currentWeekday - 1][] = $subjectName;
-    }
+                $this->next('handleLessonsSelection');
 
-    public function scheduleConfirm(Nutgram $bot)
-    {
-        if (! $answer = $this->validateCallbackData($bot, 'newschedule.confirm', 'scheduleConfirm')) {
-            return;
-        }
-        if ($answer == 'no') {
-            $this->clearScheduleData();
-            $bot->sendMessage(__('info.schedule.recreating'));
+                return;
+            }
 
-            $this->next('lessonsSelection');
-
-            return;
-        } elseif ($answer == 'yes') {
-            $this->next('createSchedule');
+            $this->sendConfirmationPrompt($bot);
+            $this->next('workDayScheduleConfirmation');
 
             return;
         }
+        $subjectId = $data;
+        $subjectName = array_find($this->subjects, fn (array $subject) => $subject['id'] == (int) $subjectId)['name'];
+
+        $this->schedule->addLesson($this->currentWeekday, (int) $subjectId, $subjectName);
+        $this->currentLesson += 1;
+
+        $this->sendSubjectSelectionMenu($bot);
+
+        $this->next('handleLessonsSelection');
     }
 
-    private function clearScheduleData()
+    private function sendSubjectSelectionMenu(Nutgram $bot): void
     {
-        $this->currentWeekday = 1;
-        $this->selectedSubjects = [[], [], [], [], [], [], []];
+        $keyboard = $this->currentLesson != 1
+            ? $this->makeSubjectSelectionMenuWithDoneButton($this->subjects, 'newschedule.select')
+            : $this->makeSubjectSelectionMenu($this->subjects, 'newschedule.select');
+        $bot->sendMessage(__('prompt.schedule.select_subjects', ['lesson_number' => $this->currentLesson]), reply_markup: $keyboard);
     }
 
-    public function createSchedule(Nutgram $bot)
+    private function sendConfirmationPrompt(Nutgram $bot): void
     {
-        try {
-            ($this->createScheduleAction)($this->class_id, collect($this->selectedSubjects));
-            $bot->sendMessage(__('info.schedule.created'));
-        } catch (InvalidInputException $e) {
-            throw new IncorrectMessageException($e->getMessage(), true);
+        $preview = view(
+            'messages/Schedule/weekday_schedule_preview',
+            [
+                'weekday' => strtolower(__('general.weekday.'.$this->currentWeekday)),
+                'lessons' => $this->schedule->getLessons($this->currentWeekday),
+            ]
+        )->render();
+        $bot->sendMessage($preview);
+        $bot->sendMessage(__('prompt.schedule.confirm_schedule'), reply_markup: $this->makeConfirmationMenu('newschedule.confirm'));
+    }
+
+    public function workDayScheduleConfirmation(Nutgram $bot): void
+    {
+        if (! $this->validateCallbackData($bot, 'newschedule.confirm')) {
+            $this->sendErrorMessage($bot, 'workDayScheduleConfirmation');
+
+            return;
+        }
+        $answer = $this->parser->parseCallbackData($bot->callbackQuery()->data);
+        switch ($answer) {
+            case 'yes':
+                $this->iterateToTheNextWorkDayOrToScheduleCreation($bot);
+                break;
+            case 'no':
+                $this->resetCurrentWorkDay();
+                $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+                $this->sendSubjectSelectionMenu($bot);
+                $this->next('handleLessonsSelection');
+
+                break;
+            default:
+                $this->sendErrorMessage($bot, 'workDayScheduleConfirmation');
+                break;
         }
     }
 
-    private function createLessonsPrompt(): string
+    private function resetCurrentWorkDay(): void
     {
-        return __('prompt.schedule.select_subjects', ['weekday' => strtolower(__('weekday.'.$this->currentWeekday))]);
+        $this->currentLesson = 1;
+        $this->schedule->removeWorkDay($this->currentWeekday);
+        $this->schedule->addWorkDay($this->currentWeekday);
     }
 
-    private function validateCallbackData(Nutgram $bot, string $prefix, string $currentStep, ?callable $additionalValidation = null): string|bool
+    private function iterateToTheNextWorkDayOrToScheduleCreation(Nutgram $bot): void
+    {
+        $hasNextWeekday = $this->switchToTheNextWorkDay();
+        if ($hasNextWeekday) {
+            $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+            $this->sendSubjectSelectionMenu($bot);
+            $this->next('handleLessonsSelection');
+
+            return;
+        }
+        $creationSuccess = $this->createSchedule();
+        if (! $creationSuccess) {
+            $bot->sendMessage(__('error.server.error'));
+            $this->end();
+
+            return;
+        }
+        $bot->sendMessage(__('info.schedule.created'));
+        $this->end();
+
+    }
+
+    private function validateCallbackData(Nutgram $bot, string $prefix): bool
     {
         if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
             return false;
         }
 
         $callbackData = $bot->callbackQuery()->data;
 
         if (! str_starts_with($callbackData, $prefix)) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
             return false;
         }
 
-        $data = $this->parser->parseCallbackData($callbackData);
+        return true;
+    }
 
-        if ($additionalValidation != null && ! $additionalValidation($data)) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
-            return false;
+    private function sendErrorMessage(Nutgram $bot, string $gotoStep, ?string $error = null): void
+    {
+        if ($error == null) {
+            $error = __('prompt.general.click_button');
         }
+        $bot->sendMessage($error);
+        $this->next($gotoStep);
+    }
 
-        return $data;
+    private function createSchedule(): bool
+    {
+        return ($this->createScheduleAction)($this->class_id, $this->schedule);
     }
 }

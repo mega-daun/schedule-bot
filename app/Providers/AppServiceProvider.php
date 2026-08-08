@@ -24,6 +24,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Conversation::refreshOnDeserialize(true);
+        Conversation::refreshOnDeserialize();
     }
 }

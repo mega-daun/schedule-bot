@@ -189,6 +189,34 @@ class Schedule implements Jsonable
         return $this->getWeekday($weekday)->getLessons();
     }
 
+    public function addWorkDay(int $weekday): void
+    {
+        if ($weekday > 7 or $weekday < 1 or in_array($weekday, $this->workDays)) {
+            throw new InvalidArgumentException;
+        }
+        $this->workDays[] = $weekday;
+        $this->weekdays->put($weekday, new Weekday($weekday));
+    }
+
+    public function removeWorkDay(int $weekday): void
+    {
+        if (! in_array($weekday, $this->workDays)) {
+            throw new InvalidArgumentException;
+        }
+        unset($this->workDays[array_search($weekday, $this->workDays)]);
+        $this->weekdays->forget($weekday);
+    }
+
+    public function hasWorkday(int $weekday): bool
+    {
+        return in_array($weekday, $this->workDays);
+    }
+
+    public function getWorkdays(): array
+    {
+        return $this->workDays;
+    }
+
     /**
      * @throws InvalidWeekdayException If $dayNumber is outside 1–7.
      */
