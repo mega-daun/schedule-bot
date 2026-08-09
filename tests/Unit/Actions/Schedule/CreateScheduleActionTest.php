@@ -61,6 +61,7 @@ it('calls repository and returns result on success', function () {
         ->once()
         ->with($schedule, $classroom->id)
         ->andReturn(true);
+    $repository->shouldReceive('purgeSchedule')->once()->with($classroom->id)->andReturn(true);
 
     $action = new CreateScheduleAction(repository: $repository);
     $result = $action(class_id: $classroom->id, schedule: $schedule);

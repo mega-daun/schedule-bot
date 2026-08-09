@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
+use App\DataObjects\Schedule\Schedule;
 use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\MessageTextGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
+use App\Repositories\ScheduleRepository;
+use App\Telegram\Messages\HomeworkList;
 use Illuminate\Support\Carbon;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 
 class ShowHomeworkConversation extends Conversation
 {
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
+    use HomeworkList;
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser, private ScheduleRepository $scheduleRepository) {}
 
     public ?int $userId = null;
 
@@ -38,8 +42,8 @@ class ShowHomeworkConversation extends Conversation
             'showhomework.date',
             collect([
                 ['text' => __('button_labels.keyboard.tomorrow'), 'data' => 'tomorrow'],
-                ['text' => __('button_labels.keyboard.this_week'), 'data' => 'thisweek'],
-                ['text' => __('button_labels.keyboard.next_week'), 'data' => 'nextweek'],
+                ['text' => __('button_labels.keyboard.this_week'), 'data' => 'this_week'],
+                ['text' => __('button_labels.keyboard.next_week'), 'data' => 'next_week'],
                 ['text' => __('button_labels.keyboard.custom'), 'data' => 'custom'],
             ]),
             fn ($item) => $item['text'],
@@ -122,10 +126,10 @@ class ShowHomeworkConversation extends Conversation
         if ($this->dateRange === 'tomorrow') {
             $startDate = now()->addDay()->toDateString();
             $endDate = $startDate;
-        } elseif ($this->dateRange === 'thisweek') {
+        } elseif ($this->dateRange === 'this_week') {
             $startDate = now()->startOfWeek()->toDateString();
             $endDate = now()->endOfWeek()->subDay()->toDateString();
-        } elseif ($this->dateRange === 'nextweek') {
+        } elseif ($this->dateRange === 'next_week') {
             $startDate = now()->addWeek()->startOfWeek()->toDateString();
             $endDate = now()->addWeek()->subDay()->endOfWeek()->toDateString();
         }
@@ -135,8 +139,15 @@ class ShowHomeworkConversation extends Conversation
             ->orderBy('date')
             ->get();
 
-        $message = (new MessageTextGenerator)->homeworkView($homeworks, Carbon::parse($startDate), Carbon::parse($endDate));
+        $schedule = $this->scheduleRepository->getSchedule($user->class_id);
+
+        [$startDate, $endDate] = [Carbon::parse($startDate), Carbon::parse($endDate)];
+
+        $message = ($startDate->isSameDay($endDate))
+            ? $this->makeHomeworkListOnDay($startDate, $schedule, collect($homeworks))
+            : $this->makeHomeworkListOnWeek($startDate, $schedule, collect($homeworks));
         $bot->sendMessage($message);
+
         $this->end();
     }
 

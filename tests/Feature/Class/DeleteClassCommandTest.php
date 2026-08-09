@@ -6,6 +6,7 @@ use App\Models\Homework;
 use App\Models\Subject;
 use App\Models\User;
 use App\Models\WeeklyScheduleEntry;
+use Illuminate\Database\Eloquent\Factories\Sequence;
 
 describe('DeleteClassCommand', function () {
     it('admin can successfully delete their class', function () {
@@ -72,7 +73,14 @@ describe('DeleteClassCommand', function () {
     it('deletes associated weekly schedule entries', function () {
         $classroom = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        WeeklyScheduleEntry::factory()->count(4)->state(
+            new Sequence(
+                ['weekday' => 1, 'lesson_number' => 1],
+                ['weekday' => 1, 'lesson_number' => 2],
+                ['weekday' => 1, 'lesson_number' => 3],
+                ['weekday' => 2, 'lesson_number' => 1],
+            )
+        )->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/deleteclass')->reply();

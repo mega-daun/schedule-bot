@@ -11,4 +11,6 @@ interface ScheduleRepository
     public function createSchedule(Schedule $schedule, int $class_id): bool;
 
     public function purgeSchedule(int $class_id): bool;
+
+    public function getSchedule(int $class_id): Schedule;
 }

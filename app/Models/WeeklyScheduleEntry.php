@@ -56,4 +56,9 @@ class WeeklyScheduleEntry extends Model
     {
         return $this->belongsTo(Classroom::class, 'class_id');
     }
+
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'subject_id');
+    }
 }
