@@ -20,6 +20,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
  * @property-read \Illuminate\Database\Eloquent\Collection<Subject> $subjects
  * @property-read \Illuminate\Database\Eloquent\Collection<User> $users
+ * @property-read int|null $homeworks_count
+ * @property-read int|null $subjects_count
+ * @property-read int|null $users_count
+ * @property-read int|null $weekly_schedule_entries_count
+ * @method static \Database\Factories\ClassroomFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereCode($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereJoinToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Classroom extends Model
 {

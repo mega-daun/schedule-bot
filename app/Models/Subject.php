@@ -18,6 +18,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property-read Classroom $classroom
  * @property-read \Illuminate\Database\Eloquent\Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
  * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
+ * @property-read int|null $homeworks_count
+ * @property-read int|null $weekly_schedule_entries_count
+ * @method static \Database\Factories\SubjectFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereClassId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereUpdatedAt($value)
+ * @mixin \Eloquent
  */
 class Subject extends Model
 {

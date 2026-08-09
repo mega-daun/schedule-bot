@@ -42,7 +42,7 @@ class Schedule implements Jsonable
         $this->weekdays = collect();
         foreach ($workDays as $day) {
             if (! is_int($day) || $day > 7 || $day < 1) {
-                throw new InvalidArgumentException;
+                throw new InvalidArgumentException();
             }
             $this->weekdays->put($day, new Weekday($day));
         }
@@ -61,7 +61,7 @@ class Schedule implements Jsonable
 
         foreach ($weekdays as $weekday) {
             if (in_array($weekday->getDayNumber(), $schedule->workDays)) {
-                throw new InvalidArgumentException;
+                throw new InvalidArgumentException();
             }
             $schedule->workDays[] = $weekday->getDayNumber();
             $schedule->assertValidWeekday($weekday);
@@ -110,7 +110,7 @@ class Schedule implements Jsonable
     public function getSubjects(?int $weekday = null): Collection
     {
         if ($weekday == null) {
-            return $this->getWeekdays()->flatMap(fn (Weekday $weekday) => $weekday->getSubjects());
+            return $this->getWeekdays()->flatMap(fn(Weekday $weekday) => $weekday->getSubjects());
         }
 
         return $this->getWeekday($weekday)->getSubjects();
@@ -183,7 +183,7 @@ class Schedule implements Jsonable
     public function getLessons(?int $weekday = null): Collection
     {
         if (is_null($weekday)) {
-            return $this->getWeekdays()->flatMap(fn (Weekday $weekday) => $weekday->getLessons());
+            return $this->getWeekdays()->flatMap(fn(Weekday $weekday) => $weekday->getLessons());
         }
 
         return $this->getWeekday($weekday)->getLessons();
@@ -192,7 +192,7 @@ class Schedule implements Jsonable
     public function addWorkDay(int $weekday): void
     {
         if ($weekday > 7 or $weekday < 1 or in_array($weekday, $this->workDays)) {
-            throw new InvalidArgumentException;
+            throw new InvalidArgumentException();
         }
         $this->workDays[] = $weekday;
         $this->weekdays->put($weekday, new Weekday($weekday));
@@ -201,7 +201,7 @@ class Schedule implements Jsonable
     public function removeWorkDay(int $weekday): void
     {
         if (! in_array($weekday, $this->workDays)) {
-            throw new InvalidArgumentException;
+            throw new InvalidArgumentException();
         }
         unset($this->workDays[array_search($weekday, $this->workDays)]);
         $this->weekdays->forget($weekday);
@@ -223,7 +223,7 @@ class Schedule implements Jsonable
     private function assertValidWeekday($weekday): void
     {
         if (! $weekday instanceof Weekday) {
-            throw new InvalidWeekdayException;
+            throw new InvalidWeekdayException();
         }
         $this->assertValidWeekdayNumber($weekday->getDayNumber());
     }
@@ -236,7 +236,7 @@ class Schedule implements Jsonable
     private function assertValidWeekdayNumber(int $number): void
     {
         if (! in_array($number, $this->workDays) || $number > 7 || $number < 1) {
-            throw new InvalidArgumentException;
+            throw new InvalidArgumentException();
         }
     }
 
@@ -245,7 +245,7 @@ class Schedule implements Jsonable
         $payload = [
             'lessons' => $this->getWeekdays()
                 ->flatMap(
-                    fn (Weekday $weekday) => $weekday->getLessons()->toArray()
+                    fn(Weekday $weekday) => $weekday->getLessons()->toArray()
                 )->values(),
             'work_days' => $this->workDays,
         ];
@@ -266,7 +266,7 @@ class Schedule implements Jsonable
             throw new JsonException('Invalid work days');
         }
         $lessons = collect($lessons);
-        if (! $lessons->every(fn ($lesson) => is_array($lesson) && isset($lesson['weekday']) && is_int($lesson['weekday']) && in_array($lesson['weekday'], $workDays) && isset($lesson['lesson_number']) && is_int($lesson['lesson_number']) && isset($lesson['subject_id']) && is_int($lesson['subject_id']) && isset($lesson['subject_name']) && is_string($lesson['subject_name']))) {
+        if (! $lessons->every(fn($lesson) => is_array($lesson) && isset($lesson['weekday']) && is_int($lesson['weekday']) && in_array($lesson['weekday'], $workDays) && isset($lesson['lesson_number']) && is_int($lesson['lesson_number']) && isset($lesson['subject_id']) && is_int($lesson['subject_id']) && isset($lesson['subject_name']) && is_string($lesson['subject_name']))) {
             throw new JsonException('Invalid lesson structure');
         }
         $lessons = $lessons->sortBy('weekday')->sortBy('lesson_number');

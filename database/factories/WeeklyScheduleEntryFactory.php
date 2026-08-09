@@ -11,8 +11,8 @@ class WeeklyScheduleEntryFactory extends Factory
     public function definition(): array
     {
         return [
-            'weekday' => fake()->unique()->numberBetween(1, 7),
-            'lesson_number' => fake()->unique()->numberBetween(1, 8),
+            'weekday' => fake()->numberBetween(1, 7),
+            'lesson_number' => fake()->numberBetween(1, 8),
         ];
     }
 }

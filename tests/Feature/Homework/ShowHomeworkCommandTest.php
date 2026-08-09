@@ -4,6 +4,8 @@ use App\Models\Classroom;
 use App\Models\Homework;
 use App\Models\Subject;
 use App\Models\User;
+use App\Models\WeeklyScheduleEntry;
+use Carbon\Carbon;
 
 describe('ShowHomework command', function () {
     it('prompts for date selection when user in a class', function () {
@@ -291,6 +293,70 @@ describe('ShowHomework custom date input', function () {
 });
 
 describe('ShowHomework homework display', function () {
+    it('shows correct schedule structure', function () {
+        $class = Classroom::factory()->create();
+        $subjects = Subject::factory(5)->create(['class_id' => $class->id]);
+        $scheduleEntries = collect([1 => 5, 2 => 6, 3 => 2])
+            ->flatMap(
+                fn (int $lessonsCount, int $weekday) => collect(range(1, $lessonsCount))->map(
+                    fn (int $lesson_number) => [
+                        'weekday' => $weekday,
+                        'lesson_number' => $lesson_number,
+                        'class_id' => $class->id,
+                        'subject_id' => $subjects->random()->id,
+                    ]
+                )
+            );
+        $scheduleEntries = WeeklyScheduleEntry::factory()->createMany($scheduleEntries);
+        $bot = bot(User::factory()->create(['class_id' => $class->id]));
+        $bot->willStartConversation(remember: true)
+            ->hearText('/showhomework')
+            ->reply();
+        $bot->hearCallbackQueryData('showhomework.date.this_week')->reply();
+        collect([
+            __('general.weekday.1'),
+            __('general.weekday.2'),
+            __('general.weekday.3'),
+            ...($subjects->pluck('name')->map(fn (string $name) => $name.': '.__('info.homework.no_homework'))->toArray()),
+        ])->each(
+            fn (string $ss) => assertReplyContains($bot, $ss)
+        );
+    });
+    it('applies homework for correct date', function () {
+        $class = Classroom::factory()->create();
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
+        $scheduleEntries = collect([1 => 1, 2 => 1])
+            ->flatMap(
+                fn (int $lessonsCount, int $weekday) => collect(range(1, $lessonsCount))->map(
+                    fn (int $lesson_number) => [
+                        'weekday' => $weekday,
+                        'lesson_number' => $lesson_number,
+                        'class_id' => $class->id,
+                        'subject_id' => $subject->id,
+                    ]
+                )
+            );
+        $scheduleEntries = WeeklyScheduleEntry::factory()->createMany($scheduleEntries);
+        $homework = Homework::factory()->create([
+            'class_id' => $class->id,
+            'subject_id' => $subject->id,
+            'date' => now()->startOfWeek(Carbon::MONDAY),
+        ]);
+        $bot = bot(User::factory()->create(['class_id' => $class->id]));
+        $bot->willStartConversation(remember: true)
+            ->hearText('/showhomework')
+            ->reply();
+        $bot->hearCallbackQueryData('showhomework.date.this_week')->reply();
+        assertReplyContains(
+            $bot,
+            __('general.weekday.1').'\n'.$subject->name.': '.$homework->description
+        );
+        assertReplyContains(
+            $bot,
+            __('general.weekday.2').'\n'.$subject->name.': '.__('info.homework.no_homework')
+        );
+
+    });
     it('shows homeworks for this week', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
@@ -338,7 +404,7 @@ describe('ShowHomework homework display', function () {
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
-            'description' => 'Тестовое ДЗ на ' . now()->format('d') . ' июня',
+            'description' => 'Тестовое ДЗ на '.now()->format('d').' июня',
             'subject_id' => $subject->id,
         ]);
 
@@ -705,21 +771,21 @@ describe('ShowHomework full conversation flow', function () {
     it('complete flow with custom date', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
-        //Before:
-        //$homework = Homework::factory()->create([
+        // Before:
+        // $homework = Homework::factory()->create([
         //    'class_id' => $class->id,
         //    'date' => now()->format('Y-m-d'),
         //    'description' => 'ДЗ на ' . now()->format('d') . ' июня',
-        //]);
-        //After:
+        // ]);
+        // After:
         $subject = Subject::factory()->create([
-            'class_id' => $class->id
+            'class_id' => $class->id,
         ]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
-            'description' => 'ДЗ на ' . now()->format('d') . ' июня',
-            'subject_id' => $subject->id
+            'description' => 'ДЗ на '.now()->format('d').' июня',
+            'subject_id' => $subject->id,
         ]);
 
         $bot = bot($user);
