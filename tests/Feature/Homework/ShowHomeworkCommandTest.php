@@ -257,7 +257,7 @@ describe('ShowHomework custom date input', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject->id, 'weekday' => now()->isoWeekday()]);
+        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject->id, 'weekday' => now()->isoWeekday()]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
@@ -279,7 +279,7 @@ WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' =
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject->id, 'weekday' => now()->isoWeekday()]);
+        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject->id, 'weekday' => now()->isoWeekday()]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->format('Y-m-d'),
@@ -325,7 +325,7 @@ describe('ShowHomework homework display', function () {
             __('general.weekday.2'),
             __('general.weekday.3'),
             __('info.homework.no_homework'),
-            ...($subjects->pluck('name')->toArray())
+            ...($subjects->pluck('name')->toArray()),
         ])->each(
             fn (string $ss) => assertReplyContains($bot, $ss)
         );
@@ -542,7 +542,6 @@ describe('ShowHomework homework display', function () {
 
 });
 
-
 describe('ShowHomework cancel and edge cases', function () {
     it('cancel works at date selection step', function () {
         $class = Classroom::factory()->create();
@@ -574,7 +573,7 @@ describe('ShowHomework cancel and edge cases', function () {
     it('conversation ends after display', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
-$subject = Subject::factory()->create(['class_id' => $class->id]);
+        $subject = Subject::factory()->create(['class_id' => $class->id]);
         WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->startOfWeek()->isoWeekday(), 'subject_id' => $subject->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,

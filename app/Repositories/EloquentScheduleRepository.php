@@ -35,6 +35,7 @@ class EloquentScheduleRepository implements ScheduleRepository
         foreach ($entries as $lesson) {
             $schedule->addLesson($lesson->weekday, $lesson->subject_id, $lesson->subject->name);
         }
+
         return $schedule;
     }
 }

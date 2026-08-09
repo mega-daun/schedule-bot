@@ -6,6 +6,7 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Exceptions\UnknownRoleException;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,8 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_bot
  * @property UserRole $role
  * @property-read Classroom|null $class
- * @property-read \Carbon\Carbon $created_at
- * @property-read \Carbon\Carbon $updated_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ *
  * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
@@ -35,6 +37,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRole($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUsername($value)
+ *
  * @mixin \Eloquent
  */
 class User extends Model

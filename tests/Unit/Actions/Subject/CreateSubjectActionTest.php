@@ -4,6 +4,7 @@ use App\Actions\Subject\CreateSubjectAction;
 use App\Exceptions\InvalidInputException;
 use App\Models\Classroom;
 use App\Models\Subject;
+
 it('rejects empty input', function () {
     $action = new CreateSubjectAction(name: '', class_id: 1);
     $action();

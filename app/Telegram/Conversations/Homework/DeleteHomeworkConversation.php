@@ -9,16 +9,12 @@ use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
-use Carbon\Carbon;
-use Carbon\Exceptions\InvalidFormatException;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 
 class DeleteHomeworkConversation extends Conversation
 {
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
-    {
-    }
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
 
     public ?int $userId = null;
 
@@ -200,10 +196,9 @@ class DeleteHomeworkConversation extends Conversation
             return;
         }
 
-        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard('deletehomework.select', $homeworks, fn (Homework $hw) => $hw->date->format('d.m') . " - " . $hw->description, fn (Homework $hw) => $hw->id);
+        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard('deletehomework.select', $homeworks, fn (Homework $hw) => $hw->date->format('d.m').' - '.$hw->description, fn (Homework $hw) => $hw->id);
         $bot->sendMessage(text: __('prompt.homework.select_for_delete'), reply_markup: $keyboard);
 
         $this->next('homeworkSelection');
     }
-
 }

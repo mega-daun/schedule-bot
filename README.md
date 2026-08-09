@@ -14,26 +14,44 @@ A Telegram bot built with Laravel to help students manage all their school activ
 
 - **Framework**: Laravel 12.x
 - **Language**: PHP 8.2+
-- **Database**: MariaDB
+- **Telegram Library**: Nutgram
+- **Tests**: Pest
 
 ## Project Structure
 
 ```
 schedule-bot/
 ├── app/
+│   ├── Actions/             # High level logic
+│   ├── DataObjects/         # Value objects (Lesson, Schedule, Weekday, etc.)
+│   ├── Enums/               # Enums (e.g. UserRole)
+│   ├── Exceptions/          # Custom exceptions
+│   ├── Helpers/             # Message/keyboard generators, parser service
 │   ├── Http/
-│   │   └── Controllers/     # HTTP controllers for webhooks/API
-│   ├── Models/              # Eloquent models (User, Homework, Event, etc.)
-│   └── Providers/           # Service providers
+│   │   └── Middleware/      # Bot command middleware (auth, class checks, etc.)
+│   ├── Jobs/                # Queued jobs (e.g. BroadcastToUsers)
+│   ├── Models/              # Eloquent models (User, Classroom, Subject, etc.)
+│   ├── Providers/           # Service providers
+│   ├── Repositories/        # Repository interfaces + implementations
+│   └── Telegram/
+│       ├── Commands/        # Bot commands (/start, /newclass, etc.)
+│       ├── Conversations/   # Bot commands with multiple steps (/newhomework, /newschedule, /showhomework, etc.)
+│       ├── Menus/           # Inline keyboard menus
+│       └── Messages/        # Message renderers (e.g. HomeworkList)
 ├── config/                  # Configuration files
 ├── database/
+│   ├── factories/           # Model factories
 │   ├── migrations/          # Database migrations
 │   └── seeders/             # Database seeders
 ├── routes/
-│   ├── web.php              # Web routes
+│   ├── telegram.php         # Telegram bot command routes
+│   ├── web.php              # Web routes(webhook setup)
 │   └── console.php          # Artisan commands
 ├── resources/
-└── tests/                   # Test files
+│   └── views/messages/      # Notification/message templates (Homework, Schedule)
+└── tests/
+    ├── Feature/             # Feature tests (Class/, Homework/, Schedule/, Subject/)
+    └── Unit/                # Unit tests (Actions/, DataObjects/, Repositories/, Views/)
 ```
 
 ## Setup Instructions
@@ -54,16 +72,10 @@ schedule-bot/
 
 2. **Install PHP dependencies**:
    ```bash
-   composer install
+   composer setup
    ```
 
-3. **Set up environment variables**:
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-4. **Configure your `.env` file** with the following required variables:
+3. **Configure your `.env` file** with the following required variables:
    ```env
    TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
    TELEGRAM_WEBHOOK_URL=https://your-domain.com/webhook/telegram
@@ -72,14 +84,14 @@ schedule-bot/
    DB_CONNECTION=sqlite
    ```
 
-5. **Run database migrations**:
+4. **Run database migrations**:
    ```bash
    php artisan migrate
    ```
 
 ### Running the Application
 
-**Development mode** (runs server, queue worker, logs, and Vite):
+**Development mode** (runs server, queue worker, logs):
 ```bash
 composer run dev
 ```
@@ -115,7 +127,7 @@ php artisan pail
 
 After deploying your application, set the webhook URL:
 ```bash
-php artisan telegram:set-webhook
+php artisan nutgram:hook:set
 ```
 
 Or manually via Telegram API:
@@ -143,10 +155,6 @@ This project uses Laravel Pint for code formatting:
 ```bash
 ./vendor/bin/pint
 ```
-
-## Architecture
-
-For detailed architecture documentation, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Contributing
 

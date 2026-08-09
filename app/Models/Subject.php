@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,13 +15,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property int $class_id
  * @property string $name
- * @property-read \Carbon\Carbon $created_at
- * @property-read \Carbon\Carbon $updated_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
  * @property-read Classroom $classroom
- * @property-read \Illuminate\Database\Eloquent\Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
- * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
+ * @property-read Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
+ * @property-read Collection<Homework> $homeworks
  * @property-read int|null $homeworks_count
  * @property-read int|null $weekly_schedule_entries_count
+ *
  * @method static \Database\Factories\SubjectFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject newQuery()
@@ -29,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereName($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Subject whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Subject extends Model

@@ -15,9 +15,7 @@ use SergiX44\Nutgram\Nutgram;
 
 class ChangeRoleConversation extends Conversation
 {
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser)
-    {
-    }
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
 
     public function start(Nutgram $bot)
     {

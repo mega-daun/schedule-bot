@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,10 +15,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $subject_id
  * @property int $weekday
  * @property int $lesson_number
- * @property-read \Carbon\Carbon $created_at
- * @property-read \Carbon\Carbon $updated_at
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
  * @property-read Classroom $classroom
  * @property-read Subject $subject
+ *
  * @method static \Database\Factories\WeeklyScheduleEntryFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WeeklyScheduleEntry newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WeeklyScheduleEntry newQuery()
@@ -29,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WeeklyScheduleEntry whereSubjectId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WeeklyScheduleEntry whereUpdatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WeeklyScheduleEntry whereWeekday($value)
+ *
  * @mixin \Eloquent
  */
 class WeeklyScheduleEntry extends Model

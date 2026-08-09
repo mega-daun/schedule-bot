@@ -26,10 +26,9 @@ trait HomeworkList
      *                        selects the lessons from the schedule.
      * @param  Schedule  $schedule  Schedule containing the lessons for each weekday.
      * @param  Collection<int, Homework>  $homeworks  Homework records for the given
-     *                        date only — the caller must pre-filter them (e.g. with
-     *                        `whereDate('date', $date)`). Records on other dates are
-     *                        never rendered.
-     *
+     *                                                date only — the caller must pre-filter them (e.g. with
+     *                                                `whereDate('date', $date)`). Records on other dates are
+     *                                                never rendered.
      * @return string The rendered message.
      */
     public function makeHomeworkListOnDay(Carbon $date, Schedule $schedule, Collection $homeworks): string
@@ -42,7 +41,7 @@ trait HomeworkList
             'date' => $date->format('d.m'),
             'lessons' => $schedule->getLessons($date->isoWeekday())
                 ->map(
-                    fn(Lesson $ls) => [
+                    fn (Lesson $ls) => [
                         'subject' => $ls->getSubjectName(),
                         'homework' => $this->getHomework($date, $ls->getSubjectId(), $homeworks),
                     ]
@@ -62,13 +61,12 @@ trait HomeworkList
      * (weekday 3 → Wednesday of that week), not by the weekday number.
      *
      * @param  Carbon  $start  Any day within the target week; the weekday of $start
-     *                        is the first day shown, and its week determines which
-     *                        days come after it.
+     *                         is the first day shown, and its week determines which
+     *                         days come after it.
      * @param  Schedule  $schedule  Schedule containing the lessons for each weekday.
      * @param  Collection<int, Homework>  $homeworks  Homework records for the whole
-     *                        week (Monday–Sunday of $start's week), pre-filtered by
-     *                        the caller. Records outside this week are never rendered.
-     *
+     *                                                week (Monday–Sunday of $start's week), pre-filtered by
+     *                                                the caller. Records outside this week are never rendered.
      * @return string The rendered message.
      */
     public function makeHomeworkListOnWeek(Carbon $start, Schedule $schedule, Collection $homeworks): string
@@ -81,10 +79,10 @@ trait HomeworkList
             'end_date' => $end->format('d.m'),
             'days' => collect(range($mon->isoWeekday(), $end->isoWeekday()))
                 ->map(
-                    fn(int $weekday) => $schedule->hasWorkday($weekday)
+                    fn (int $weekday) => $schedule->hasWorkday($weekday)
                     ? [
-                        'name' => __('general.weekday.' . $weekday),
-                        'lessons' => $schedule->getLessons($weekday)->map(fn(Lesson $ls) => [
+                        'name' => __('general.weekday.'.$weekday),
+                        'lessons' => $schedule->getLessons($weekday)->map(fn (Lesson $ls) => [
                             'subject' => $ls->getSubjectName(),
                             'homework' => $this->getHomework((clone $mon)->addDays($weekday - 1), $ls->getSubjectId(), $homeworks),
                         ]),
@@ -98,7 +96,7 @@ trait HomeworkList
 
     private function mapHomeworksToDaysSubjects(Collection $homeworks): Collection
     {
-        return $homeworks->groupBy(fn(Homework $h) => $h->date->format('Y-m-d'))->sortKeys()->map(fn(Collection $h) => $h->keyBy('subject_id'));
+        return $homeworks->groupBy(fn (Homework $h) => $h->date->format('Y-m-d'))->sortKeys()->map(fn (Collection $h) => $h->keyBy('subject_id'));
     }
 
     private function getHomework(Carbon $date, int $subject_id, Collection $homeworks): string

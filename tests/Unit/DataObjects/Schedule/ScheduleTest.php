@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-use App\DataObjects\Schedule\Lesson;
 use App\DataObjects\Schedule\Schedule;
 use App\DataObjects\Schedule\Weekday;
-use App\Models\Subject;
 use Illuminate\Support\Collection;
 
 //
@@ -13,7 +11,7 @@ use Illuminate\Support\Collection;
 //
 
 it('creates 7 weekdays by default', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
 
     $weekdays = $schedule->getWeekdays();
     expect($weekdays)->toHaveCount(7);
@@ -88,7 +86,7 @@ it('throws on duplicate weekday day number in collection', function () {
 //
 
 it('returns correct weekday', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
 
     $weekday = $schedule->getWeekday(1);
@@ -98,11 +96,11 @@ it('returns correct weekday', function () {
 });
 
 it('throws for day 0', function () {
-    (new Schedule())->getWeekday(0);
+    (new Schedule)->getWeekday(0);
 })->throws(InvalidArgumentException::class);
 
 it('throws for day 8', function () {
-    (new Schedule())->getWeekday(8);
+    (new Schedule)->getWeekday(8);
 })->throws(InvalidArgumentException::class);
 
 it('throws for non-work-day', function () {
@@ -115,7 +113,7 @@ it('throws for non-work-day', function () {
 //
 
 it('addLesson delegates to correct weekday', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
 
     $lessons = $schedule->getLessons(1);
@@ -126,11 +124,11 @@ it('addLesson delegates to correct weekday', function () {
 });
 
 it('addLesson throws for invalid weekday', function () {
-    (new Schedule())->addLesson(8, 10, 'Math');
+    (new Schedule)->addLesson(8, 10, 'Math');
 })->throws(InvalidArgumentException::class);
 
 it('removeLessonsBySubject delegates correctly', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
     $schedule->addLesson(1, 20, 'Physics');
 
@@ -142,7 +140,7 @@ it('removeLessonsBySubject delegates correctly', function () {
 });
 
 it('removeLessonByNumber delegates correctly', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
     $schedule->addLesson(1, 20, 'Physics');
 
@@ -155,7 +153,7 @@ it('removeLessonByNumber delegates correctly', function () {
 });
 
 it('hasLesson delegates correctly', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
 
     expect($schedule->hasLesson(1, 10))->toBeTrue()
@@ -163,7 +161,7 @@ it('hasLesson delegates correctly', function () {
 });
 
 it('findLessonsBySubject delegates correctly', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
     $schedule->addLesson(1, 20, 'Physics');
 
@@ -173,7 +171,7 @@ it('findLessonsBySubject delegates correctly', function () {
 });
 
 it('getLessons returns lessons from correct weekday', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 10, 'Math');
     $schedule->addLesson(3, 20, 'Physics');
 
@@ -187,7 +185,7 @@ it('getLessons returns lessons from correct weekday', function () {
 //
 
 it('returns collection of all weekdays', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $weekdays = $schedule->getWeekdays();
 
     expect($weekdays)->toBeInstanceOf(Collection::class)
@@ -199,7 +197,7 @@ it('returns collection of all weekdays', function () {
 //
 
 it('serializes empty schedule to JSON with named keys', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $json = $schedule->toJson();
     $data = json_decode($json, true);
 
@@ -228,7 +226,7 @@ it('serializes custom work_days', function () {
 });
 
 it('passes options to json_encode', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $json = $schedule->toJson(JSON_PRETTY_PRINT);
 
     expect($json)->toContain("\n");
@@ -239,7 +237,7 @@ it('passes options to json_encode', function () {
 //
 
 it('reconstructs empty schedule from JSON', function () {
-    $json = (new Schedule())->toJson();
+    $json = (new Schedule)->toJson();
     $schedule = Schedule::fromJson($json);
 
     expect($schedule->getWeekdays())->toHaveCount(7)
@@ -280,7 +278,7 @@ it('round-trips custom work_days through toJson/fromJson', function () {
 });
 
 it('round-trips schedule preserving lesson order within weekday', function () {
-    $original = new Schedule();
+    $original = new Schedule;
     $original->addLesson(1, 10, 'First');
     $original->addLesson(1, 20, 'Second');
     $original->addLesson(1, 30, 'Third');
@@ -368,7 +366,7 @@ it('throws JsonException when lesson subject_id is not int', function () {
 //
 
 it('returns true for default work day', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
 
     expect($schedule->hasWorkday(1))->toBeTrue()
         ->and($schedule->hasWorkday(7))->toBeTrue();
@@ -387,7 +385,7 @@ it('returns true for custom work day', function () {
 });
 
 it('returns false for out-of-range days', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
 
     expect($schedule->hasWorkday(0))->toBeFalse()
         ->and($schedule->hasWorkday(8))->toBeFalse();
@@ -430,11 +428,11 @@ it('throws when adding an existing work day', function () {
 })->throws(InvalidArgumentException::class);
 
 it('throws when adding day greater than 7', function () {
-    (new Schedule())->addWorkDay(8);
+    (new Schedule)->addWorkDay(8);
 })->throws(InvalidArgumentException::class);
 
 it('throws when adding day less than 1', function () {
-    (new Schedule())->addWorkDay(0);
+    (new Schedule)->addWorkDay(0);
 })->throws(InvalidArgumentException::class);
 
 it('round-trips added work day through toJson/fromJson', function () {
@@ -454,7 +452,7 @@ it('round-trips added work day through toJson/fromJson', function () {
 //
 
 it('removes the weekday from the collection', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->removeWorkDay(5);
 
     expect($schedule->getWeekdays()->has(5))->toBeFalse()
@@ -462,14 +460,14 @@ it('removes the weekday from the collection', function () {
 });
 
 it('hasWorkday returns false after removal', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->removeWorkDay(5);
 
     expect($schedule->hasWorkday(5))->toBeFalse();
 });
 
 it('getWeekday throws after removal', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->removeWorkDay(5);
     $schedule->getWeekday(5);
 })->throws(InvalidArgumentException::class);
@@ -480,7 +478,7 @@ it('throws when removing a non-work day', function () {
 })->throws(InvalidArgumentException::class);
 
 it('drops lessons on the removed day', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(5, 10, 'Math');
 
     $schedule->removeWorkDay(5);
@@ -489,7 +487,7 @@ it('drops lessons on the removed day', function () {
 });
 
 it('removes day from toJson work_days', function () {
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->removeWorkDay(7);
 
     $data = json_decode($schedule->toJson(), true);

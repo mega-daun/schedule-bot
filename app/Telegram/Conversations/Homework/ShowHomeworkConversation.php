@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
-use App\DataObjects\Schedule\Schedule;
 use App\Helpers\MessageKeyboardGenerator;
-use App\Helpers\MessageTextGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\User;
@@ -19,6 +17,7 @@ use SergiX44\Nutgram\Nutgram;
 class ShowHomeworkConversation extends Conversation
 {
     use HomeworkList;
+
     public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser, private ScheduleRepository $scheduleRepository) {}
 
     public ?int $userId = null;

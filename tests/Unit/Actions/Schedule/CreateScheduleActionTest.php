@@ -16,7 +16,7 @@ afterEach(function () {
 it('rejects non-existent class', function () {
     $repository = Mockery::mock(ScheduleRepository::class);
 
-    $schedule = new Schedule();
+    $schedule = new Schedule;
 
     $action = new CreateScheduleAction(repository: $repository);
     $action(class_id: 999, schedule: $schedule);
@@ -29,7 +29,7 @@ it('rejects subject not belonging to class', function () {
 
     $repository = Mockery::mock(ScheduleRepository::class);
 
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, $subject->id, $subject->name);
 
     $action = new CreateScheduleAction(repository: $repository);
@@ -41,7 +41,7 @@ it('rejects non-existent subject', function () {
 
     $repository = Mockery::mock(ScheduleRepository::class);
 
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, 99999, 'Non-existent Subject');
 
     $action = new CreateScheduleAction(repository: $repository);
@@ -52,7 +52,7 @@ it('calls repository and returns result on success', function () {
     $classroom = Classroom::factory()->create();
     $subjects = Subject::factory()->count(2)->create(['class_id' => $classroom->id]);
 
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, $subjects[0]->id, $subjects[0]->name);
     $schedule->addLesson(1, $subjects[1]->id, $subjects[1]->name);
 
@@ -75,7 +75,7 @@ it('validates multiple subjects with single query', function () {
 
     $repository = Mockery::mock(ScheduleRepository::class);
 
-    $schedule = new Schedule();
+    $schedule = new Schedule;
     $schedule->addLesson(1, $validSubject->id, $validSubject->name);
     $schedule->addLesson(1, 99999, 'Non-existent Subject');
 

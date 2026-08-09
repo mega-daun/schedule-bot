@@ -4,6 +4,7 @@ use App\Actions\Subject\DeleteSubjectAction;
 use App\Exceptions\InvalidInputException;
 use App\Models\Classroom;
 use App\Models\Subject;
+
 it('deletes an existing subject', function () {
     $subject = Subject::factory()->for(Classroom::factory())->create();
 

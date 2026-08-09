@@ -1,10 +1,8 @@
 <?php
 
 use App\Models\Classroom;
-use App\Models\Homework;
 use App\Models\Subject;
 use App\Models\User;
-use App\Telegram\Conversations\Homework\NewHomeworkConversation;
 
 describe('NewHomework command', function () {
     it('prompts for date selection when user in a class', function () {
@@ -58,7 +56,7 @@ describe('NewHomework command', function () {
         $bot->willStartConversation(remember: true)
             ->hearText('/newhomework')
             ->reply();
-        
+
         assertReplyContains($bot, __('error.class.no_subjects'));
     });
 });
@@ -303,7 +301,7 @@ describe('NewHomework conversation subject input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
         assertReplyContains($bot, __('prompt.homework.select_subject'));
-        assertReplyMarkupContains($bot, [$s->name, (string)$s->id]);        
+        assertReplyMarkupContains($bot, [$s->name, (string) $s->id]);
         $bot->assertActiveConversation();
     });
 
@@ -414,7 +412,7 @@ describe('NewHomework full conversation flow', function () {
             ->hearText('/newhomework')
             ->reply();
 
-        $bot->hearCallbackQueryData('newhomework.date.' . now()->format('Y-m-d'))->reply();
+        $bot->hearCallbackQueryData('newhomework.date.'.now()->format('Y-m-d'))->reply();
         $bot->hearCallbackQueryData('newhomework.subject.'.$subject->id)->reply();
         $bot->hearText('Complete the project')->reply();
 

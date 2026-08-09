@@ -1,14 +1,10 @@
 <?php
 
-use App\DataObjects\Schedule\Lesson;
-use App\Telegram\Messages\HomeworkList;
-use App\Models\Homework;
-use App\Models\Classroom;
-use App\Models\Subject;
 use App\DataObjects\Schedule\Schedule;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Collection;
-use PhpParser\Builder\Class_;
+use App\Models\Classroom;
+use App\Models\Homework;
+use App\Models\Subject;
+use App\Telegram\Messages\HomeworkList;
 
 use function PHPUnit\Framework\assertStringContainsString;
 use function PHPUnit\Framework\assertStringNotContainsString;
@@ -19,7 +15,7 @@ class TestableHomeworkList
 }
 
 it('should output homework for stated date', function () {
-    $printer = new TestableHomeworkList();
+    $printer = new TestableHomeworkList;
     $c = Classroom::factory()->create();
     $s = Subject::factory()->for($c)->create();
     $homework = Homework::factory()
@@ -39,7 +35,7 @@ it('should output homework for stated date', function () {
 });
 
 it('should not output homework for unstated date', function () {
-    $printer = new TestableHomeworkList();
+    $printer = new TestableHomeworkList;
     $c = Classroom::factory()->create();
     $s = Subject::factory()->for($c)->create();
     $homework = Homework::factory()
@@ -59,7 +55,7 @@ it('should not output homework for unstated date', function () {
 });
 
 it('should output headers only for work days', function () {
-    $printer = new TestableHomeworkList();
+    $printer = new TestableHomeworkList;
     $schedule = new Schedule(range(1, 5));
     $output = $printer->makeHomeworkListOnWeek(now(), $schedule, collect([]));
     assertStringContainsString(__('general.weekday.1'), $output, 'Weekly view does not print monday header when it is a work day');
@@ -72,7 +68,7 @@ it('should output headers only for work days', function () {
 });
 
 it('should leave \'no homework\' message when day is not a work day', function () {
-    $printer = new TestableHomeworkList();
+    $printer = new TestableHomeworkList;
     $c = Classroom::factory()->create();
     $s = Subject::factory()->for($c)->create();
     $homework = Homework::factory()
@@ -89,7 +85,7 @@ it('should leave \'no homework\' message when day is not a work day', function (
 });
 
 test('edge case: same subject on different dates with one homework', function () {
-    $printer = new TestableHomeworkList();
+    $printer = new TestableHomeworkList;
     $c = Classroom::factory()->create();
     $s = Subject::factory()->for($c)->create();
     $homework = Homework::factory()

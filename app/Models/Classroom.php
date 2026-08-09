@@ -6,6 +6,8 @@ namespace App\Models;
 
 use App\Enums\UserRole;
 use App\Jobs\BroadcastToUsers;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -14,16 +16,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $code
  * @property string $join_token
- * @property-read \Carbon\Carbon $created_at
- * @property-read \Carbon\Carbon $updated_at
- * @property-read \Illuminate\Database\Eloquent\Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
- * @property-read \Illuminate\Database\Eloquent\Collection<Homework> $homeworks
- * @property-read \Illuminate\Database\Eloquent\Collection<Subject> $subjects
- * @property-read \Illuminate\Database\Eloquent\Collection<User> $users
+ * @property-read Carbon $created_at
+ * @property-read Carbon $updated_at
+ * @property-read Collection<WeeklyScheduleEntry> $weeklyScheduleEntries
+ * @property-read Collection<Homework> $homeworks
+ * @property-read Collection<Subject> $subjects
+ * @property-read Collection<User> $users
  * @property-read int|null $homeworks_count
  * @property-read int|null $subjects_count
  * @property-read int|null $users_count
  * @property-read int|null $weekly_schedule_entries_count
+ *
  * @method static \Database\Factories\ClassroomFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom newQuery()
@@ -33,6 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereJoinToken($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Classroom whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Classroom extends Model
@@ -81,7 +85,8 @@ class Classroom extends Model
      *
      * @return HasMany<Subject>
      */
-    public function subjects(): HasMany {
+    public function subjects(): HasMany
+    {
         return $this->hasMany(Subject::class, 'class_id');
     }
 

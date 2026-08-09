@@ -8,7 +8,6 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * @property int $id
@@ -20,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property-read Carbon $updated_at
  * @property-read Classroom $classroom
  * @property-read Subject $subject
+ *
  * @method static \Database\Factories\HomeworkFactory factory($count = null, $state = [])
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Homework newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Homework newQuery()
@@ -31,6 +31,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Homework whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Homework whereSubjectId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Homework whereUpdatedAt($value)
+ *
  * @mixin \Eloquent
  */
 class Homework extends Model
