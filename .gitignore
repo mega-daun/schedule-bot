@@ -4,7 +4,12 @@
 .env.backup
 .env.production
 .phpactor.json
+.php-cs-fixer.cache
 .phpunit.result.cache
+_ide_helper.php
+_ide_helper_nutgram.php
+.phpstorm.meta.php
+dump.rdb
 /.fleet
 /.idea
 /.nova

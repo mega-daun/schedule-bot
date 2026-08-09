@@ -161,7 +161,7 @@ class NewScheduleConversation extends Conversation
     private function sendConfirmationPrompt(Nutgram $bot): void
     {
         $preview = view(
-            'messages/Schedule/weekday_schedule_preview',
+            'messages/schedule/weekday_schedule',
             [
                 'weekday' => strtolower(__('general.weekday.'.$this->currentWeekday)),
                 'lessons' => $this->schedule->getLessons($this->currentWeekday),

@@ -48,7 +48,7 @@ trait HomeworkList
                 ),
         ];
 
-        return view('messages/Homework/daily_homework_view', $params)->render();
+        return view('messages/homework/daily_homework', $params)->render();
     }
 
     /**
@@ -91,7 +91,7 @@ trait HomeworkList
                 )->filter(),
         ];
 
-        return view('messages/Homework/weekly_homework_view', $params)->render();
+        return view('messages/homework/weekly_homework', $params)->render();
     }
 
     private function mapHomeworksToDaysSubjects(Collection $homeworks): Collection
