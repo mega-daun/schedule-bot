@@ -127,10 +127,10 @@ class ShowHomeworkConversation extends Conversation
             $endDate = $startDate;
         } elseif ($this->dateRange === 'this_week') {
             $startDate = now()->startOfWeek()->toDateString();
-            $endDate = now()->endOfWeek()->subDay()->toDateString();
+            $endDate = now()->endOfWeek()->addDay()->toDateString();
         } elseif ($this->dateRange === 'next_week') {
             $startDate = now()->addWeek()->startOfWeek()->toDateString();
-            $endDate = now()->addWeek()->subDay()->endOfWeek()->toDateString();
+            $endDate = now()->addWeek()->endOfWeek()->addDay()->toDateString();
         }
 
         $homeworks = Homework::where('class_id', $user->class_id)

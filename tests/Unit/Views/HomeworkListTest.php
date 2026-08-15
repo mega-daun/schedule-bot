@@ -44,12 +44,13 @@ it('should not output homework for unstated date', function () {
             'subject_id' => $s->id,
             'date' => now(),
         ]);
-    $schedule = new Schedule([now()->isoWeekday()]);
+    $schedule = new Schedule;
     $schedule->addLesson(now()->isoWeekday(), $s->id, $s->name);
+    $schedule->addLesson(now()->isoWeekday() + 1, $s->id, $s->name);
     $output = $printer->makeHomeworkListOnDay(now()->addDay(), $schedule, collect([$homework]));
     assertStringContainsString(__('info.homework.no_homework'), $output, 'Daily view does not print no homework message when there is no homework');
     assertStringNotContainsString($homework->description, $output, 'Daily view does print homework description with wrong date');
-    $output = $printer->makeHomeworkListOnWeek(now()->addDay(), $schedule, collect([$homework]));
+    $output = $printer->makeHomeworkListOnWeek(now()->addWeek(), $schedule, collect([$homework]));
     assertStringNotContainsString($homework->description, $output, 'Weekly view does print homework description with wrong date');
     assertStringContainsString(__('info.homework.no_homework'), $output, 'Weekly view does not print no homework message when there is no homework');
 });

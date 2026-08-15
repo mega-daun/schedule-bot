@@ -118,10 +118,10 @@ describe('ShowHomework date selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->addDay()->isoWeekday(), 'subject_id' => $subject->id]);
+        $e = WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->addDay()->isoWeekday(), 'subject_id' => $subject->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => now()->startOfWeek()->toDateString(),
+            'date' => now()->startOfWeek()->addDays($e->weekday - 1)->toDateString(),
             'subject_id' => $subject->id,
         ]);
 
@@ -139,10 +139,10 @@ describe('ShowHomework date selection', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->addDay()->isoWeekday(), 'subject_id' => $subject->id]);
+        $e = WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->addDay()->isoWeekday(), 'subject_id' => $subject->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
-            'date' => now()->addWeek()->startOfWeek()->toDateString(),
+            'date' => now()->addWeek()->startOfWeek()->addDays($e->weekday - 1)->toDateString(),
             'subject_id' => $subject->id,
         ]);
 
@@ -597,7 +597,7 @@ describe('ShowHomework full conversation flow', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->startOfWeek()->isoWeekday(), 'subject_id' => $subject->id]);
+        WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'weekday' => now()->addDay()->isoWeekday(), 'subject_id' => $subject->id]);
         $homework = Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->addDay()->toDateString(),
