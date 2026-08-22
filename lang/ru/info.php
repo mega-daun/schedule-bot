@@ -2,7 +2,7 @@
 
 return [
     'class' => [
-        'created' => 'Класс :code успешно создан. Токен для присоединения: :token. Ссылка для присоединения: https://t.me/hatenigas_bot?start=:token',
+        'created' => 'Класс :code успешно создан. Токен для присоединения: :token. Ссылка для присоединения: https://t.me/'.env('TELEGRAM_BOT_USERNAME').'?start=:token',
         'joined' => 'Вы успешно присоеденились к классу :code.',
         'left' => 'Вы вышли из класса :code.',
         'deleted' => 'Вы успешно удалили класс :code.',
