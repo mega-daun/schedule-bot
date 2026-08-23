@@ -497,14 +497,15 @@ describe('ShowHomework homework display', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->student()->create(['class_id' => $class->id]);
         $subject = Subject::factory()->create(['class_id' => $class->id]);
-        WeeklyScheduleEntry::factory(6, new Sequence(
-            ['weekday' => 1, 'lesson_number' => 1, 'subject_id' => $subject->id],
-            ['weekday' => 2, 'lesson_number' => 1, 'subject_id' => $subject->id],
-            ['weekday' => 3, 'lesson_number' => 1, 'subject_id' => $subject->id],
-            ['weekday' => 4, 'lesson_number' => 1, 'subject_id' => $subject->id],
-            ['weekday' => 5, 'lesson_number' => 1, 'subject_id' => $subject->id],
-            ['weekday' => 6, 'lesson_number' => 1, 'subject_id' => $subject->id],
-        ))->create(['class_id' => $class->id]);
+        $slots = [
+            ['weekday' => 1, 'lesson_number' => 1],
+            ['weekday' => 2, 'lesson_number' => 1],
+            ['weekday' => 3, 'lesson_number' => 1],
+            ['weekday' => 4, 'lesson_number' => 1],
+            ['weekday' => 5, 'lesson_number' => 1],
+            ['weekday' => 6, 'lesson_number' => 1],
+        ];
+        WeeklyScheduleEntry::factory(count($slots), new Sequence(...$slots))->create(['class_id' => $class->id, 'subject_id' => $subject->id]);
         Homework::factory()->create([
             'class_id' => $class->id,
             'date' => now()->startOfWeek()->toDateString(),

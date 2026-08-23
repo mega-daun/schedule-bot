@@ -636,7 +636,7 @@ describe('Schedule creation and completion', function () {
         $class = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Mathematics']);
         $subject2 = Subject::factory()->create(['class_id' => $class->id, 'name' => 'Physics']);
-        $scheduleEntry = WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject2->id]);
+        $scheduleEntry = WeeklyScheduleEntry::factory()->create(['class_id' => $class->id, 'subject_id' => $subject2->id, 'weekday' => 6]);
         $user = User::factory()->onDuty()->create(['class_id' => $class->id]);
         $bot = bot($user);
         $bot->willStartConversation(remember: true)

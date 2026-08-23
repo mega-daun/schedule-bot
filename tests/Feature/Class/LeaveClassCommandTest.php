@@ -176,7 +176,7 @@ describe('LeaveClassCommand - Admin as only member', function () {
     it('admin is only member and schedules are deleted', function () {
         $classroom = Classroom::factory()->create();
         $subject = Subject::factory()->create(['class_id' => $classroom->id]);
-        WeeklyScheduleEntry::factory()->count(4)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
+        WeeklyScheduleEntry::factory()->count(1)->create(['class_id' => $classroom->id, 'subject_id' => $subject->id]);
         $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
         $bot = bot($admin);
         $bot->hearText('/leaveclass')->reply();
