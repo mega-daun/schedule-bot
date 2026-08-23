@@ -17,7 +17,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
-          passphrase: ${{ secreats.PASSPHRASE }}
+          passphrase: ${{ secrets.PASSPHRASE }}
           fingerprint: ${{ secrets.FINGERPRINT }}
           script: |
             cd /var/www/schedule-bot || (git clone git@github.com:mega-daun/schedule-bot.git /var/www/schedule-bot && cd /var/www/schedule-bot)
