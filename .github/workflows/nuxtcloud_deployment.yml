@@ -20,8 +20,8 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT }}
           passphrase: ${{ secrets.PASSPHRASE }}
-          fingerprint: ${{ secrets.FINGERPRINT }}
+          # fingerprint: ${{ secrets.FINGERPRINT }}
           script: |
             cd /var/www/schedule-bot || (git clone git@github.com:mega-daun/schedule-bot.git /var/www/schedule-bot && cd /var/www/schedule-bot)
-            git pull origin main
+            git pull origin master
             composer install --no-dev
