@@ -23,6 +23,23 @@ jobs:
           - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
+    - name: Cache MySQL Docker image
+      id: cache-mysql
+      uses: actions/cache@v3
+      with:
+        path: /tmp/mysql-image.tar
+        key: ${{ runner.os }}-mysql-8.0
+
+    - name: Load MySQL image from cache
+      if: steps.cache-mysql.outputs.cache-hit == 'true'
+      run: docker load < /tmp/mysql-image.tar
+
+    - name: Pull and save MySQL image (if cache miss)
+      if: steps.cache-mysql.outputs.cache-hit != 'true'
+      run: |
+        docker pull mysql:8.0
+        docker save mysql:8.0 -o /tmp/mysql-image.tar
+
     - uses: actions/checkout@v4
 
     - name: Cache Composer dependencies
