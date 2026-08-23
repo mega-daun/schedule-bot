@@ -19,7 +19,7 @@ return new class extends Migration
             $table->dropColumn('remember_token');
             $table->dropColumn('name');
             $table->string('first_name');
-            $table->string('username')->unique();
+            $table->string('username')->nullable();
         });
     }
 
