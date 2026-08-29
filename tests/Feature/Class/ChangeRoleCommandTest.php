@@ -161,7 +161,7 @@ describe('ChangeRoleCommand', function () {
         it('admin sees inline keyboard with class members', function () {
             $classroom = Classroom::factory()->create();
             $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1']);
+            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1', 'first_name' => 'Maria']);
             $bot = bot($admin);
             $bot->willStartConversation(remember: true)
                 ->hearText('/changerole')
@@ -169,7 +169,7 @@ describe('ChangeRoleCommand', function () {
             $bot->assertReplyMessage([
                 'text' => __('prompt.role.select_user'),
             ]);
-            assertReplyContains($bot, '@member1');
+            assertReplyContains($bot, 'Maria');
         });
 
         it('inline keyboard contains callback data for each member', function () {
@@ -201,17 +201,17 @@ describe('ChangeRoleCommand', function () {
             $classroom = Classroom::factory()->create();
             $otherClassroom = Classroom::factory()->create();
             $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1']);
-            User::factory()->student()->create(['class_id' => $otherClassroom->id, 'username' => 'othermember']);
+            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1', 'first_name' => 'Maria']);
+            User::factory()->student()->create(['class_id' => $otherClassroom->id, 'username' => 'othermember', 'first_name' => 'Other']);
             $bot = bot($admin);
             $bot->willStartConversation(remember: true)
                 ->hearText('/changerole')
                 ->reply();
-            assertReplyContains($bot, '@member1');
+            assertReplyContains($bot, 'Maria');
             $bot->assertRaw(function ($request) {
                 $body = (string) $request->getBody();
 
-                return ! str_contains($body, 'othermember');
+                return ! str_contains($body, 'Other');
             });
         });
 
@@ -497,17 +497,17 @@ describe('ChangeRoleCommand', function () {
         it('user keyboard does not show users without class', function () {
             $classroom = Classroom::factory()->create();
             $admin = User::factory()->admin()->create(['class_id' => $classroom->id]);
-            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1']);
-            User::factory()->student()->create(['class_id' => null, 'username' => 'noClassUser']);
+            User::factory()->student()->create(['class_id' => $classroom->id, 'username' => 'member1', 'first_name' => 'Maria']);
+            User::factory()->student()->create(['class_id' => null, 'username' => 'noClassUser', 'first_name' => 'NoClass']);
             $bot = bot($admin);
             $bot->willStartConversation(remember: true)
                 ->hearText('/changerole')
                 ->reply();
-            assertReplyContains($bot, '@member1');
+            assertReplyContains($bot, 'Maria');
             $bot->assertRaw(function ($request) {
                 $body = (string) $request->getBody();
 
-                return ! str_contains($body, 'noClassUser');
+                return ! str_contains($body, 'NoClass');
             });
         });
     });

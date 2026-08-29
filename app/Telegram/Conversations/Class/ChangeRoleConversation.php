@@ -26,7 +26,7 @@ class ChangeRoleConversation extends Conversation
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
             'changerole.select',
             $classMembers,
-            fn (User $member) => '@'.($member->username ?? __('button_labels.general.no_name')),
+            fn (User $member) => $member->first_name,
             fn (User $member) => $member->id
         );
 
