@@ -32,12 +32,12 @@ trait SubjectSelectionMenu
     {
         $menu = InlineKeyboardMarkup::make();
         collect($subjects)->each(
-            fn (array $subject) => $menu->addRow([
+            fn (array $subject) => $menu->addRow(
                 new InlineKeyboardButton(
                     text: $subject['name'],
                     callback_data: $prefix.'.'.$subject['id']
                 ),
-            ])
+            )
         );
 
         return $menu;

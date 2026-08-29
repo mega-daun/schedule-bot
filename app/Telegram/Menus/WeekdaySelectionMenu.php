@@ -13,8 +13,8 @@ trait WeekdaySelectionMenu
     {
         $payload = collect(range(1, 7))->map(
             fn (int $weekday) => in_array($weekday, $selectedWorkdays)
-            ? ['label' => __('prompt.general.marked', ['item' => __('general.weekday.'.$weekday)]), 'data' => $prefix.'.remove.'.$weekday]
-            : ['label' => __('general.weekday.'.$weekday), 'data' => $prefix.'.add.'.$weekday]
+                ? ['label' => __('prompt.general.marked', ['item' => __('general.weekday.'.$weekday)]), 'data' => $prefix.'.remove.'.$weekday]
+                : ['label' => __('general.weekday.'.$weekday), 'data' => $prefix.'.add.'.$weekday]
         );
         $payload->add(['label' => __('prompt.general.done'), 'data' => 'done.done']);
         $payload = $payload->map(
@@ -24,7 +24,7 @@ trait WeekdaySelectionMenu
             )
         );
         $menu = InlineKeyboardMarkup::make();
-        $payload->each(fn (InlineKeyboardButton $btn) => $menu->addRow([$btn]));
+        $payload->each(fn (InlineKeyboardButton $btn) => $menu->addRow($btn));
 
         return $menu;
     }
@@ -41,7 +41,7 @@ trait WeekdaySelectionMenu
             )
         );
         $menu = InlineKeyboardMarkup::make();
-        $payload->each(fn (InlineKeyboardButton $btn) => $menu->addRow([$btn]));
+        $payload->each(fn (InlineKeyboardButton $btn) => $menu->addRow($btn));
 
         return $menu;
     }
