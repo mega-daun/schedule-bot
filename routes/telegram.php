@@ -30,8 +30,8 @@ use App\Telegram\Conversations\Subject\NewSubjectConversation;
 
 $bot->middleware(IncorrectMessageMiddleware::class);
 
-$bot->onCommand('start {token}', StartCommand::class)->description(__('command_descriptions.cmd.start'));
 $bot->onCommand('start', StartCommand::class)->description(__('command_descriptions.cmd.start'));
+$bot->onCommand('start {token}', StartCommand::class)->description(__('command_descriptions.cmd.start'));
 $bot->onCommand('cancel', CancelCommand::class)->description(__('command_descriptions.cmd.cancel'));
 
 $bot->onCommand('newclass {code}', NewClassCommand::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.newclass'));
