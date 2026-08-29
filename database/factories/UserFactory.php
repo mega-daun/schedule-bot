@@ -48,4 +48,18 @@ class UserFactory extends Factory
             'role' => UserRole::Admin,
         ]);
     }
+
+    public function withoutUsername(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'username' => null,
+        ]);
+    }
+
+    public function withoutLanguageCode(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'language_code' => null,
+        ]);
+    }
 }

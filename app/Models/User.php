@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property int $id Telegram user ID
  * @property string $first_name
- * @property string $username
+ * @property string|null $username
  * @property string|null $timezone
  * @property string|null $language_code
  * @property int|null $class_id
