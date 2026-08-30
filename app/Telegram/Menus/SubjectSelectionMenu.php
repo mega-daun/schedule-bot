@@ -13,16 +13,16 @@ trait SubjectSelectionMenu
     {
         $menu = InlineKeyboardMarkup::make();
         collect($subjects)->each(
-            fn(array $subject) => $menu->addRow(
+            fn (array $subject) => $menu->addRow(
                 new InlineKeyboardButton(
                     text: $subject['name'],
-                    callback_data: $prefix . '.' . $subject['id']
+                    callback_data: $prefix.'.'.$subject['id']
                 ),
             )
         );
         $menu->addRow(new InlineKeyboardButton(
             text: __('prompt.general.done'),
-            callback_data: $prefix . '.done'
+            callback_data: $prefix.'.done'
         ));
 
         return $menu;
@@ -32,10 +32,10 @@ trait SubjectSelectionMenu
     {
         $menu = InlineKeyboardMarkup::make();
         collect($subjects)->each(
-            fn(array $subject) => $menu->addRow(
+            fn (array $subject) => $menu->addRow(
                 new InlineKeyboardButton(
                     text: $subject['name'],
-                    callback_data: $prefix . '.' . $subject['id']
+                    callback_data: $prefix.'.'.$subject['id']
                 ),
             )
         );
