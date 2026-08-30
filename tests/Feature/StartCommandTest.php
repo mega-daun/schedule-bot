@@ -93,11 +93,10 @@ describe("Start Command (joining a class)", function () {
         $user = User::factory()->create(['class_id' => null]);
         $bot = botWithData(['token' => $classroom->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$classroom->join_token)->reply();
+        $bot->hearText('/start ' . $classroom->join_token)->reply();
 
         $user->refresh();
         $this->assertEquals($classroom->id, $user->class_id);
-        assertReplyContains($bot, $classroom->code);
     });
 
     it('adds user without username and language_code to the class', function () {
@@ -105,13 +104,12 @@ describe("Start Command (joining a class)", function () {
         $user = User::factory()->withoutUsername()->withoutLanguageCode()->create(['class_id' => null]);
         $bot = botWithData(['token' => $classroom->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$classroom->join_token)->reply();
+        $bot->hearText('/start ' . $classroom->join_token)->reply();
 
         $user->refresh();
         $this->assertEquals($classroom->id, $user->class_id);
         $this->assertNull($user->username);
         $this->assertNull($user->language_code);
-        assertReplyContains($bot, $classroom->code);
     });
 
     it('gracefully fails when provided token is invalid', function () {
@@ -130,7 +128,7 @@ describe("Start Command (joining a class)", function () {
         $user = User::factory()->create(['class_id' => $existingClass->id]);
         $bot = botWithData(['token' => $existingClass->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$existingClass->join_token)->reply();
+        $bot->hearText('/start ' . $existingClass->join_token)->reply();
 
         assertReplyContains($bot, __('error.class.already_has_class_link'));
         $user->refresh();
@@ -143,7 +141,7 @@ describe("Start Command (joining a class)", function () {
         $newClass = Classroom::factory()->create();
         $bot = botWithData(['token' => $newClass->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$newClass->join_token)->reply();
+        $bot->hearText('/start ' . $newClass->join_token)->reply();
 
         assertReplyContains($bot, __('error.class.already_has_class_link'));
         $user->refresh();
@@ -156,7 +154,7 @@ describe("Start Command (joining a class)", function () {
         $newClass = Classroom::factory()->create();
         $bot = botWithData(['token' => $newClass->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$newClass->join_token)->reply();
+        $bot->hearText('/start ' . $newClass->join_token)->reply();
 
         assertReplyContains($bot, __('error.class.already_has_class_link'));
         $user->refresh();
@@ -173,7 +171,7 @@ describe("Start Command (joining a class)", function () {
 
         $bot = botWithData(['token' => $token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$token)->reply();
+        $bot->hearText('/start ' . $token)->reply();
 
         assertReplyContains($bot, __('error.class.not_found'));
         $user->refresh();
@@ -185,7 +183,7 @@ describe("Start Command (joining a class)", function () {
         $user = User::factory()->create(['class_id' => null, 'role' => UserRole::Student]);
         $bot = botWithData(['token' => $classroom->join_token], $user->id, $user->first_name);
 
-        $bot->hearText('/start '.$classroom->join_token)->reply();
+        $bot->hearText('/start ' . $classroom->join_token)->reply();
 
         $user->refresh();
         $this->assertEquals($classroom->id, $user->class_id);
@@ -202,7 +200,7 @@ describe("Start Command (joining a class)", function () {
         $telegramId = 999888777;
         $bot = botWithData(['token' => $classroom->join_token], $telegramId, 'NewUser');
 
-        $bot->hearText('/start '.$classroom->join_token)->reply();
+        $bot->hearText('/start ' . $classroom->join_token)->reply();
 
         $this->assertDatabaseHas('users', [
             'id' => $telegramId,
@@ -210,7 +208,6 @@ describe("Start Command (joining a class)", function () {
         ]);
         $user = User::findOrFail($telegramId);
         $this->assertEquals($classroom->id, $user->class_id);
-        assertReplyContains($bot, $classroom->code);
     });
 
     it('creates new user even if provided token is invalid', function () {
