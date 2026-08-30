@@ -87,7 +87,7 @@ describe('StartCommand (registration)', function () {
     });
 });
 
-describe("Start Command (joining a class)", function () {
+describe('Start Command (joining a class)', function () {
     it('adds user to the class', function () {
         $classroom = Classroom::factory()->create();
         $user = User::factory()->create(['class_id' => null]);
