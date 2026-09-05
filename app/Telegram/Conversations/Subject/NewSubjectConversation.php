@@ -3,38 +3,32 @@
 namespace App\Telegram\Conversations\Subject;
 
 use App\Actions\Subject\CreateSubjectAction;
-use App\Exceptions\IncorrectMessageException;
 use App\Exceptions\InvalidInputException;
-use App\Models\User;
-use SergiX44\Nutgram\Conversations\Conversation;
+use App\Telegram\Conversations\BaseConversation;
 use SergiX44\Nutgram\Nutgram;
 
-class NewSubjectConversation extends Conversation
+class NewSubjectConversation extends BaseConversation
 {
+    public function __construct(private CreateSubjectAction $createSubject) {}
+
     public function start(Nutgram $bot)
     {
-        $bot->sendMessage(text: __('prompt.subject.enter_name'));
-        $this->next('promptName');
+        $this->replyAndProceed($bot, __('prompt.subject.enter_name'), 'promptName');
     }
 
     public function promptName(Nutgram $bot)
     {
         $name = $bot->message()->text;
+        $user = $this->getUser($bot);
+
         try {
-            $action = new CreateSubjectAction($name, $this->getUser($bot)->class_id);
-            $subject = $action();
+            $subject = ($this->createSubject)($name, $user->class_id);
         } catch (InvalidInputException $e) {
-            $this->next('promptName');
-            throw new IncorrectMessageException($e->getMessage().' '.__('error.try_again'));
+            $this->errorAndProceed($e->getMessage().' '.__('error.try_again'), 'promptName');
+
+            return;
         }
-        $bot->sendMessage(text: __('info.subject.created', ['name' => $subject->name]));
-        $this->end();
-    }
 
-    private function getUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
-
-        return User::findOrFail($telegramUser->id);
+        $this->replyAndEnd($bot, __('info.subject.created', ['name' => $subject->name]));
     }
 }

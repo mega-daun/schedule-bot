@@ -8,13 +8,13 @@ use App\Models\Subject;
 it('deletes an existing subject', function () {
     $subject = Subject::factory()->for(Classroom::factory())->create();
 
-    $action = new DeleteSubjectAction(id: $subject->id, class_id: $subject->class_id);
-    $action();
+    $action = new DeleteSubjectAction;
+    $action(id: $subject->id, class_id: $subject->class_id);
 
     expect(Subject::find($subject->id))->toBeNull();
 });
 
 it('throws when subject does not exist', function () {
-    $action = new DeleteSubjectAction(id: 999999, class_id: 123);
-    $action();
+    $action = new DeleteSubjectAction;
+    $action(id: 999999, class_id: 123);
 })->throws(InvalidInputException::class);

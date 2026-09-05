@@ -10,23 +10,18 @@ class CreateSubjectAction
 {
     private const MIN_NAME_LENGTH = 3;
 
-    public function __construct(private string $name, private int $class_id) {}
-
-    /**
-     * Invoke the class instance.
-     */
-    public function __invoke(): Subject
+    public function __invoke(string $name, int $class_id): Subject
     {
-        if (empty($this->name)) {
+        if (empty($name)) {
             throw new InvalidInputException(__('error.subject.name_empty'));
         }
-        if (strlen($this->name) < self::MIN_NAME_LENGTH) {
+        if (strlen($name) < self::MIN_NAME_LENGTH) {
             throw new InvalidInputException(__('error.subject.name_too_short', ['min' => self::MIN_NAME_LENGTH]));
         }
         try {
             $subject = Subject::create([
-                'name' => $this->name,
-                'class_id' => $this->class_id,
+                'name' => $name,
+                'class_id' => $class_id,
             ]);
 
             return $subject;

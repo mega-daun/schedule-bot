@@ -96,7 +96,7 @@ class BaseConversation extends Conversation
     {
         $result = $this->getCallbackAnswer($bot, $prefix);
         if ($result === false) {
-            $this->errorAndProceed($errorMessage, $nextStepOnError);
+            $this->errorAndProceed($errorMessage ?? __('prompt.general.click_button'), $nextStepOnError);
 
             return false;
         }

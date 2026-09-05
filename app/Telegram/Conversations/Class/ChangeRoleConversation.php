@@ -4,24 +4,20 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Class;
 
-use App\Exceptions\IncorrectMessageException;
-use App\Exceptions\UnknownRoleException;
+use App\Actions\Class\ChangeRoleAction;
 use App\Helpers\MessageKeyboardGenerator;
-use App\Helpers\ParserService;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
-use SergiX44\Nutgram\Conversations\Conversation;
+use App\Telegram\Conversations\BaseConversation;
 use SergiX44\Nutgram\Nutgram;
 
-class ChangeRoleConversation extends Conversation
+class ChangeRoleConversation extends BaseConversation
 {
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
+    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ChangeRoleAction $changeRoleAction) {}
 
     public function start(Nutgram $bot)
     {
         $user = $this->getUser($bot);
-
-        $classMembers = $this->findClassmembers($user->class_id, $user->id);
+        $classMembers = $this->changeRoleAction->getClassMembers($user->class_id, $user->id);
 
         $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
             'changerole.select',
@@ -38,39 +34,13 @@ class ChangeRoleConversation extends Conversation
         $this->next('handleUserSelection');
     }
 
-    private function getUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
-
-        return User::findOrFail($telegramUser->id);
-    }
-
-    private function findClassmembers(int $class_id, int $caller_id): Collection
-    {
-        return User::where('class_id', $class_id)
-            ->where('id', '!=', $caller_id)
-            ->get();
-    }
-
     public function handleUserSelection(Nutgram $bot)
     {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('handleUserSelection');
+        $selectedUserId = $this->getCallbackAnswerOrError($bot, 'changerole.select', 'handleUserSelection');
 
+        if ($selectedUserId === false) {
             return;
         }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, 'changerole.select.')) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('handleUserSelection');
-
-            return;
-        }
-
-        $selectedUserId = (int) $this->parser->parseCallbackData($callbackData);
 
         $roles = collect([
             ['text' => __('button_labels.role.student'), 'data' => 'ученик_'.$selectedUserId],
@@ -95,27 +65,14 @@ class ChangeRoleConversation extends Conversation
 
     public function handleRoleSelection(Nutgram $bot)
     {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('handleRoleSelection');
+        $value = $this->getCallbackAnswerOrError($bot, 'changerole.role', 'handleRoleSelection');
 
+        if ($value === false) {
             return;
         }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, 'changerole.role.')) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('handleRoleSelection');
-
-            return;
-        }
-
-        $value = $this->parser->parseCallbackData($callbackData);
 
         if (! str_contains($value, '_')) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('handleRoleSelection');
+            $this->errorAndProceed(__('prompt.general.click_button'), 'handleRoleSelection');
 
             return;
         }
@@ -126,33 +83,27 @@ class ChangeRoleConversation extends Conversation
         $admin = $this->getUser($bot);
 
         if ($selectedUserId === $admin->id) {
-            $bot->answerCallbackQuery(__('error.role.self_change'));
-            $bot->sendMessage(__('error.role.self_change'));
-            $this->end();
+            $this->errorAndEnd(__('error.role.self_change'));
 
             return;
         }
 
-        $targetUser = $this->findUser($selectedUserId);
         try {
-            $targetUser->changeRole($role);
-        } catch (UnknownRoleException) {
-            $bot->answerCallbackQuery(__('error.role.invalid_short'));
+            $targetUser = $this->changeRoleAction->findUser($selectedUserId);
+        } catch (\InvalidArgumentException $e) {
+            $this->errorAndEnd($e->getMessage());
+
+            return;
         }
 
-        $bot->sendMessage(__('info.role.changed_to', ['role' => $role]));
+        if ($targetUser->class_id !== $admin->class_id) {
+            $this->errorAndEnd(__('error.role.not_in_class'));
 
-        $this->end();
-    }
-
-    private function findUser(int $id): User
-    {
-        $targetUser = User::find($id);
-
-        if (! $targetUser) {
-            throw new IncorrectMessageException(__('error.role.user_not_found'), true);
+            return;
         }
 
-        return $targetUser;
+        $this->changeRoleAction->changeRole($targetUser, $role);
+
+        $this->replyAndEnd($bot, __('info.role.changed_to', ['role' => $role]));
     }
 }
