@@ -13,4 +13,6 @@ interface ScheduleRepository
     public function purgeSchedule(int $class_id): bool;
 
     public function getSchedule(int $class_id): Schedule;
+
+    public function getWorkDays(int $class_id): array;
 }

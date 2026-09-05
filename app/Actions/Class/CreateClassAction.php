@@ -4,8 +4,8 @@ namespace App\Actions\Class;
 
 use App\Models\Classroom;
 use Exception;
-use InvalidArgumentException;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class CreateClassAction
 {
@@ -25,6 +25,7 @@ class CreateClassAction
         if (! $class) {
             throw new Exception(__('error.class.create_error'));
         }
+
         return $class;
     }
 }

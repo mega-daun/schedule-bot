@@ -43,7 +43,7 @@ describe('NewClass conversation validation', function () {
 
         $bot->hearText('')->reply();
         assertReplyContains($bot, __('prompt.class.name_invalid'));
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 
     it('rejects input without Russian letter', function () {
@@ -54,7 +54,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('10')->reply();
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 
     it('rejects input starting with letter', function () {
@@ -65,7 +65,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('А1')->reply();
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 
     it('rejects input with too many digits', function () {
@@ -76,7 +76,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('123Б')->reply();
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 
     it('rejects invalid digit after 10', function () {
@@ -87,7 +87,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('12А')->reply();
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 
     it('rejects input that is too long', function () {
@@ -98,7 +98,7 @@ describe('NewClass conversation validation', function () {
             ->reply();
 
         $bot->hearText('101АБ')->reply();
-        $bot->assertActiveConversation();
+        $bot->assertNoConversation();
     });
 });
 

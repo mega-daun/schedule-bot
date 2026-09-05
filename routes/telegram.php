@@ -18,7 +18,6 @@ use App\Telegram\Commands\Class\JoinClassCommand;
 use App\Telegram\Commands\Class\LeaveClassCommand;
 use App\Telegram\Commands\Class\NewClassCommand;
 use App\Telegram\Commands\StartCommand;
-use App\Telegram\Commands\TestCommand;
 use App\Telegram\Conversations\Class\ChangeRoleConversation;
 use App\Telegram\Conversations\Class\JoinClassConversation;
 use App\Telegram\Conversations\Class\NewClassConversation;

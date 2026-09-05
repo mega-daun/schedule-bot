@@ -38,4 +38,14 @@ class EloquentScheduleRepository implements ScheduleRepository
 
         return $schedule;
     }
+
+    public function getWorkDays(int $class_id): array
+    {
+        $weekdays = DB::table('weekly_schedule_entries')
+            ->where('class_id', $class_id)
+            ->distinct()
+            ->get(['weekday']);
+
+        return $weekdays->map(fn (WeeklyScheduleEntry $w) => $w->weekday)->toArray();
+    }
 }
