@@ -13,22 +13,22 @@ trait DateSelectionMenu
         $todaysWeekdayNum = now()->isoWeekday();
 
         $payload = $payload->map(
-            fn(int $weekdayNum) => [
-                'text' => __('button_labels.keyboard.next_' . (string) $weekdayNum),
-                'data' => $prefix . '.' . (clone now())->modify('+' . (7 - $todaysWeekdayNum + $weekdayNum) . ' days')->format('Y-m-d'),
+            fn (int $weekdayNum) => [
+                'text' => __('button_labels.keyboard.next_'.(string) $weekdayNum),
+                'data' => $prefix.'.'.(clone now())->modify('+'.(7 - $todaysWeekdayNum + $weekdayNum).' days')->format('Y-m-d'),
             ]
         );
 
         if ($withCustomOption) {
             $payload->add([
                 'text' => __('button_labels.keyboard.custom'),
-                'data' => $prefix . '.custom',
+                'data' => $prefix.'.custom',
             ]);
         }
 
         $keyboard = InlineKeyboardMarkup::make();
         $payload->each(
-            fn(array $button) => $keyboard->addRow(new InlineKeyboardButton(
+            fn (array $button) => $keyboard->addRow(new InlineKeyboardButton(
                 text: $button['text'],
                 callback_data: $button['data']
             ))
@@ -43,15 +43,15 @@ trait DateSelectionMenu
 
         foreach (['tomorrow', 'this_week', 'next_week'] as $date) {
             $keyboard->addRow(new InlineKeyboardButton(
-                text: __('button_labels.keyboard.' . $date),
-                callback_data: $prefix . '.' . $date,
+                text: __('button_labels.keyboard.'.$date),
+                callback_data: $prefix.'.'.$date,
             ));
         }
 
         if ($withCustomOption) {
             $keyboard->addRow(new InlineKeyboardButton(
                 text: __('button_labels.keyboard.custom'),
-                callback_data: $prefix . '.custom',
+                callback_data: $prefix.'.custom',
             ));
         }
 
