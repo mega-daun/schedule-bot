@@ -4,60 +4,56 @@ declare(strict_types=1);
 
 namespace App\Telegram\Commands;
 
-use App\Models\User;
 use SergiX44\Nutgram\Nutgram;
 
-class HelpCommand
+class HelpCommand extends BaseCommand
 {
+    private array $messageLines = [];
+
     public function __invoke(Nutgram $bot): void
     {
-        $user = User::find($bot->userId());
+        $user = $this->getOrAddUser($bot);
 
-        $lines = [
-            __('info.help.title'),
-            '',
-            __('info.help.base'),
-            $this->commandLine('/start', __('command_descriptions.cmd.start')),
-            $this->commandLine('/cancel', __('command_descriptions.cmd.cancel')),
-            $this->commandLine('/help', __('command_descriptions.cmd.help')),
-        ];
+        $this->messageLines[] = __('info.help.title');
+
+        $this->addChapter(__('info.help.base'), 'start', 'cancel', 'help');
 
         if ($user?->hasClass()) {
-            $lines[] = '';
-            $lines[] = __('info.help.class');
-            $lines[] = $this->commandLine('/showhomework', __('command_descriptions.cmd.showhomework'));
-            $lines[] = $this->commandLine('/leaveclass', __('command_descriptions.cmd.leaveclass'));
+            $this->addChapter(__('info.help.class'), 'leaveclass');
+            $this->addChapter(__('info.help.homework'), 'showhomework', 'newhomework', 'deletehomework');
 
             if ($user->isOnDutyOrHigher()) {
-                $lines[] = '';
-                $lines[] = __('info.help.homework');
-                $lines[] = $this->commandLine('/newhomework', __('command_descriptions.cmd.newhomework'));
-                $lines[] = $this->commandLine('/deletehomework', __('command_descriptions.cmd.deletehomework'));
-
-                $lines[] = '';
-                $lines[] = __('info.help.subjects');
-                $lines[] = $this->commandLine('/newsubject', __('command_descriptions.cmd.newsubject'));
-                $lines[] = $this->commandLine('/deletesubject', __('command_descriptions.cmd.deletesubject'));
-
-                $lines[] = '';
-                $lines[] = __('info.help.schedule');
-                $lines[] = $this->commandLine('/newschedule', __('command_descriptions.cmd.newschedule'));
+                $this->addChapter(__('info.help.subjects'), 'newsubject', 'deletesubject');
+                $this->addChapter(__('info.help.schedule'), 'newschedule');
             }
 
             if ($user->isAdmin()) {
-                $lines[] = '';
-                $lines[] = __('info.help.administration');
-                $lines[] = $this->commandLine('/deleteclass', __('command_descriptions.cmd.deleteclass'));
-                $lines[] = $this->commandLine('/changerole', __('command_descriptions.cmd.changerole'));
+                $this->addChapter(__('info.help.administration'), 'deleteclass', 'changerole');
             }
         } else {
-            $lines[] = '';
-            $lines[] = __('info.help.no_class');
-            $lines[] = $this->commandLine('/newclass', __('command_descriptions.cmd.newclass'));
-            $lines[] = $this->commandLine('/joinclass', __('command_descriptions.cmd.joinclass'));
+            $this->addChapter(__('info.help.no_class'), 'newclass', 'joinclass');
         }
 
-        $bot->sendMessage(text: implode("\n", $lines));
+        $this->reply($bot, $this->constructMessage());
+    }
+
+    private function addCommandDescriptions(string ...$commandNames): void
+    {
+        foreach ($commandNames as $name) {
+            $this->messageLines[] = $this->commandLine('/' . $name, __('command_descriptions.cmd.' . $name));
+        }
+    }
+
+    private function addChapter(string $header, string ...$commandNames): void
+    {
+        $this->messageLines[] = '';
+        $this->messageLines[] = $header;
+        $this->addCommandDescriptions(...$commandNames);
+    }
+
+    private function constructMessage(): string
+    {
+        return implode("\n", $this->messageLines);
     }
 
     private function commandLine(string $command, string $description): string

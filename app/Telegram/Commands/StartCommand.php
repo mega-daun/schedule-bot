@@ -4,62 +4,30 @@ declare(strict_types=1);
 
 namespace App\Telegram\Commands;
 
-use App\Enums\UserRole;
+use App\Actions\Class\JoinClassAction;
 use App\Exceptions\IncorrectMessageException;
-use App\Models\Classroom;
-use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use InvalidArgumentException;
 use SergiX44\Nutgram\Nutgram;
 
-class StartCommand
+class StartCommand extends BaseCommand
 {
+    public function __construct(private JoinClassAction $joinClass) {}
+
     public function __invoke(Nutgram $bot, ?string $token = null): void
     {
-        $user = $this->getUser($bot);
+        $user = $this->getOrAddUser($bot);
 
         if ($token === null) {
-            $bot->sendMessage(
-                text: __('prompt.general.welcome', ['name' => $user->first_name])
-            );
-        } else {
-            if ($user->class !== null) {
-                throw new IncorrectMessageException(
-                    __('error.class.already_has_class_link')
-                );
-            }
-
-            $class = Classroom::where('join_token', $token)->first();
-
-            if ($class === null) {
-                throw new IncorrectMessageException(
-                    __('error.class.not_found')
-                );
-            }
-
-            $user->update([
-                'class_id' => $class->id,
-                'role' => UserRole::Student,
-            ]);
-
-            $bot->sendMessage(
-                text: __('info.class.joined', ['code' => $class->code])
-            );
+            $this->reply($bot, __('prompt.general.welcome', ['name' => $user->first_name]));
+            return;
         }
-    }
-
-    private function getUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
 
         try {
-            return User::findOrFail($telegramUser->id);
-        } catch (ModelNotFoundException) {
-            return User::create([
-                'id' => $telegramUser->id,
-                'first_name' => $telegramUser->first_name,
-                'language_code' => $telegramUser->language_code,
-                'username' => $telegramUser->username,
-            ]);
+            ($this->joinClass)->byToken($token, $user);
+        } catch (InvalidArgumentException $e) {
+            throw new IncorrectMessageException($e->getMessage());
         }
+
+        $this->reply($bot, __('info.class.joined'));
     }
 }

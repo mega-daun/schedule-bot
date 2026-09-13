@@ -46,10 +46,13 @@ describe('HelpCommand', function () {
         assertReplyContains($bot, __('command_descriptions.cmd.showhomework'));
         assertReplyContains($bot, '/leaveclass');
         assertReplyContains($bot, __('command_descriptions.cmd.leaveclass'));
+        assertReplyContains($bot, '/newhomework');
+        assertReplyContains($bot, __('command_descriptions.cmd.newhomework'));
+        assertReplyContains($bot, '/deletehomework');
+        assertReplyContains($bot, __('command_descriptions.cmd.deletehomework'));
+
 
         assertReplyMarkupNotContains($bot, [
-            '/newhomework',
-            '/deletehomework',
             '/newsubject',
             '/deletesubject',
             '/newschedule',
