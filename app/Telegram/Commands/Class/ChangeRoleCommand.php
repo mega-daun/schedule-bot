@@ -11,36 +11,32 @@ use SergiX44\Nutgram\Nutgram;
 
 class ChangeRoleCommand
 {
-    private Nutgram $bot;
-
-    public function __invoke(Nutgram $bot): void
+    public function __invoke(Nutgram $bot, ?string $username = null, ?string $role = null): void
     {
-        $this->bot = $bot;
-        $user = $this->getUser();
+        $user = $this->getUser($bot);
 
-        $targetUser = $this->findClassmember($this->getUsername(), $user->class_id);
+        $targetUser = $this->findClassmember($this->getUsername($username), $user->class_id);
 
         if ($targetUser->id == $user->id) {
             throw new IncorrectMessageException(__('error.role.self_change'), true);
         }
 
-        $this->changeRole($targetUser, $this->getRole());
+        $this->changeRole($targetUser, $this->getRole($role));
 
         $bot->sendMessage(
             text: __('info.role.changed')
         );
     }
 
-    private function getUser(): User
+    private function getUser(Nutgram $bot): User
     {
-        $telegramUser = $this->bot->user();
+        $telegramUser = $bot->user();
 
         return User::findOrFail($telegramUser->id);
     }
 
-    private function getUsername(): string
+    private function getUsername(?string $username): string
     {
-        $username = $this->bot->get('username');
         if ($username === null) {
             throw new IncorrectMessageException(__('error.role.example'));
         }
@@ -48,9 +44,8 @@ class ChangeRoleCommand
         return $username;
     }
 
-    private function getRole(): string
+    private function getRole(?string $role): string
     {
-        $role = $this->bot->get('role');
         if ($role === null) {
             throw new IncorrectMessageException(__('error.role.example'));
         }
