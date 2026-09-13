@@ -19,6 +19,7 @@ class StartCommand extends BaseCommand
 
         if ($token === null) {
             $this->reply($bot, __('prompt.general.welcome', ['name' => $user->first_name]));
+
             return;
         }
 

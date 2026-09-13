@@ -4,21 +4,24 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
+use App\Actions\Homework\CreateHomeworkAction;
+use App\Exceptions\IncorrectMessageException;
 use App\Helpers\ParserService;
-use App\Models\Homework;
-use App\Models\Subject;
+use App\Repositories\ScheduleRepository;
+use App\Repositories\SubjectRepository;
 use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\DateSelectionMenu;
 use App\Telegram\Menus\SubjectSelectionMenu;
+use InvalidArgumentException;
 use SergiX44\Nutgram\Nutgram;
 
 class NewHomeworkConversation extends BaseConversation
 {
     use DateSelectionMenu, SubjectSelectionMenu;
 
-    private const MIN_DESCRIPTION_LENGTH = 12;
-
     public ?int $userId = null;
+
+    public ?int $classId = null;
 
     public ?string $date = null;
 
@@ -26,22 +29,30 @@ class NewHomeworkConversation extends BaseConversation
 
     public ?int $subjectId = null;
 
-    public function __construct(private ParserService $parser) {}
+    public function __construct(private ScheduleRepository $scheduleRepository, private SubjectRepository $subjectRepository, private ParserService $parser, private CreateHomeworkAction $createHomeworkAction) {}
 
     public function start(Nutgram $bot): void
     {
-        $this->userId = $this->getUser($bot)->id;
+        $user = $this->getUser($bot);
 
-        $keyboard = $this->makeFutureWeekdaySelectionMenu([1, 2, 3, 4, 5, 6], 'newhomework.date');
+        $this->userId = $user->id;
+        $this->classId = $user->class_id;
+
+        $keyboard = $this->makeFutureWeekdaySelectionMenu(
+            $this->scheduleRepository->getWorkDays($this->classId),
+            'newhomework.date'
+        );
+
         $this->replyAndProceed($bot, __('prompt.homework.select_date'), 'dateSelection', $keyboard);
     }
 
     public function dateSelection(Nutgram $bot): void
     {
-        $selectedDate = $this->getCallbackAnswerOrError($bot, 'newhomework.date', 'dateSelection');
-        if ($selectedDate === false) {
-            return;
-        }
+        $selectedDate = $this->getCallbackAnswerOrError(
+            $bot,
+            'newhomework.date',
+            'dateSelection'
+        );
 
         if ($selectedDate === 'custom') {
             $this->replyAndProceed($bot, __('prompt.homework.enter_date_format'), 'promptDate');
@@ -51,8 +62,11 @@ class NewHomeworkConversation extends BaseConversation
 
         $this->date = $selectedDate;
 
-        $subjects = $this->getUser($bot)->class->subjects->map(fn (Subject $s) => ['name' => $s->name, 'id' => $s->id])->values()->toArray();
-        $keyboard = $this->makeSubjectSelectionMenu($subjects, 'newhomework.subject');
+        $keyboard = $this->makeSubjectSelectionMenu(
+            $this->subjectRepository->getSubjects($this->classId, ['name', 'id'])->toArray(),
+            'newhomework.subject',
+        );
+
         $this->replyAndProceed($bot, __('prompt.homework.select_subject'), 'subjectSelection', $keyboard);
     }
 
@@ -66,12 +80,6 @@ class NewHomeworkConversation extends BaseConversation
 
         $input = $bot->message()->text;
 
-        if ($input === null || trim($input) === '') {
-            $this->replyAndProceed($bot, __('error.homework.date_empty'), 'promptDate');
-
-            return;
-        }
-
         $parsed = $this->parser->parseDate(trim($input));
         if ($parsed == null) {
             $this->replyAndProceed($bot, __('error.homework.date_invalid'), 'promptDate');
@@ -81,57 +89,29 @@ class NewHomeworkConversation extends BaseConversation
 
         $this->date = $parsed->format('Y-m-d');
 
-        $subjects = $this->getUser($bot)->class->subjects->map(fn (Subject $s) => ['name' => $s->name, 'id' => $s->id])->values()->toArray();
-        $keyboard = $this->makeSubjectSelectionMenu($subjects, 'newhomework.subject');
+        $keyboard = $this->makeSubjectSelectionMenu(
+            $this->subjectRepository->getSubjects($this->classId, ['name', 'id'])->toArray(),
+            'newhomework.subject',
+        );
+
         $this->replyAndProceed($bot, __('prompt.homework.select_subject'), 'subjectSelection', $keyboard);
     }
 
     public function subjectSelection(Nutgram $bot): void
     {
-        $subjectId = $this->getCallbackAnswerOrError($bot, 'newhomework.subject', 'subjectSelection');
-        if ($subjectId === false) {
-            return;
-        }
-
-        if (! in_array($subjectId, $this->getUser($bot)->class->subjects->pluck('id')->map(fn ($id) => (string) $id)->toArray())) {
-            $this->errorAndProceed(__('prompt.general.click_button'), 'subjectSelection');
-
-            return;
-        }
-
-        $this->subjectId = (int) $subjectId;
+        $this->subjectId = (int) $this->getCallbackAnswerOrError($bot, 'newhomework.subject', 'subjectSelection');
         $this->replyAndProceed($bot, __('prompt.homework.enter_description'), 'promptDescription');
     }
 
     public function promptDescription(Nutgram $bot): void
     {
-        $input = $bot->message()->text;
+        $text = $bot->message()->text;
 
-        if ($input === null || trim($input) === '') {
-            $this->replyAndProceed($bot, __('error.homework.description_empty'), 'promptDescription');
-
-            return;
+        try {
+            ($this->createHomeworkAction)($this->classId, $this->subjectId, $this->parser->parseDate($this->date), $text);
+        } catch (InvalidArgumentException $e) {
+            throw new IncorrectMessageException($e->getMessage());
         }
-
-        $text = trim($input);
-
-        if (mb_strlen($text) < self::MIN_DESCRIPTION_LENGTH) {
-            $this->replyAndProceed($bot, __('error.homework.description_too_short', ['min' => self::MIN_DESCRIPTION_LENGTH]), 'promptDescription');
-
-            return;
-        }
-
-        $this->description = $text;
-
-        $user = $this->getUser($bot);
-
-        Homework::create([
-            'class_id' => $user->class_id,
-            'date' => $this->date,
-            'description' => $this->description,
-            'subject_id' => $this->subjectId,
-        ]);
-
         $this->replyAndEnd($bot, __('info.homework.created'));
     }
 }

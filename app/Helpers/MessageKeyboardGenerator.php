@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardButton;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
 
+// DEPRECATED. CODE THAT USES THIS CLASS MUST USE App\Telegram\Menus\* CLASSES
 class MessageKeyboardGenerator
 {
     public function buildSelectionKeyboard(string $prefix, Collection $items, callable $generateText, callable $generateCallbackDataEntry, int $buttons_per_row = 2, array $additional_options = []): InlineKeyboardMarkup

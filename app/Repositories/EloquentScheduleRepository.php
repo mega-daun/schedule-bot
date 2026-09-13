@@ -46,6 +46,6 @@ class EloquentScheduleRepository implements ScheduleRepository
             ->distinct()
             ->get(['weekday']);
 
-        return $weekdays->map(fn($w) => $w->weekday)->toArray();
+        return $weekdays->map(fn ($w) => $w->weekday)->toArray();
     }
 }

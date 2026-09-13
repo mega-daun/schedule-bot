@@ -21,9 +21,9 @@ describe('DeleteHomework command', function () {
         ]);
         assertReplyMarkupContains($bot, [
             __('button_labels.keyboard.this_week'),
-            'deletehomework.date.thisweek',
+            'deletehomework.date.this_week',
             __('button_labels.keyboard.next_week'),
-            'deletehomework.date.nextweek',
+            'deletehomework.date.next_week',
             __('button_labels.keyboard.custom'),
             'deletehomework.date.custom',
         ]);

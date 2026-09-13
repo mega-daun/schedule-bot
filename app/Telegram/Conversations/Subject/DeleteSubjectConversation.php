@@ -4,6 +4,7 @@ namespace App\Telegram\Conversations\Subject;
 
 use App\Actions\Subject\DeleteSubjectAction;
 use App\Exceptions\InvalidInputException;
+use App\Repositories\SubjectRepository;
 use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\SubjectSelectionMenu;
 use SergiX44\Nutgram\Nutgram;
@@ -12,14 +13,17 @@ class DeleteSubjectConversation extends BaseConversation
 {
     use SubjectSelectionMenu;
 
-    public function __construct(private DeleteSubjectAction $deleteSubject) {}
+    public function __construct(
+        private DeleteSubjectAction $deleteSubject,
+        private SubjectRepository $subjectRepository,
+    ) {}
 
     public ?int $class_id = null;
 
     public function start(Nutgram $bot)
     {
         $user = $this->getUser($bot);
-        $subjects = $user->class->subjects;
+        $subjects = $this->subjectRepository->getSubjects($user->class_id);
         $this->class_id = (int) $user->class_id;
 
         $keyboard = $this->makeSubjectSelectionMenu($subjects->toArray(), 'deletesubject.select');

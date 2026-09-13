@@ -2,8 +2,8 @@
 
 namespace App\Helpers;
 
-use Carbon\Carbon;
 use Carbon\Exceptions\InvalidFormatException;
+use Illuminate\Support\Carbon;
 
 class ParserService
 {
@@ -12,7 +12,7 @@ class ParserService
         $formats = ['d.m.Y', 'Y-m-d', 'd.m', 'd'];
         foreach ($formats as $format) {
             try {
-                $res = Carbon::createFromFormat($format, $date);
+                $res = now()->createFromFormat($format, $date);
 
                 return $res;
             } catch (InvalidFormatException) {

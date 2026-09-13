@@ -51,7 +51,6 @@ describe('HelpCommand', function () {
         assertReplyContains($bot, '/deletehomework');
         assertReplyContains($bot, __('command_descriptions.cmd.deletehomework'));
 
-
         assertReplyMarkupNotContains($bot, [
             '/newsubject',
             '/deletesubject',

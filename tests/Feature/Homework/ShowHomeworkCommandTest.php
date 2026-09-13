@@ -296,7 +296,6 @@ describe('ShowHomework custom date input', function () {
         $bot->assertNoConversation();
         assertReplyContains($bot, $homework->description);
     });
-
 });
 
 describe('ShowHomework homework display', function () {
@@ -371,7 +370,6 @@ describe('ShowHomework homework display', function () {
             $bot,
             $subject->name.': '.__('info.homework.no_homework')
         );
-
     });
     it('shows homeworks for this week', function () {
         $class = Classroom::factory()->create();
@@ -540,7 +538,6 @@ describe('ShowHomework homework display', function () {
         $bot->hearCallbackQueryData('showhomework.date.tomorrow')->reply();
         assertReplyContains($bot, __('info.homework.view_header', ['start' => now()->addDay()->format('d.m')]));
     });
-
 });
 
 describe('ShowHomework cancel and edge cases', function () {

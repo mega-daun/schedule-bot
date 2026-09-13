@@ -13,22 +13,22 @@ trait DateSelectionMenu
         $todaysWeekdayNum = now()->isoWeekday();
 
         $payload = $payload->map(
-            fn (int $weekdayNum) => [
-                'text' => __('button_labels.keyboard.next_'.(string) $weekdayNum),
-                'data' => $prefix.'.'.(clone now())->modify('+'.(7 - $todaysWeekdayNum + $weekdayNum).' days')->format('Y-m-d'),
+            fn(int $weekdayNum) => [
+                'text' => __('button_labels.keyboard.next_' . (string) $weekdayNum),
+                'data' => $prefix . '.' . (clone now())->modify('+' . (7 - $todaysWeekdayNum + $weekdayNum) . ' days')->format('Y-m-d'),
             ]
         );
 
         if ($withCustomOption) {
             $payload->add([
                 'text' => __('button_labels.keyboard.custom'),
-                'data' => $prefix.'.custom',
+                'data' => $prefix . '.custom',
             ]);
         }
 
         $keyboard = InlineKeyboardMarkup::make();
         $payload->each(
-            fn (array $button) => $keyboard->addRow(new InlineKeyboardButton(
+            fn(array $button) => $keyboard->addRow(new InlineKeyboardButton(
                 text: $button['text'],
                 callback_data: $button['data']
             ))
@@ -37,22 +37,21 @@ trait DateSelectionMenu
         return $keyboard;
     }
 
-    /**
-     * Build an inline keyboard from an array of pre-formatted options.
-     *
-     * Each option must be an array with 'text' and 'data' keys. The 'data'
-     * value must be the full callback data including the prefix.
-     *
-     * @param  array<int, array{text: string, data: string}>  $options
-     */
-    protected function makeOptionSelectionMenu(array $options): InlineKeyboardMarkup
+    protected function makeFutureDatesSelectionMenu(string $prefix, bool $withCustomOption = true)
     {
         $keyboard = InlineKeyboardMarkup::make();
 
-        foreach ($options as $option) {
+        foreach (['tomorrow', 'this_week', 'next_week'] as $date) {
             $keyboard->addRow(new InlineKeyboardButton(
-                text: $option['text'],
-                callback_data: $option['data'],
+                text: __('button_labels.keyboard.' . $date),
+                callback_data: $prefix . '.' . $date,
+            ));
+        }
+
+        if ($withCustomOption) {
+            $keyboard->addRow(new InlineKeyboardButton(
+                text: __('button_labels.keyboard.custom'),
+                callback_data: $prefix . '.custom',
             ));
         }
 

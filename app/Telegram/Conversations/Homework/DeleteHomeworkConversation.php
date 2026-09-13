@@ -6,16 +6,17 @@ namespace App\Telegram\Conversations\Homework;
 
 use App\Enums\UserRole;
 use App\Helpers\ParserService;
-use App\Models\Homework;
+use App\Repositories\HomeworkRepository;
 use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\DateSelectionMenu;
+use App\Telegram\Menus\HomeworkSelectionMenu;
 use SergiX44\Nutgram\Nutgram;
 
 class DeleteHomeworkConversation extends BaseConversation
 {
-    use DateSelectionMenu;
+    use DateSelectionMenu, HomeworkSelectionMenu;
 
-    public function __construct(private ParserService $parser) {}
+    public function __construct(private ParserService $parser, private HomeworkRepository $homeworkRepository) {}
 
     public ?int $userId = null;
 
@@ -25,12 +26,6 @@ class DeleteHomeworkConversation extends BaseConversation
     {
         $user = $this->getUser($bot);
 
-        if ($user->class === null) {
-            $this->replyAndEnd($bot, __('error.homework.not_in_class'));
-
-            return;
-        }
-
         if (! in_array($user->role, [UserRole::Teacher, UserRole::Admin, UserRole::OnDuty])) {
             $this->replyAndEnd($bot, __('error.homework.no_permission'));
 
@@ -39,11 +34,7 @@ class DeleteHomeworkConversation extends BaseConversation
 
         $this->userId = $user->id;
 
-        $keyboard = $this->makeOptionSelectionMenu([
-            ['text' => __('button_labels.keyboard.this_week'), 'data' => 'deletehomework.date.thisweek'],
-            ['text' => __('button_labels.keyboard.next_week'), 'data' => 'deletehomework.date.nextweek'],
-            ['text' => __('button_labels.keyboard.custom'), 'data' => 'deletehomework.date.custom'],
-        ]);
+        $keyboard = $this->makeFutureDatesSelectionMenu('deletehomework.date');
 
         $this->replyAndProceed($bot, __('prompt.homework.select_period'), 'dateSelection', $keyboard);
     }
@@ -61,7 +52,6 @@ class DeleteHomeworkConversation extends BaseConversation
 
             return;
         }
-
         $this->dateRange = $range;
 
         $this->showHomeworkList($bot);
@@ -105,7 +95,7 @@ class DeleteHomeworkConversation extends BaseConversation
 
         $homeworkId = (int) $id;
 
-        $homework = Homework::find($homeworkId);
+        $homework = $this->homeworkRepository->findHomework($homeworkId);
 
         if ($homework === null) {
             $this->replyAndEnd($bot, __('error.homework.not_found'));
@@ -121,7 +111,7 @@ class DeleteHomeworkConversation extends BaseConversation
             return;
         }
 
-        $homework->delete();
+        $this->homeworkRepository->deleteHomework($homework->id);
 
         $this->replyAndEnd($bot, __('info.homework.deleted'));
     }
@@ -139,12 +129,11 @@ class DeleteHomeworkConversation extends BaseConversation
         } elseif ($this->dateRange === 'nextweek') {
             $startDate = now()->addWeek()->startOfWeek()->toDateString();
             $endDate = now()->addWeek()->endOfWeek()->toDateString();
+        } elseif ($this->dateRange === 'tomorrow') {
+            $startDate = $endDate = now()->addDay()->toDateString();
         }
 
-        $homeworks = Homework::where('class_id', $user->class_id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->orderBy('date')
-            ->get();
+        $homeworks = $this->homeworkRepository->getHomeworks($user->class_id, $startDate, $endDate);
 
         if ($homeworks->isEmpty()) {
             $this->replyAndEnd($bot, __('error.homework.none_in_period'));
@@ -152,10 +141,7 @@ class DeleteHomeworkConversation extends BaseConversation
             return;
         }
 
-        $keyboard = $this->makeOptionSelectionMenu($homeworks->map(fn (Homework $hw) => [
-            'text' => $hw->date->format('d.m').' - '.$hw->description,
-            'data' => 'deletehomework.select.'.$hw->id,
-        ])->values()->toArray());
+        $keyboard = $this->makeHomeworkSelectionMenu($homeworks, 'deletehomework.select');
 
         $this->replyAndProceed($bot, __('prompt.homework.select_for_delete'), 'homeworkSelection', $keyboard);
     }

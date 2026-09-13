@@ -3,8 +3,7 @@
 namespace App\Telegram\Conversations;
 
 use App\Exceptions\IncorrectMessageException;
-use App\Models\User;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Telegram\Utils\UserUtils;
 use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
@@ -17,41 +16,7 @@ use SergiX44\Nutgram\Telegram\Types\Keyboard\InlineKeyboardMarkup;
  */
 class BaseConversation extends Conversation
 {
-    /**
-     * Find existing user by Telegram ID or create a new one.
-     *
-     * Used when the conversation should auto-register unknown users
-     * (e.g. /start command). For conversations that require the user
-     * to already exist, use {@see getUser()} instead.
-     */
-    protected function getOrAddUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
-
-        try {
-            return User::findOrFail($telegramUser->id);
-        } catch (ModelNotFoundException) {
-            return User::create([
-                'id' => $telegramUser->id,
-                'first_name' => $telegramUser->first_name,
-                'language_code' => $telegramUser?->language_code,
-                'username' => $telegramUser?->username,
-            ]);
-        }
-    }
-
-    /**
-     * Find user by Telegram ID or throw ModelNotFoundException.
-     *
-     * Use this in conversations that require the user to already
-     * exist in the database (e.g. class member checks).
-     *
-     * @throws ModelNotFoundException
-     */
-    protected function getUser(Nutgram $bot): User
-    {
-        return User::findOrFail($bot->user()->id);
-    }
+    use UserUtils;
 
     /**
      * Validate that the incoming update is a callback query with the
@@ -161,5 +126,10 @@ class BaseConversation extends Conversation
     {
         $bot->sendMessage(text: $message, reply_markup: $keyboard);
         $this->end();
+    }
+
+    protected function reply(Nutgram $bot, string $message, ?InlineKeyboardMarkup $keyboard = null): void
+    {
+        $bot->sendMessage(text: $message, reply_markup: $keyboard);
     }
 }

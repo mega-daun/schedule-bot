@@ -16,7 +16,7 @@ class CreateHomeworkAction
         $description = trim($description);
 
         if ($description == '') {
-            throw new InvalidArgumentException;
+            throw new InvalidArgumentException(__('error.homework.description_empty'));
         }
 
         if (! $this->homeworkRepository->createHomework(

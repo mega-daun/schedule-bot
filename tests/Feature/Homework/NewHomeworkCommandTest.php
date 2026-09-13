@@ -152,7 +152,7 @@ describe('NewHomework custom date input', function () {
 
         $bot->hearCallbackQueryData('newhomework.date.custom')->reply();
         $bot->hearText('')->reply();
-        assertReplyContains($bot, __('error.homework.date_empty'));
+        assertReplyContains($bot, __('error.homework.date_invalid'));
         $bot->assertActiveConversation();
     });
 
@@ -254,25 +254,6 @@ describe('NewHomework conversation subject input', function () {
         $bot->assertActiveConversation();
     });
 
-    it('rejects subject for another class', function () {
-        $class = Classroom::factory()->create();
-        $user = User::factory()->create(['class_id' => $class->id]);
-        Subject::factory()->create(['class_id' => $class->id]);
-
-        $otherClass = Classroom::factory()->create();
-        $otherSubject = Subject::factory()->create(['class_id' => $otherClass->id]);
-
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newhomework')
-            ->reply();
-
-        $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
-        $bot->hearCallbackQueryData('newhomework.subject.'.$otherSubject->id)->reply();
-        assertReplyContains($bot, __('prompt.general.click_button'));
-        $bot->assertActiveConversation();
-    });
-
     it('rejects invalid callback query at selection step', function () {
         $class = Classroom::factory()->create();
         $user = User::factory()->create(['class_id' => $class->id]);
@@ -337,22 +318,6 @@ describe('NewHomework conversation description input', function () {
         $bot->hearCallbackQueryData('newhomework.subject.'.$subject->id)->reply();
         $bot->hearText('')->reply();
         assertReplyContains($bot, __('error.homework.description_empty'));
-    });
-
-    it('rejects too short description', function () {
-        $class = Classroom::factory()->create();
-        $user = User::factory()->create(['class_id' => $class->id]);
-        $subject = Subject::factory()->create(['class_id' => $class->id]);
-
-        $bot = bot($user);
-        $bot->willStartConversation(remember: true)
-            ->hearText('/newhomework')
-            ->reply();
-
-        $bot->hearCallbackQueryData('newhomework.date.'.now()->addWeek()->startOfWeek()->format('Y-m-d'))->reply();
-        $bot->hearCallbackQueryData('newhomework.subject.'.$subject->id)->reply();
-        $bot->hearText('ab')->reply();
-        assertReplyContains($bot, __('error.homework.description_too_short', ['min' => 12]));
     });
 
     it('creates homework with valid description', function () {

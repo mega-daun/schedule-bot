@@ -6,8 +6,7 @@ namespace App\Telegram\Conversations\Schedule;
 
 use App\Actions\Schedule\CreateScheduleAction;
 use App\DataObjects\Schedule\Schedule;
-use App\Models\Subject;
-use App\Models\User;
+use App\Repositories\SubjectRepository;
 use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\ConfirmationMenu;
 use App\Telegram\Menus\SubjectSelectionMenu;
@@ -18,7 +17,7 @@ class NewScheduleConversation extends BaseConversation
 {
     use ConfirmationMenu, SubjectSelectionMenu, WeekdaySelectionMenu;
 
-    public function __construct(private CreateScheduleAction $createScheduleAction) {}
+    public function __construct(private CreateScheduleAction $createScheduleAction, private SubjectRepository $subjectRepository) {}
 
     protected function beforeStep(Nutgram $bot): void
     {
@@ -49,8 +48,8 @@ class NewScheduleConversation extends BaseConversation
 
     public function start(Nutgram $bot)
     {
-        $this->class_id = User::where('id', $bot->user()->id)->get(['class_id'])->first()->class_id;
-        $this->subjects = Subject::where('class_id', $this->class_id)->get(['name', 'id'])->toArray();
+        $this->class_id = $this->getUser($bot, with: ['class' => ['subjects']])->class_id;
+        $this->subjects = $this->subjectRepository->getSubjects($this->class_id, ['name', 'id'])->toArray();
 
         $this->sendWeekdaySelectionMenu($bot);
         $this->next('handleWorkDaysSelection');
@@ -59,7 +58,7 @@ class NewScheduleConversation extends BaseConversation
     private function sendWeekdaySelectionMenu(Nutgram $bot): void
     {
         $keyboard = $this->makeMultipleWeekdaySelectionMenu($this->schedule->getWorkdays(), 'newschedule.weekday');
-        $bot->sendMessage(__('prompt.schedule.select_weekdays'), reply_markup: $keyboard);
+        $this->reply($bot, __('prompt.schedule.select_weekdays'), $keyboard);
     }
 
     public function handleWorkDaysSelection(Nutgram $bot)
@@ -73,16 +72,13 @@ class NewScheduleConversation extends BaseConversation
             case 'done':
                 $hasNextWorkDay = $this->switchToTheNextWorkDay();
                 if ($hasNextWorkDay) {
-                    $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+                    $this->replyAndProceed($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]), 'handleLessonsSelection');
                     $this->sendSubjectSelectionMenu($bot);
-
-                    $this->next('handleLessonsSelection');
 
                     return;
                 }
-                $bot->sendMessage(__('prompt.schedule.should_have_workdays'));
+                $this->replyAndProceed($bot, __('prompt.schedule.should_have_workdays'), 'handleWorkDaysSelection');
                 $this->sendWeekdaySelectionMenu($bot);
-                $this->next('handleWorkDaysSelection');
 
                 return;
             case 'add':
@@ -119,10 +115,8 @@ class NewScheduleConversation extends BaseConversation
         }
         if ($data == 'done') {
             if ($this->schedule->getLessons($this->currentWeekday)->isEmpty()) {
-                $bot->sendMessage(__('prompt.schedule.no_lessons'));
+                $this->replyAndProceed($bot, __('prompt.schedule.no_lessons'), 'handleLessonsSelection');
                 $this->sendSubjectSelectionMenu($bot);
-
-                $this->next('handleLessonsSelection');
 
                 return;
             }
@@ -148,7 +142,8 @@ class NewScheduleConversation extends BaseConversation
         $keyboard = $this->currentLesson != 1
             ? $this->makeSubjectSelectionMenuWithDoneButton($this->subjects, 'newschedule.select')
             : $this->makeSubjectSelectionMenu($this->subjects, 'newschedule.select');
-        $bot->sendMessage(__('prompt.schedule.select_subjects', ['lesson_number' => $this->currentLesson]), reply_markup: $keyboard);
+
+        $this->reply($bot, __('prompt.schedule.select_subjects', ['lesson_number' => $this->currentLesson]), $keyboard);
     }
 
     private function sendConfirmationPrompt(Nutgram $bot): void
@@ -160,8 +155,8 @@ class NewScheduleConversation extends BaseConversation
                 'lessons' => $this->schedule->getLessons($this->currentWeekday),
             ]
         )->render();
-        $bot->sendMessage($preview);
-        $bot->sendMessage(__('prompt.schedule.confirm_schedule'), reply_markup: $this->makeConfirmationMenu('newschedule.confirm'));
+        $this->reply($bot, $preview);
+        $this->reply($bot, __('prompt.schedule.confirm_schedule'), $this->makeConfirmationMenu('newschedule.confirm'));
     }
 
     public function workDayScheduleConfirmation(Nutgram $bot): void
@@ -176,9 +171,8 @@ class NewScheduleConversation extends BaseConversation
                 break;
             case 'no':
                 $this->resetCurrentWorkDay();
-                $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+                $this->replyAndProceed($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]), 'handleLessonsSelection');
                 $this->sendSubjectSelectionMenu($bot);
-                $this->next('handleLessonsSelection');
 
                 break;
             default:
@@ -198,9 +192,8 @@ class NewScheduleConversation extends BaseConversation
     {
         $hasNextWeekday = $this->switchToTheNextWorkDay();
         if ($hasNextWeekday) {
-            $bot->sendMessage(__('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]));
+            $this->replyAndProceed($bot, __('prompt.schedule.creating_schedule', ['weekday' => strtolower(__('general.weekday.'.$this->currentWeekday))]), 'handleLessonsSelection');
             $this->sendSubjectSelectionMenu($bot);
-            $this->next('handleLessonsSelection');
 
             return;
         }
@@ -211,7 +204,6 @@ class NewScheduleConversation extends BaseConversation
             return;
         }
         $this->replyAndEnd($bot, __('info.schedule.created'));
-
     }
 
     private function createSchedule(): bool

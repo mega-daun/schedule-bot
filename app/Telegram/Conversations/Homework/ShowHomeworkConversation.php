@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Telegram\Conversations\Homework;
 
 use App\Helpers\ParserService;
-use App\Models\Homework;
+use App\Repositories\HomeworkRepository;
 use App\Repositories\ScheduleRepository;
 use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\DateSelectionMenu;
@@ -18,7 +18,7 @@ class ShowHomeworkConversation extends BaseConversation
     use DateSelectionMenu;
     use HomeworkList;
 
-    public function __construct(private ParserService $parser, private ScheduleRepository $scheduleRepository) {}
+    public function __construct(private ParserService $parser, private ScheduleRepository $scheduleRepository, private HomeworkRepository $homeworkRepository) {}
 
     public ?int $userId = null;
 
@@ -28,20 +28,9 @@ class ShowHomeworkConversation extends BaseConversation
     {
         $user = $this->getUser($bot);
 
-        if ($user->class === null) {
-            $this->replyAndEnd($bot, __('error.homework.not_in_class'));
-
-            return;
-        }
-
         $this->userId = $user->id;
 
-        $keyboard = $this->makeOptionSelectionMenu([
-            ['text' => __('button_labels.keyboard.tomorrow'), 'data' => 'showhomework.date.tomorrow'],
-            ['text' => __('button_labels.keyboard.this_week'), 'data' => 'showhomework.date.this_week'],
-            ['text' => __('button_labels.keyboard.next_week'), 'data' => 'showhomework.date.next_week'],
-            ['text' => __('button_labels.keyboard.custom'), 'data' => 'showhomework.date.custom'],
-        ]);
+        $keyboard = $this->makeFutureDatesSelectionMenu('showhomework.date');
         $this->replyAndProceed($bot, __('prompt.homework.select_period'), 'dateSelection', $keyboard);
     }
 
@@ -109,18 +98,15 @@ class ShowHomeworkConversation extends BaseConversation
             $endDate = now()->addWeek()->endOfWeek()->addDay()->toDateString();
         }
 
-        $homeworks = Homework::where('class_id', $user->class_id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->orderBy('date')
-            ->get();
+        $homeworks = $this->homeworkRepository->getHomeworks($user->class_id, $startDate, $endDate);
 
         $schedule = $this->scheduleRepository->getSchedule($user->class_id);
 
         [$startDate, $endDate] = [Carbon::parse($startDate), Carbon::parse($endDate)];
 
         $message = ($startDate->isSameDay($endDate))
-            ? $this->makeHomeworkListOnDay($startDate, $schedule, collect($homeworks))
-            : $this->makeHomeworkListOnWeek($startDate, $schedule, collect($homeworks));
+            ? $this->makeHomeworkListOnDay($startDate, $schedule, $homeworks)
+            : $this->makeHomeworkListOnWeek($startDate, $schedule, $homeworks);
         $this->replyAndEnd($bot, $message);
     }
 }

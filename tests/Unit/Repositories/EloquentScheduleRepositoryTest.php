@@ -55,7 +55,7 @@ it('inserts all entries with single DB query', function () {
     $queryLog = DB::getQueryLog();
     DB::disableQueryLog();
 
-    $insertQueries = array_filter($queryLog, fn($q) => str_contains($q['query'], 'insert into'));
+    $insertQueries = array_filter($queryLog, fn ($q) => str_contains($q['query'], 'insert into'));
     expect($insertQueries)->toHaveCount(1);
 });
 
@@ -99,7 +99,7 @@ it('gets correct schedule', function () {
     assertContains(1, $workDays);
     assertContains(2, $workDays);
     assertContains(3, $workDays);
-    assertEquals([$subject->name, $subject->name, $subject->name], $schedule->getLessons()->map(fn(Lesson $l) => $l->getSubjectName())->toArray());
+    assertEquals([$subject->name, $subject->name, $subject->name], $schedule->getLessons()->map(fn (Lesson $l) => $l->getSubjectName())->toArray());
 });
 
 it('returns empty Schedule object when there is no records', function () {

@@ -118,7 +118,7 @@ describe('Start Command (joining a class)', function () {
 
         $bot->hearText('/start nonexistent_token_1234')->reply();
 
-        assertReplyContains($bot, __('error.class.not_found'));
+        assertReplyContains($bot, __('prompt.class.token_invalid'));
         $user->refresh();
         $this->assertNull($user->class_id);
     });
@@ -130,7 +130,7 @@ describe('Start Command (joining a class)', function () {
 
         $bot->hearText('/start '.$existingClass->join_token)->reply();
 
-        assertReplyContains($bot, __('error.class.already_has_class_link'));
+        assertReplyContains($bot, __('error.class.already_member'));
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);
     });
@@ -143,7 +143,7 @@ describe('Start Command (joining a class)', function () {
 
         $bot->hearText('/start '.$newClass->join_token)->reply();
 
-        assertReplyContains($bot, __('error.class.already_has_class_link'));
+        assertReplyContains($bot, __('error.class.already_member'));
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);
     });
@@ -156,7 +156,7 @@ describe('Start Command (joining a class)', function () {
 
         $bot->hearText('/start '.$newClass->join_token)->reply();
 
-        assertReplyContains($bot, __('error.class.already_has_class_link'));
+        assertReplyContains($bot, __('error.class.already_member'));
         $user->refresh();
         $this->assertEquals($existingClass->id, $user->class_id);
         $this->assertNull($user->username);
@@ -173,7 +173,7 @@ describe('Start Command (joining a class)', function () {
 
         $bot->hearText('/start '.$token)->reply();
 
-        assertReplyContains($bot, __('error.class.not_found'));
+        assertReplyContains($bot, __('error.class.not_found_with_token'));
         $user->refresh();
         $this->assertNull($user->class_id);
     });
@@ -214,7 +214,7 @@ describe('Start Command (joining a class)', function () {
         $telegramId = 777666555;
         $bot = botWithData(['token' => 'bad_token'], $telegramId, 'GhostUser');
 
-        $bot->hearText('/start bad_token')->reply();
+        $bot->hearText('/start 0123456789abcdef')->reply();
 
         $this->assertDatabaseHas('users', [
             'id' => $telegramId,
@@ -222,6 +222,6 @@ describe('Start Command (joining a class)', function () {
         ]);
         $user = User::findOrFail($telegramId);
         $this->assertNull($user->class_id);
-        assertReplyContains($bot, __('error.class.not_found'));
+        assertReplyContains($bot, __('error.class.not_found_with_token'));
     });
 });
