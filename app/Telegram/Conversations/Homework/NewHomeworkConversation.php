@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Telegram\Conversations\Homework;
 
-use App\Helpers\MessageKeyboardGenerator;
 use App\Helpers\ParserService;
 use App\Models\Homework;
 use App\Models\Subject;
-use App\Models\User;
-use SergiX44\Nutgram\Conversations\Conversation;
+use App\Telegram\Conversations\BaseConversation;
+use App\Telegram\Menus\DateSelectionMenu;
+use App\Telegram\Menus\SubjectSelectionMenu;
 use SergiX44\Nutgram\Nutgram;
 
-use function Symfony\Component\Clock\now;
-
-class NewHomeworkConversation extends Conversation
+class NewHomeworkConversation extends BaseConversation
 {
+    use DateSelectionMenu, SubjectSelectionMenu;
+
     private const MIN_DESCRIPTION_LENGTH = 12;
 
     public ?int $userId = null;
@@ -26,78 +26,40 @@ class NewHomeworkConversation extends Conversation
 
     public ?int $subjectId = null;
 
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser) {}
+    public function __construct(private ParserService $parser) {}
 
     public function start(Nutgram $bot): void
     {
-        $user = $this->getUser($bot);
+        $this->userId = $this->getUser($bot)->id;
 
-        $this->userId = $user->id;
-
-        $dayNum = (int) now()->format('N');
-        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newhomework.date',
-            collect([
-                ['text' => __('button_labels.keyboard.next_monday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 1).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.next_tuesday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 2).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.next_wednesday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 3).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.next_thursday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 4).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.next_friday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 5).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.next_saturday'), 'data' => (clone now())->modify('+'.(7 - $dayNum + 6).' days')->format('Y-m-d')],
-                ['text' => __('button_labels.keyboard.custom'), 'data' => 'custom'],
-            ]),
-            fn ($item) => $item['text'],
-            fn ($item) => $item['data']
-        );
-        $bot->sendMessage(text: __('prompt.homework.select_date'), reply_markup: $keyboard);
-
-        $this->next('dateSelection');
+        $keyboard = $this->makeFutureWeekdaySelectionMenu([1, 2, 3, 4, 5, 6], 'newhomework.date');
+        $this->replyAndProceed($bot, __('prompt.homework.select_date'), 'dateSelection', $keyboard);
     }
 
     public function dateSelection(Nutgram $bot): void
     {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('dateSelection');
-
+        $selectedDate = $this->getCallbackAnswerOrError($bot, 'newhomework.date', 'dateSelection');
+        if ($selectedDate === false) {
             return;
         }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, 'newhomework.date.')) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next('dateSelection');
-
-            return;
-        }
-
-        $selectedDate = $this->parser->parseCallbackData($callbackData);
 
         if ($selectedDate === 'custom') {
-            $bot->sendMessage(__('prompt.homework.enter_date_format'));
-            $this->next('promptDate');
+            $this->replyAndProceed($bot, __('prompt.homework.enter_date_format'), 'promptDate');
 
             return;
         }
 
         $this->date = $selectedDate;
 
-        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newhomework.subject',
-            $this->getUser($bot)->class->subjects,
-            fn (Subject $item) => $item->name,
-            fn (Subject $item) => $item->id
-        );
-        $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
-        $this->next('subjectSelection');
+        $subjects = $this->getUser($bot)->class->subjects->map(fn (Subject $s) => ['name' => $s->name, 'id' => $s->id])->values()->toArray();
+        $keyboard = $this->makeSubjectSelectionMenu($subjects, 'newhomework.subject');
+        $this->replyAndProceed($bot, __('prompt.homework.select_subject'), 'subjectSelection', $keyboard);
     }
 
     public function promptDate(Nutgram $bot): void
     {
         if ($bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.enter_date_text'));
-            $this->next('promptDate');
+            $this->replyAndProceed($bot, __('prompt.general.enter_date_text'), 'promptDate');
 
             return;
         }
@@ -105,46 +67,40 @@ class NewHomeworkConversation extends Conversation
         $input = $bot->message()->text;
 
         if ($input === null || trim($input) === '') {
-            $bot->sendMessage(__('error.homework.date_empty'));
-            $this->next('promptDate');
+            $this->replyAndProceed($bot, __('error.homework.date_empty'), 'promptDate');
 
             return;
         }
 
         $parsed = $this->parser->parseDate(trim($input));
         if ($parsed == null) {
-            $bot->sendMessage(__('error.homework.date_invalid'));
-            $this->next('promptDate');
+            $this->replyAndProceed($bot, __('error.homework.date_invalid'), 'promptDate');
 
             return;
         }
 
         $this->date = $parsed->format('Y-m-d');
 
-        $keyboard = $this->keyboardGenerator->buildSelectionKeyboard(
-            'newhomework.subject',
-            $this->getUser($bot)->class->subjects,
-            fn (Subject $item) => $item->name,
-            fn (Subject $item) => $item->id
-        );
-        $bot->sendMessage(__('prompt.homework.select_subject'), reply_markup: $keyboard);
-        $this->next('subjectSelection');
+        $subjects = $this->getUser($bot)->class->subjects->map(fn (Subject $s) => ['name' => $s->name, 'id' => $s->id])->values()->toArray();
+        $keyboard = $this->makeSubjectSelectionMenu($subjects, 'newhomework.subject');
+        $this->replyAndProceed($bot, __('prompt.homework.select_subject'), 'subjectSelection', $keyboard);
     }
 
     public function subjectSelection(Nutgram $bot): void
     {
-        if (! $subjectId = $this->validateCallbackData(
-            $bot,
-            'newhomework.subject',
-            'subjectSelection',
-            fn (string $data) => in_array($data, $this->getUser($bot)->class->subjects->pluck('id')->toArray())
-        )
-        ) {
+        $subjectId = $this->getCallbackAnswerOrError($bot, 'newhomework.subject', 'subjectSelection');
+        if ($subjectId === false) {
             return;
         }
+
+        if (! in_array($subjectId, $this->getUser($bot)->class->subjects->pluck('id')->map(fn ($id) => (string) $id)->toArray())) {
+            $this->errorAndProceed(__('prompt.general.click_button'), 'subjectSelection');
+
+            return;
+        }
+
         $this->subjectId = (int) $subjectId;
-        $bot->sendMessage(__('prompt.homework.enter_description'));
-        $this->next('promptDescription');
+        $this->replyAndProceed($bot, __('prompt.homework.enter_description'), 'promptDescription');
     }
 
     public function promptDescription(Nutgram $bot): void
@@ -152,8 +108,7 @@ class NewHomeworkConversation extends Conversation
         $input = $bot->message()->text;
 
         if ($input === null || trim($input) === '') {
-            $bot->sendMessage(__('error.homework.description_empty'));
-            $this->next('promptDescription');
+            $this->replyAndProceed($bot, __('error.homework.description_empty'), 'promptDescription');
 
             return;
         }
@@ -161,8 +116,7 @@ class NewHomeworkConversation extends Conversation
         $text = trim($input);
 
         if (mb_strlen($text) < self::MIN_DESCRIPTION_LENGTH) {
-            $bot->sendMessage(__('error.homework.description_too_short', ['min' => self::MIN_DESCRIPTION_LENGTH]));
-            $this->next('promptDescription');
+            $this->replyAndProceed($bot, __('error.homework.description_too_short', ['min' => self::MIN_DESCRIPTION_LENGTH]), 'promptDescription');
 
             return;
         }
@@ -178,44 +132,6 @@ class NewHomeworkConversation extends Conversation
             'subject_id' => $this->subjectId,
         ]);
 
-        $bot->sendMessage(__('info.homework.created'));
-        $this->end();
-    }
-
-    private function getUser(Nutgram $bot): User
-    {
-        $telegramUser = $bot->user();
-
-        return User::findOrFail($telegramUser->id);
-    }
-
-    private function validateCallbackData(Nutgram $bot, string $prefix, string $currentStep, ?callable $additionalValidation = null): string|bool
-    {
-        if (! $bot->isCallbackQuery()) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
-            return false;
-        }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, $prefix)) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
-            return false;
-        }
-
-        $data = $this->parser->parseCallbackData($callbackData);
-
-        if ($additionalValidation != null && ! $additionalValidation($data)) {
-            $bot->sendMessage(__('prompt.general.click_button'));
-            $this->next($currentStep);
-
-            return false;
-        }
-
-        return $data;
+        $this->replyAndEnd($bot, __('info.homework.created'));
     }
 }

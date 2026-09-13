@@ -6,22 +6,19 @@ namespace App\Telegram\Conversations\Schedule;
 
 use App\Actions\Schedule\CreateScheduleAction;
 use App\DataObjects\Schedule\Schedule;
-use App\Helpers\MessageKeyboardGenerator;
-use App\Helpers\MessageTextGenerator;
-use App\Helpers\ParserService;
 use App\Models\Subject;
 use App\Models\User;
+use App\Telegram\Conversations\BaseConversation;
 use App\Telegram\Menus\ConfirmationMenu;
 use App\Telegram\Menus\SubjectSelectionMenu;
 use App\Telegram\Menus\WeekdaySelectionMenu;
-use SergiX44\Nutgram\Conversations\Conversation;
 use SergiX44\Nutgram\Nutgram;
 
-class NewScheduleConversation extends Conversation
+class NewScheduleConversation extends BaseConversation
 {
     use ConfirmationMenu, SubjectSelectionMenu, WeekdaySelectionMenu;
 
-    public function __construct(private MessageKeyboardGenerator $keyboardGenerator, private ParserService $parser, private CreateScheduleAction $createScheduleAction, private MessageTextGenerator $messageGenerator) {}
+    public function __construct(private CreateScheduleAction $createScheduleAction) {}
 
     protected function beforeStep(Nutgram $bot): void
     {
@@ -67,12 +64,11 @@ class NewScheduleConversation extends Conversation
 
     public function handleWorkDaysSelection(Nutgram $bot)
     {
-        if (! $this->validateCallbackData($bot, 'newschedule.weekday')) {
-            $this->sendErrorMessage($bot, 'handleWorkDaysSelection');
-
+        $answer = $this->getCallbackAnswerOrError($bot, 'newschedule.weekday', 'handleWorkDaysSelection');
+        if ($answer === false) {
             return;
         }
-        [$action, $weekdayNum] = explode('.', $this->parser->parseCallbackData($bot->callbackQuery()->data));
+        [$action, $weekdayNum] = explode('.', $answer);
         switch ($action) {
             case 'done':
                 $hasNextWorkDay = $this->switchToTheNextWorkDay();
@@ -117,13 +113,10 @@ class NewScheduleConversation extends Conversation
 
     public function handleLessonsSelection(Nutgram $bot)
     {
-        if (! $this->validateCallbackData($bot, 'newschedule.select')) {
-            $this->sendErrorMessage($bot, 'handleLessonsSelection');
-
+        $data = $this->getCallbackAnswerOrError($bot, 'newschedule.select', 'handleLessonsSelection');
+        if ($data === false) {
             return;
         }
-
-        $data = $this->parser->parseCallbackData($bot->callbackQuery()->data);
         if ($data == 'done') {
             if ($this->schedule->getLessons($this->currentWeekday)->isEmpty()) {
                 $bot->sendMessage(__('prompt.schedule.no_lessons'));
@@ -173,12 +166,10 @@ class NewScheduleConversation extends Conversation
 
     public function workDayScheduleConfirmation(Nutgram $bot): void
     {
-        if (! $this->validateCallbackData($bot, 'newschedule.confirm')) {
-            $this->sendErrorMessage($bot, 'workDayScheduleConfirmation');
-
+        $answer = $this->getCallbackAnswerOrError($bot, 'newschedule.confirm', 'workDayScheduleConfirmation');
+        if ($answer === false) {
             return;
         }
-        $answer = $this->parser->parseCallbackData($bot->callbackQuery()->data);
         switch ($answer) {
             case 'yes':
                 $this->iterateToTheNextWorkDayOrToScheduleCreation($bot);
@@ -191,7 +182,7 @@ class NewScheduleConversation extends Conversation
 
                 break;
             default:
-                $this->sendErrorMessage($bot, 'workDayScheduleConfirmation');
+                $this->errorAndProceed(__('prompt.general.click_button'), 'workDayScheduleConfirmation');
                 break;
         }
     }
@@ -215,38 +206,12 @@ class NewScheduleConversation extends Conversation
         }
         $creationSuccess = $this->createSchedule();
         if (! $creationSuccess) {
-            $bot->sendMessage(__('error.server.error'));
-            $this->end();
+            $this->replyAndEnd($bot, __('error.server.error'));
 
             return;
         }
-        $bot->sendMessage(__('info.schedule.created'));
-        $this->end();
+        $this->replyAndEnd($bot, __('info.schedule.created'));
 
-    }
-
-    private function validateCallbackData(Nutgram $bot, string $prefix): bool
-    {
-        if (! $bot->isCallbackQuery()) {
-            return false;
-        }
-
-        $callbackData = $bot->callbackQuery()->data;
-
-        if (! str_starts_with($callbackData, $prefix)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    private function sendErrorMessage(Nutgram $bot, string $gotoStep, ?string $error = null): void
-    {
-        if ($error == null) {
-            $error = __('prompt.general.click_button');
-        }
-        $bot->sendMessage($error);
-        $this->next($gotoStep);
     }
 
     private function createSchedule(): bool
