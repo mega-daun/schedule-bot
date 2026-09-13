@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Classroom;
+use App\Models\Homework;
 use App\Models\Subject;
 use App\Repositories\EloquentHomeworkRepository;
 use Illuminate\Database\QueryException;
@@ -149,4 +150,83 @@ it('truncates a datetime string to the date part in the DATE column', function (
         'subject_id' => $subject->id,
         'date' => '2026-09-13',
     ]);
+});
+
+it('returns only homeworks within the given date range', function () {
+    $classroom = Classroom::factory()->create();
+    $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-10']);
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-13']);
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-20']);
+
+    $homeworks = $this->repo->getHomeworks($classroom->id, '2026-09-12', '2026-09-15');
+
+    expect($homeworks)->toHaveCount(1);
+    expect($homeworks->first()->date->toDateString())->toBe('2026-09-13');
+});
+
+it('returns only homeworks of the given class', function () {
+    $classroom = Classroom::factory()->create();
+    $otherClassroom = Classroom::factory()->create();
+    $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+    $otherSubject = Subject::factory()->create(['class_id' => $otherClassroom->id]);
+
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-13']);
+    Homework::factory()->create(['class_id' => $otherClassroom->id, 'subject_id' => $otherSubject->id, 'date' => '2026-09-13']);
+
+    $homeworks = $this->repo->getHomeworks($classroom->id, '2026-09-12', '2026-09-15');
+
+    expect($homeworks)->toHaveCount(1);
+    expect($homeworks->first()->class_id)->toBe($classroom->id);
+});
+
+it('returns homeworks ordered by date ascending', function () {
+    $classroom = Classroom::factory()->create();
+    $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-20']);
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-10']);
+    Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-13']);
+
+    $homeworks = $this->repo->getHomeworks($classroom->id, '2026-09-01', '2026-09-30');
+
+    expect($homeworks->pluck('date')->map(fn ($date) => $date->toDateString())->toArray())
+        ->toBe(['2026-09-10', '2026-09-13', '2026-09-20']);
+});
+
+it('returns the homework model for an existing id', function () {
+    $classroom = Classroom::factory()->create();
+    $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+
+    $homework = Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-13']);
+
+    $found = $this->repo->findHomework($homework->id);
+
+    expect($found)->toBeInstanceOf(Homework::class);
+    expect($found->id)->toBe($homework->id);
+});
+
+it('returns null when no homework has the given id', function () {
+    $found = $this->repo->findHomework(999999);
+
+    expect($found)->toBeNull();
+});
+
+it('deletes an existing homework and returns true', function () {
+    $classroom = Classroom::factory()->create();
+    $subject = Subject::factory()->create(['class_id' => $classroom->id]);
+
+    $homework = Homework::factory()->create(['class_id' => $classroom->id, 'subject_id' => $subject->id, 'date' => '2026-09-13']);
+
+    $result = $this->repo->deleteHomework($homework->id);
+
+    expect($result)->toBeTrue();
+    $this->assertDatabaseMissing('homeworks', ['id' => $homework->id]);
+});
+
+it('returns false when deleting a non-existent homework', function () {
+    $result = $this->repo->deleteHomework(999999);
+
+    expect($result)->toBeFalse();
 });

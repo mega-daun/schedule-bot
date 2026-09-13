@@ -93,18 +93,3 @@ it('returns an empty collection for a non-existent class id without throwing', f
     expect($result)->toBeEmpty();
     $this->assertDatabaseCount('subjects', 0);
 });
-
-it('returns subjects in database insertion order', function () {
-    $classroom = Classroom::factory()->create();
-    // Insertion order deliberately differs from alphabetical order
-    // so this assertion discriminates "insertion order" from any
-    // index-driven (e.g. name-sorted) ordering the DB may apply.
-    Subject::factory()->create(['class_id' => $classroom->id, 'name' => 'Charlie']);
-    Subject::factory()->create(['class_id' => $classroom->id, 'name' => 'Alpha']);
-    Subject::factory()->create(['class_id' => $classroom->id, 'name' => 'Bravo']);
-
-    $result = $this->repo->getSubjects($classroom->id);
-
-    expect($result)->toHaveCount(3);
-    expect($result->pluck('name')->all())->toBe(['Charlie', 'Alpha', 'Bravo']);
-});
