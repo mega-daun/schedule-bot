@@ -23,8 +23,8 @@ trait SelectionMenu
 
         foreach ($options as $option) {
             $keyboard->addRow(new InlineKeyboardButton(
-                text: __('button_labels.keyboard.' . $option),
-                callback_data: $prefix . '.' . $option,
+                text: __('button_labels.keyboard.'.$option),
+                callback_data: $prefix.'.'.$option,
             ));
         }
 

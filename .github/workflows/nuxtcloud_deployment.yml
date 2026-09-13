@@ -10,6 +10,7 @@ jobs:
     permissions:
       contents: write
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Push release into hosting via SSH
