@@ -17,6 +17,7 @@ use App\Telegram\Commands\Class\DeleteClassCommand;
 use App\Telegram\Commands\Class\JoinClassCommand;
 use App\Telegram\Commands\Class\LeaveClassCommand;
 use App\Telegram\Commands\Class\NewClassCommand;
+use App\Telegram\Commands\HelpCommand;
 use App\Telegram\Commands\StartCommand;
 use App\Telegram\Conversations\Class\ChangeRoleConversation;
 use App\Telegram\Conversations\Class\JoinClassConversation;
@@ -33,6 +34,7 @@ $bot->middleware(IncorrectMessageMiddleware::class);
 $bot->onCommand('start', StartCommand::class)->description(__('command_descriptions.cmd.start'));
 $bot->onCommand('start {token}', StartCommand::class)->description(__('command_descriptions.cmd.start'));
 $bot->onCommand('cancel', CancelCommand::class)->description(__('command_descriptions.cmd.cancel'));
+$bot->onCommand('help', HelpCommand::class)->description(__('command_descriptions.cmd.help'));
 
 $bot->onCommand('newclass {code}', NewClassCommand::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.newclass'));
 $bot->onCommand('newclass', NewClassConversation::class)->middleware(NoClassMiddleware::class)->description(__('command_descriptions.cmd.newclass_step'));

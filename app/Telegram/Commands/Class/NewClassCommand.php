@@ -12,10 +12,9 @@ use SergiX44\Nutgram\Nutgram;
 
 class NewClassCommand
 {
-    public function __invoke(Nutgram $bot): void
+    public function __invoke(Nutgram $bot, ?string $code = null): void
     {
         $user = $this->getUser($bot);
-        $code = $bot->get('code');
 
         if ($user->class !== null) {
             throw new IncorrectMessageException(__('error.class.already_member'));

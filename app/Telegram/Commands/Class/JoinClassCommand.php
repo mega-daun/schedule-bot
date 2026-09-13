@@ -12,10 +12,9 @@ use SergiX44\Nutgram\Nutgram;
 
 class JoinClassCommand
 {
-    public function __invoke(Nutgram $bot): void
+    public function __invoke(Nutgram $bot, ?string $token = null): void
     {
         $user = $this->getUser($bot);
-        $token = $bot->get('token');
 
         if ($user->class_id !== null) {
             throw new IncorrectMessageException(__('error.class.already_member'), true);
