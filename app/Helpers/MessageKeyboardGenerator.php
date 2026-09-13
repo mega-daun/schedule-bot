@@ -31,7 +31,7 @@ class MessageKeyboardGenerator
         $markup = InlineKeyboardMarkup::make();
 
         foreach (array_chunk($buttons, $buttons_per_row) as $row) {
-            $markup->addRow($row);
+            $markup->addRow(...$row);
         }
 
         return $markup;

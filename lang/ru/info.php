@@ -1,6 +1,17 @@
 <?php
 
 return [
+    'help' => [
+        'title' => '❗️Справка по командам',
+        'base' => 'Основные команды:',
+        'class' => 'Класс:',
+        'no_class' => 'Без класса:',
+        'homework' => 'Домашние задания:',
+        'subjects' => 'Предметы:',
+        'schedule' => 'Расписание:',
+        'administration' => 'Администрирование:',
+        'format' => '/:command — :description',
+    ],
     'class' => [
         'created' => 'Класс :code успешно создан. Токен для присоединения: :token. Ссылка для присоединения: https://t.me/'.env('TELEGRAM_BOT_USERNAME').'?start=:token',
         'joined' => 'Вы успешно присоеденились к классу.',

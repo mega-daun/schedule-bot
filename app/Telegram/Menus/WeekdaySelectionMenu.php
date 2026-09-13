@@ -16,7 +16,7 @@ trait WeekdaySelectionMenu
                 ? ['label' => __('prompt.general.marked', ['item' => __('general.weekday.'.$weekday)]), 'data' => $prefix.'.remove.'.$weekday]
                 : ['label' => __('general.weekday.'.$weekday), 'data' => $prefix.'.add.'.$weekday]
         );
-        $payload->add(['label' => __('prompt.general.done'), 'data' => 'done.done']);
+        $payload->add(['label' => __('prompt.general.done'), 'data' => $prefix.'.done.done']);
         $payload = $payload->map(
             fn (array $item) => new InlineKeyboardButton(
                 text: $item['label'],

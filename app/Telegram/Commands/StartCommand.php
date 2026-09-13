@@ -13,10 +13,9 @@ use SergiX44\Nutgram\Nutgram;
 
 class StartCommand
 {
-    public function __invoke(Nutgram $bot): void
+    public function __invoke(Nutgram $bot, ?string $token = null): void
     {
         $user = $this->getUser($bot);
-        $token = $bot->get('token');
 
         if ($token === null) {
             $bot->sendMessage(

@@ -25,3 +25,16 @@ jobs:
             cd /var/www/schedule-bot || (git clone git@github.com:mega-daun/schedule-bot.git /var/www/schedule-bot && cd /var/www/schedule-bot)
             git pull origin master
             composer install --no-dev
+            mkdir -p storage/database/backups
+            BACKUP_FILE="/var/www/schedule-bot/storage/database/backups/$(date +'%Y%m%d_%H%M%S').sql.gz"
+            mysqldump \
+              --single-transaction \
+              --routines \
+              --triggers \
+              --quick \
+              -u ${{ secrets.DB_USER }} \
+              -p${{ secrets.DB_PASSWORD }} \
+              -h ${{ secrets.DB_HOST }} \
+              ${{ secrets.DB_NAME }} | gzip > $BACKUP_FILE
+            echo "Backup created: $BACKUP_FILE"
+            php artisan migrate --force
