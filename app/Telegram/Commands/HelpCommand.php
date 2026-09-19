@@ -40,7 +40,7 @@ class HelpCommand extends BaseCommand
     private function addCommandDescriptions(string ...$commandNames): void
     {
         foreach ($commandNames as $name) {
-            $this->messageLines[] = $this->commandLine($name, __('command_descriptions.cmd.' . $name));
+            $this->messageLines[] = $this->commandLine($name, __('command_descriptions.cmd.'.$name));
         }
     }
 
